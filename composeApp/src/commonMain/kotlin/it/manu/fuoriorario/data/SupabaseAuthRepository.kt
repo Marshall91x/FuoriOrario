@@ -9,17 +9,27 @@ import io.github.jan.supabase.auth.providers.builtin.OTP
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
 import it.manu.fuoriorario.core.supabase
 import it.manu.fuoriorario.domain.Member
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.update
 
 class SupabaseAuthRepository(private val client: SupabaseClient = supabase) : AuthRepository {
+    /** Bumped to reload the member after it changes (privacy acknowledgement). */
+    private val reload = MutableStateFlow(0)
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val session: Flow<Session> = client.auth.sessionStatus.mapLatest { status ->
+    override val session: Flow<Session> = combine(client.auth.sessionStatus, reload) { status, _ ->
+        status
+    }.mapLatest { status ->
         when (status) {
             is SessionStatus.Authenticated -> {
                 val member = loadMember(status.session.user!!.id)
@@ -68,6 +78,11 @@ class SupabaseAuthRepository(private val client: SupabaseClient = supabase) : Au
             if (e.errorCode == AuthErrorCode.OtpExpired) throw InvalidCodeException()
             throw e
         }
+    }
+
+    override suspend fun acknowledgePrivacy() {
+        client.postgrest.rpc("ack_privacy")
+        reload.update { it + 1 }
     }
 
     override suspend fun signOut() {

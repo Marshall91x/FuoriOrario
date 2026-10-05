@@ -27,5 +27,8 @@ interface AuthRepository {
     /** Throws [InvalidCodeException]. On success [session] becomes [Session.SignedIn]. */
     suspend fun verifyCode(email: String, code: String)
 
+    /** Records the privacy notice acceptance; [session] then emits the updated member. */
+    suspend fun acknowledgePrivacy()
+
     suspend fun signOut()
 }
