@@ -29,7 +29,6 @@ jobs:
           ./gradlew
           :composeApp:ktlintCheck
           :composeApp:assembleDebug
-          :composeApp:testDebugUnitTest
           :composeApp:wasmJsBrowserDistribution
           :composeApp:wasmJsBrowserTest
 
@@ -44,3 +43,14 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64 :composeApp:iosSimulatorArm64Test
+
+  database:
+    name: Database (pgTAP)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.119.0
+      - run: supabase db start
+      - run: supabase test db

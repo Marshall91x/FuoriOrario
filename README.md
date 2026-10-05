@@ -24,6 +24,34 @@ SUPABASE_ANON_KEY=
 
 In CI gli stessi valori arrivano da variabili d'ambiente. Mai committare chiavi.
 
+### Supabase locale
+
+Requisiti: Docker e [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) (`brew install supabase/tap/supabase`).
+
+```sh
+supabase start          # Postgres + Auth + Mailpit; applica supabase/migrations e supabase/seed.sql
+supabase db reset       # ricrea il database da migrazioni + seed
+supabase test db        # test pgTAP delle RLS (supabase/tests)
+supabase stop
+```
+
+`supabase status` mostra URL e chiave anonima: mettili in `local.properties` (`SUPABASE_URL=http://127.0.0.1:54321`, `SUPABASE_ANON_KEY=<anon key>`).
+
+Account di prova del seed: `staff@example.com` (staff) e `giocatore@example.com` (giocatore). Il codice OTP arriva in Mailpit: <http://127.0.0.1:54324>. Altre email vengono rifiutate.
+
+Il rifiuto delle email fuori rosa è l'auth hook `before_user_created` (`supabase/config.toml`): in un progetto cloud va attivato con `supabase config push` (o dalla dashboard), `db push` non basta.
+
+Emulatore Android: `adb reverse tcp:54321 tcp:54321` per raggiungere `127.0.0.1` del Mac.
+
+### Test
+
+| Cosa | Comando |
+|---|---|
+| UI test iOS | `./gradlew :composeApp:iosSimulatorArm64Test` |
+| UI test web | `./gradlew :composeApp:wasmJsBrowserTest` |
+| UI test Android (emulatore acceso) | `./gradlew :composeApp:connectedDebugAndroidTest` |
+| RLS | `supabase test db` |
+
 | Target | Comando |
 |---|---|
 | Android | `./gradlew :composeApp:installDebug` |
