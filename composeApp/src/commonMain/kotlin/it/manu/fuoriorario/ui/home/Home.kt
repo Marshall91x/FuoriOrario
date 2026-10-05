@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -48,11 +50,10 @@ import fuoriorario.composeapp.generated.resources.placeholder_title
 import fuoriorario.composeapp.generated.resources.tab_plan
 import fuoriorario.composeapp.generated.resources.tab_shot_log
 import fuoriorario.composeapp.generated.resources.tab_team
-import it.manu.fuoriorario.Header
-import it.manu.fuoriorario.Page
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.components.LocalToast
+import it.manu.fuoriorario.ui.components.Page
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.ToastHost
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
@@ -73,9 +74,9 @@ private enum class Tab(
     TEAM(Res.string.tab_team, Res.drawable.ic_tab_team, Res.string.placeholder_team, staffOnly = true)
 }
 
-/** Signed-in shell: tabs for the member's role, with the toast host. Players have no Squadra route at all. */
+/** Signed-in content under the header: tabs for the member's role, with the toast host. Players have no Squadra route at all. */
 @Composable
-fun Home(member: Member, onSignOut: () -> Unit) {
+fun Home(member: Member) {
     val tabs = Tab.entries.filter { !it.staffOnly || member.role == Role.STAFF }
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
@@ -87,10 +88,7 @@ fun Home(member: Member, onSignOut: () -> Unit) {
                 NavHost(nav, startDestination = Tab.SHOT_LOG.name) {
                     tabs.forEach { tab ->
                         composable(tab.name) {
-                            Page {
-                                Header(member, onSignOut)
-                                Placeholder(tab)
-                            }
+                            Page { Placeholder(tab) }
                         }
                     }
                 }
@@ -126,7 +124,7 @@ private fun TabBar(tabs: List<Tab>, current: String?, onSelect: (Tab) -> Unit) {
                 .widthIn(max = 560.dp)
                 .fillMaxWidth()
                 .align(Alignment.CenterHorizontally)
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                .windowInsetsPadding(WindowInsets.safeDrawing.exclude(WindowInsets.ime).only(WindowInsetsSides.Bottom))
                 .selectableGroup()
         ) {
             tabs.forEach { tab ->
