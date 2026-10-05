@@ -1,5 +1,5 @@
 begin;
-select plan(6);
+select plan(7);
 
 insert into auth.users (id, email) values
   ('10000000-0000-0000-0000-000000000001', 'staff@example.com'),
@@ -11,6 +11,8 @@ select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-0000000
 select is((select privacy_ack_at from public.members), null, 'privacy not acknowledged before first access');
 select is_empty($$ update public.members set display_name = 'Hacker', privacy_ack_at = now() returning id $$,
   'player cannot update their own member row directly');
+select is_empty($$ update public.members set role = 'staff' where user_id = auth.uid() returning id $$,
+  'player cannot promote themselves to staff');
 select lives_ok('select public.ack_privacy()', 'player acknowledges the privacy notice');
 select isnt((select privacy_ack_at from public.members), null, 'acknowledgement is recorded');
 

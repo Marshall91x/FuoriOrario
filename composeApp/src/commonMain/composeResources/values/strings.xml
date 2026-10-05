@@ -32,6 +32,6 @@
     <string name="privacy_where_title">Dove</string>
     <string name="privacy_where_body">Su Supabase, con server nell\'Unione Europea. Li vedi tu e lo staff della tua squadra.</string>
     <string name="privacy_delete_title">Cancellazione</string>
-    <string name="privacy_delete_body">Chiedila allo staff o al titolare: i tuoi dati vengono eliminati entro un mese. Quando un membro viene tolto dalla squadra, tutti i suoi dati vengono eliminati.</string>
+    <string name="privacy_delete_body">Chiedila allo staff o al titolare e i tuoi dati vengono eliminati. Quando un membro viene tolto dalla squadra, tutti i suoi dati vengono eliminati.</string>
     <string name="privacy_accept">Ho letto</string>
 </resources>
