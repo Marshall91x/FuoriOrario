@@ -1,0 +1,28 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+indent_size = 4
+max_line_length = 120
+ktlint_code_style = android_studio
+
+# Allow wildcard imports (Compose screens import many symbols)
+ktlint_standard_no-wildcard-imports = disabled
+
+# Trailing commas are enforced by the Kotlin formatter — keep them
+ktlint_standard_trailing-comma-on-call-site = enabled
+ktlint_standard_trailing-comma-on-declaration-site = enabled
+
+# Compose lambdas make this noisy — relax multiline expression wrapping
+ktlint_standard_multiline-expression-wrapping = disabled
+
+# Allow @Composable function names to start with uppercase (standard Compose convention)
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+[*.md]
+trim_trailing_whitespace = false
