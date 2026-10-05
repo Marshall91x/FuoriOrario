@@ -2,6 +2,21 @@
     <string name="brand_first">Fuori</string>
     <string name="brand_second">Orario</string>
     <string name="subtitle_player">Lavoro individuale</string>
+    <string name="subtitle_staff">Vista staff</string>
+    <string name="sign_out">Esci</string>
     <string name="placeholder_title">Lavori in corso</string>
     <string name="placeholder_body">Qui arriveranno il diario di tiro e il piano settimanale.</string>
+
+    <string name="login_title">Accedi</string>
+    <string name="login_email_hint">Inserisci l\'email che hai dato allo staff: ti mandiamo un codice di 6 cifre.</string>
+    <string name="login_email">Email</string>
+    <string name="login_send">Invia codice</string>
+    <string name="login_code_title">Controlla la posta</string>
+    <string name="login_code_hint">Abbiamo mandato il codice a %1$s.</string>
+    <string name="login_code">Codice</string>
+    <string name="login_verify">Accedi</string>
+    <string name="login_change_email">Cambia email</string>
+    <string name="login_error_not_in_team">Non sei in nessuna squadra, contatta lo staff.</string>
+    <string name="login_error_code">Codice non valido o scaduto.</string>
+    <string name="login_error_generic">Qualcosa non ha funzionato. Riprova tra poco.</string>
 </resources>

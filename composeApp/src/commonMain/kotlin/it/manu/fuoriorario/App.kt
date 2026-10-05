@@ -1,7 +1,6 @@
 package it.manu.fuoriorario
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,15 +12,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import fuoriorario.composeapp.generated.resources.Res
@@ -29,53 +34,68 @@ import fuoriorario.composeapp.generated.resources.brand_first
 import fuoriorario.composeapp.generated.resources.brand_second
 import fuoriorario.composeapp.generated.resources.placeholder_body
 import fuoriorario.composeapp.generated.resources.placeholder_title
+import fuoriorario.composeapp.generated.resources.sign_out
 import fuoriorario.composeapp.generated.resources.subtitle_player
+import fuoriorario.composeapp.generated.resources.subtitle_staff
+import it.manu.fuoriorario.data.AuthRepository
+import it.manu.fuoriorario.data.Session
+import it.manu.fuoriorario.data.SupabaseAuthRepository
+import it.manu.fuoriorario.domain.Member
+import it.manu.fuoriorario.domain.Role
+import it.manu.fuoriorario.ui.auth.LoginScreen
+import it.manu.fuoriorario.ui.components.GhostButton
+import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun App() {
+fun App(auth: AuthRepository = remember { SupabaseAuthRepository() }) {
     FuoriOrarioTheme {
         val c = FuoriOrarioTheme.colors
+        val session by auth.session.collectAsState(Session.Loading)
+        val scope = rememberCoroutineScope()
         Box(
             Modifier.fillMaxSize().background(c.bg).windowInsetsPadding(WindowInsets.safeDrawing),
             contentAlignment = Alignment.TopCenter
         ) {
             // 16dp gutter outside a 560dp column, like the prototype's body padding + `.wrap`.
             Column(
-                Modifier.padding(horizontal = 16.dp).widthIn(max = 560.dp).fillMaxWidth(),
+                Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
+                    .widthIn(max = 560.dp)
+                    .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                Header()
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(c.surface, RoundedCornerShape(14.dp))
-                        .border(1.dp, c.line, RoundedCornerShape(14.dp))
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(stringResource(Res.string.placeholder_title), style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        stringResource(Res.string.placeholder_body),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = c.muted
-                    )
+                when (val s = session) {
+                    Session.Loading -> Header()
+                    Session.SignedOut -> {
+                        Header()
+                        LoginScreen(auth)
+                    }
+                    is Session.SignedIn -> {
+                        Header(s.member, onSignOut = { scope.launch { auth.signOut() } })
+                        Panel(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                stringResource(Res.string.placeholder_title),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(stringResource(Res.string.placeholder_body), color = c.muted)
+                        }
+                    }
                 }
             }
         }
     }
 }
 
+/** Prototype `.top`: brand + subtitle; when signed in, the `.who` row with name and logout. */
 @Composable
-private fun Header() {
+private fun Header(member: Member? = null, onSignOut: () -> Unit = {}) {
     val c = FuoriOrarioTheme.colors
-    Column {
-        Row(
-            Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+    Column(Modifier.padding(top = 14.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             val first = stringResource(Res.string.brand_first).uppercase()
             val second = stringResource(Res.string.brand_second).uppercase()
             Text(
@@ -87,13 +107,24 @@ private fun Header() {
                 style = MaterialTheme.typography.headlineMedium,
                 color = c.ink
             )
+            val subtitle = if (member?.role == Role.STAFF) Res.string.subtitle_staff else Res.string.subtitle_player
             Text(
-                stringResource(Res.string.subtitle_player).uppercase(),
+                stringResource(subtitle).uppercase(),
                 modifier = Modifier.alignByBaseline(),
                 style = MaterialTheme.typography.labelSmall,
                 color = c.muted
             )
         }
-        HorizontalDivider(color = c.line)
+        if (member != null) {
+            Row(
+                Modifier.fillMaxWidth().padding(top = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(member.displayName, Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                GhostButton(stringResource(Res.string.sign_out), onSignOut, pill = true)
+            }
+        }
+        HorizontalDivider(Modifier.padding(top = 10.dp), color = c.line)
     }
 }

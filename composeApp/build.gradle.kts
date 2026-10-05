@@ -1,13 +1,16 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.buildkonfig)
     alias(libs.plugins.ktlint)
 }
@@ -17,6 +20,11 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
+        // commonTest holds Compose UI tests: on Android they run on a device (connectedAndroidTest), not as JVM unit tests.
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        unitTestVariant.sourceSetTree.set(KotlinSourceSetTree.unitTest)
     }
 
     listOf(
@@ -47,6 +55,15 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.ktor.client.okhttp)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.client.js)
+            // 0.9.0 (from Ktor) reads `import.meta` directly, which breaks the Karma test bundle. Drop when Ktor ships >= 0.9.1.
+            implementation(libs.kotlinx.io.core)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -54,9 +71,14 @@ kotlin {
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
+            implementation(project.dependencies.platform(libs.supabase.bom))
+            implementation(libs.supabase.auth)
+            implementation(libs.supabase.postgrest)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+            implementation(libs.compose.uiTest)
         }
     }
 }
@@ -94,6 +116,7 @@ android {
             .toInt()
         versionCode = appVersionCode
         versionName = appVersion
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
         create("release") {
@@ -109,7 +132,10 @@ android {
         }
     }
     buildTypes {
+        // Debug talks to local Supabase over plain http://127.0.0.1.
+        getByName("debug") { manifestPlaceholders["usesCleartextTraffic"] = true }
         getByName("release") {
+            manifestPlaceholders["usesCleartextTraffic"] = false
             isMinifyEnabled = false
             // Unsigned when no keystore is configured (local builds); CI always provides one.
             signingConfigs.getByName("release").takeIf { it.storeFile != null }?.let { signingConfig = it }
@@ -123,6 +149,8 @@ android {
 
 dependencies {
     debugImplementation(libs.compose.uiTooling)
+    debugImplementation(libs.androidx.compose.uiTestManifest)
+    androidTestImplementation(libs.androidx.compose.uiTestJunit4)
 }
 
 buildkonfig {
