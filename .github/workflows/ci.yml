@@ -6,6 +6,10 @@ on:
   push:
     branches: [develop, main]
 
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true

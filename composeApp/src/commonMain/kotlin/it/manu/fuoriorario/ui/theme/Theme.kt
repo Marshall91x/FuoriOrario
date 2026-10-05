@@ -10,7 +10,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 
-private val LocalFoColors = staticCompositionLocalOf { LightColors }
+private val LocalFuoriOrarioColors = staticCompositionLocalOf { LightColors }
 
 /** Light/dark follows the system, like the prototype's `prefers-color-scheme`. */
 @Composable
@@ -31,13 +31,13 @@ fun FuoriOrarioTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable
         error = c.accent
     )
     // LocalContentColor: Text without an explicit color uses ink, not Material's default black.
-    CompositionLocalProvider(LocalFoColors provides c, LocalContentColor provides c.ink) {
+    CompositionLocalProvider(LocalFuoriOrarioColors provides c, LocalContentColor provides c.ink) {
         MaterialTheme(colorScheme = scheme, typography = foTypography(), content = content)
     }
 }
 
 object FuoriOrarioTheme {
-    val colors: FoColors
+    val colors: FuoriOrarioColors
         @Composable @ReadOnlyComposable
-        get() = LocalFoColors.current
+        get() = LocalFuoriOrarioColors.current
 }

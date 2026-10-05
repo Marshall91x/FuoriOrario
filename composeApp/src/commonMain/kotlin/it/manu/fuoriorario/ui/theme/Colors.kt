@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 
 /** Design tokens from docs/prototype/fuori-orario.html (`:root` CSS variables). */
 @Immutable
-data class FoColors(
+data class FuoriOrarioColors(
     val bg: Color,
     val surface: Color,
     val surface2: Color,
@@ -24,7 +24,7 @@ data class FoColors(
     val good: Color
 )
 
-val LightColors = FoColors(
+val LightColors = FuoriOrarioColors(
     bg = Color(0xFFECEFF2),
     surface = Color(0xFFFFFFFF),
     surface2 = Color(0xFFF5F6F8),
@@ -43,7 +43,7 @@ val LightColors = FoColors(
     good = Color(0xFF2C8A57)
 )
 
-val DarkColors = FoColors(
+val DarkColors = FuoriOrarioColors(
     bg = Color(0xFF0E1217),
     surface = Color(0xFF171C23),
     surface2 = Color(0xFF1E242C),

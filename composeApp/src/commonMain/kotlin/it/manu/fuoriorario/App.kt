@@ -41,9 +41,9 @@ fun App() {
             Modifier.fillMaxSize().background(c.bg).windowInsetsPadding(WindowInsets.safeDrawing),
             contentAlignment = Alignment.TopCenter
         ) {
-            // Single column, max 560dp like the prototype's `.wrap`.
+            // 16dp gutter outside a 560dp column, like the prototype's body padding + `.wrap`.
             Column(
-                Modifier.widthIn(max = 560.dp).fillMaxWidth().padding(horizontal = 16.dp),
+                Modifier.padding(horizontal = 16.dp).widthIn(max = 560.dp).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 Header()
@@ -74,8 +74,7 @@ private fun Header() {
     Column {
         Row(
             Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             val first = stringResource(Res.string.brand_first).uppercase()
             val second = stringResource(Res.string.brand_second).uppercase()
@@ -84,11 +83,13 @@ private fun Header() {
                     append("$first ")
                     withStyle(SpanStyle(color = c.accent)) { append(second) }
                 },
+                modifier = Modifier.alignByBaseline(),
                 style = MaterialTheme.typography.headlineMedium,
                 color = c.ink
             )
             Text(
                 stringResource(Res.string.subtitle_player).uppercase(),
+                modifier = Modifier.alignByBaseline(),
                 style = MaterialTheme.typography.labelSmall,
                 color = c.muted
             )
