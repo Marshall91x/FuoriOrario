@@ -18,7 +18,7 @@ import org.jetbrains.compose.resources.Font
 
 /** Headings and numbers. */
 @Composable
-fun displayFont() = FontFamily(
+private fun displayFont() = FontFamily(
     Font(Res.font.saira_condensed_500, FontWeight.Medium),
     Font(Res.font.saira_condensed_600, FontWeight.SemiBold),
     Font(Res.font.saira_condensed_700, FontWeight.Bold)
@@ -26,7 +26,7 @@ fun displayFont() = FontFamily(
 
 /** Body text. */
 @Composable
-fun bodyFont() = FontFamily(
+private fun bodyFont() = FontFamily(
     Font(Res.font.instrument_sans_400, FontWeight.Normal),
     Font(Res.font.instrument_sans_500, FontWeight.Medium),
     Font(Res.font.instrument_sans_600, FontWeight.SemiBold)
