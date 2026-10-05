@@ -5,7 +5,12 @@
     <string name="subtitle_staff">Vista staff</string>
     <string name="sign_out">Esci</string>
     <string name="placeholder_title">Lavori in corso</string>
-    <string name="placeholder_body">Qui arriveranno il diario di tiro e il piano settimanale.</string>
+    <string name="placeholder_shot_log">Qui arriveranno la mappa di tiro, le statistiche e le sessioni.</string>
+    <string name="placeholder_plan">Qui arriverà il piano settimanale con gli esercizi.</string>
+    <string name="placeholder_team">Qui arriveranno la rosa e le impostazioni della squadra.</string>
+    <string name="tab_shot_log">Diario di tiro</string>
+    <string name="tab_plan">Piano</string>
+    <string name="tab_team">Squadra</string>
 
     <string name="login_title">Accedi</string>
     <string name="login_email_hint">Inserisci l\'email che hai dato allo staff: ti mandiamo un codice di 6 cifre.</string>

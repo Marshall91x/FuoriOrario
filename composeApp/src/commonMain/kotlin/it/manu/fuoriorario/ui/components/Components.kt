@@ -17,8 +17,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -110,6 +113,25 @@ fun Field(
             singleLine = true,
             keyboardOptions = keyboardOptions,
             keyboardActions = KeyboardActions(onDone = { onDone() })
+        )
+    }
+}
+
+/** Where screens send toasts: `LocalToast.current.showSnackbar("Sessione salvata")`. Provided by the home. */
+val LocalToast = staticCompositionLocalOf<SnackbarHostState> { error("No ToastHost in composition") }
+
+/** Prototype `.toast`: an ink pill showing [state]'s current message. */
+@Composable
+fun ToastHost(state: SnackbarHostState, modifier: Modifier = Modifier) {
+    val c = FuoriOrarioTheme.colors
+    SnackbarHost(state, modifier.padding(horizontal = 16.dp)) { data ->
+        Text(
+            data.visuals.message,
+            Modifier
+                .background(c.ink, RoundedCornerShape(50))
+                .padding(horizontal = 16.dp, vertical = 9.dp),
+            color = c.bg,
+            style = MaterialTheme.typography.bodyMedium
         )
     }
 }
