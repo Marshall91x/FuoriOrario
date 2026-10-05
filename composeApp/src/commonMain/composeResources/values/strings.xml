@@ -1,0 +1,7 @@
+<resources>
+    <string name="brand_first">Fuori</string>
+    <string name="brand_second">Orario</string>
+    <string name="subtitle_player">Lavoro individuale</string>
+    <string name="placeholder_title">Lavori in corso</string>
+    <string name="placeholder_body">Qui arriveranno il diario di tiro e il piano settimanale.</string>
+</resources>
