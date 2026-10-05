@@ -2,9 +2,7 @@ package it.manu.fuoriorario
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -15,8 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,6 +42,7 @@ import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.LoginScreen
 import it.manu.fuoriorario.ui.auth.PrivacyScreen
 import it.manu.fuoriorario.ui.components.GhostButton
+import it.manu.fuoriorario.ui.components.Page
 import it.manu.fuoriorario.ui.home.Home
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlinx.coroutines.launch
@@ -54,59 +51,45 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun App(auth: AuthRepository = remember { SupabaseAuthRepository() }) {
     FuoriOrarioTheme {
+        val c = FuoriOrarioTheme.colors
         val session by auth.session.collectAsState(Session.Loading)
+        val member = (session as? Session.SignedIn)?.member
         val scope = rememberCoroutineScope()
-        val signOut: () -> Unit = { scope.launch { auth.signOut() } }
         // Bottom inset is left to each screen: the home's tab bar runs to the bottom edge.
-        Box(
+        Column(
             Modifier
                 .fillMaxSize()
-                .background(FuoriOrarioTheme.colors.bg)
+                .background(c.bg)
                 .windowInsetsPadding(
                     WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
                 )
         ) {
-            val bottom = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-            when (val s = session) {
-                Session.Loading -> Page(bottom) { Header() }
-                Session.SignedOut -> Page(bottom) {
-                    Header()
-                    LoginScreen(auth)
-                }
-                is Session.SignedIn ->
-                    if (s.member.privacyAckAt == null) {
-                        Page(bottom) {
-                            Header(s.member, signOut)
-                            PrivacyScreen(auth)
-                        }
-                    } else {
-                        Home(s.member, signOut)
+            // Stays put while the content scrolls, like the prototype's sticky `.top`.
+            Header(
+                member,
+                onSignOut = { scope.launch { auth.signOut() } },
+                Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).widthIn(max = 560.dp)
+            )
+            if (member?.privacyAckAt != null) {
+                Home(member)
+            } else {
+                Page(Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))) {
+                    when (session) {
+                        Session.Loading -> Unit
+                        Session.SignedOut -> LoginScreen(auth)
+                        is Session.SignedIn -> PrivacyScreen(auth)
                     }
+                }
             }
         }
     }
 }
 
-/** Scrolling page: 16dp gutter outside a 560dp column, like the prototype's body padding + `.wrap`. */
-@Composable
-internal fun Page(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Box(modifier.fillMaxSize().verticalScroll(rememberScrollState()), contentAlignment = Alignment.TopCenter) {
-        Column(
-            Modifier
-                .padding(start = 16.dp, end = 16.dp, bottom = 18.dp)
-                .widthIn(max = 560.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
-            content = content
-        )
-    }
-}
-
 /** Prototype `.top`: brand + subtitle; when signed in, the `.who` row with name and logout. */
 @Composable
-internal fun Header(member: Member? = null, onSignOut: () -> Unit = {}) {
+private fun Header(member: Member?, onSignOut: () -> Unit, modifier: Modifier = Modifier) {
     val c = FuoriOrarioTheme.colors
-    Column(Modifier.padding(top = 14.dp)) {
+    Column(modifier.fillMaxWidth().padding(top = 14.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             val first = stringResource(Res.string.brand_first).uppercase()
             val second = stringResource(Res.string.brand_second).uppercase()
