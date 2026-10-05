@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalTestApi::class)
 class PrivacyTest {
     @Test
-    fun notAcknowledged_blocksUntilHoLetto() = runComposeUiTest {
+    fun notAcknowledged_blocksUntilAccepted() = runComposeUiTest {
         setContent { App(FakeAuthRepository(Member("Luca B.", Role.PLAYER))) }
 
         awaitText("Ho letto")
