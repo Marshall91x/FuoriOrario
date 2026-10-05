@@ -61,6 +61,23 @@ kotlin {
     }
 }
 
+// Supabase, version and signing config: local.properties in dev, environment variables in CI. Never commit real values.
+val localProps =
+    Properties().apply {
+        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
+    }
+
+fun config(key: String): String = localProps.getProperty(key) ?: System.getenv(key) ?: ""
+
+// APP_VERSION=X.Y.Z comes from the release tag (vX.Y.Z); versionCode must grow for in-place APK updates.
+val appVersion = config("APP_VERSION").ifEmpty { "0.0.0" }
+val appVersionCode =
+    requireNotNull(Regex("""(\d+)\.(\d{1,2})\.(\d{1,2})""").matchEntire(appVersion)) {
+        "APP_VERSION must be X.Y.Z with Y, Z < 100, got '$appVersion'"
+    }.destructured.let { (major, minor, patch) ->
+        maxOf(1, major.toInt() * 10_000 + minor.toInt() * 100 + patch.toInt())
+    }
+
 android {
     namespace = "it.manu.fuoriorario"
     compileSdk = libs.versions.android.compileSdk
@@ -75,8 +92,16 @@ android {
         targetSdk = libs.versions.android.targetSdk
             .get()
             .toInt()
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode
+        versionName = appVersion
+    }
+    signingConfigs {
+        create("release") {
+            storeFile = config("ANDROID_KEYSTORE_PATH").takeIf { it.isNotEmpty() }?.let(::file)
+            storePassword = config("ANDROID_KEYSTORE_PASSWORD")
+            keyAlias = config("ANDROID_KEY_ALIAS")
+            keyPassword = config("ANDROID_KEY_PASSWORD")
+        }
     }
     packaging {
         resources {
@@ -86,6 +111,8 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            // Unsigned when no keystore is configured (local builds); CI always provides one.
+            signingConfigs.getByName("release").takeIf { it.storeFile != null }?.let { signingConfig = it }
         }
     }
     compileOptions {
@@ -97,14 +124,6 @@ android {
 dependencies {
     debugImplementation(libs.compose.uiTooling)
 }
-
-// Supabase config: local.properties in dev, environment variables in CI. Never commit real values.
-val localProps =
-    Properties().apply {
-        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
-    }
-
-fun config(key: String): String = localProps.getProperty(key) ?: System.getenv(key) ?: ""
 
 buildkonfig {
     packageName = "it.manu.fuoriorario"
