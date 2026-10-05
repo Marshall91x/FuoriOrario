@@ -43,6 +43,7 @@ import it.manu.fuoriorario.data.SupabaseAuthRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.LoginScreen
+import it.manu.fuoriorario.ui.auth.PrivacyScreen
 import it.manu.fuoriorario.ui.components.GhostButton
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
@@ -76,12 +77,16 @@ fun App(auth: AuthRepository = remember { SupabaseAuthRepository() }) {
                     }
                     is Session.SignedIn -> {
                         Header(s.member, onSignOut = { scope.launch { auth.signOut() } })
-                        Panel(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                stringResource(Res.string.placeholder_title),
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(stringResource(Res.string.placeholder_body), color = c.muted)
+                        if (s.member.privacyAckAt == null) {
+                            PrivacyScreen(auth)
+                        } else {
+                            Panel(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    stringResource(Res.string.placeholder_title),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(stringResource(Res.string.placeholder_body), color = c.muted)
+                            }
                         }
                     }
                 }
