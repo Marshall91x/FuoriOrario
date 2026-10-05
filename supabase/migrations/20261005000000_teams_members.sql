@@ -52,11 +52,13 @@ create policy members_update on public.members for update to authenticated
 create policy members_delete on public.members for delete to authenticated
   using (public.is_staff(team_id));
 
+-- Functions below run with an empty search_path, where citext's case-insensitive `=` isn't visible: compare lower().
+
 -- Before User Created auth hook: only emails already in a roster get an account (no orphan users).
 create function public.before_user_created(event jsonb) returns jsonb
 language sql stable security definer set search_path = '' as $$
   select case
-    when exists (select 1 from public.members where email = (event -> 'user' ->> 'email')::extensions.citext)
+    when exists (select 1 from public.members where lower(email) = lower(event -> 'user' ->> 'email'))
       then '{}'::jsonb
     else jsonb_build_object('error', jsonb_build_object('http_code', 403, 'message', 'not_a_member'))
   end
@@ -69,7 +71,7 @@ grant execute on function public.before_user_created to supabase_auth_admin;
 create function public.link_member() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
-  update public.members set user_id = new.id where email = new.email::extensions.citext and user_id is null;
+  update public.members set user_id = new.id where lower(email) = lower(new.email) and user_id is null;
   return new;
 end
 $$;
