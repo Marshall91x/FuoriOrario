@@ -56,7 +56,7 @@ class SupabaseAuthRepository(private val client: SupabaseClient = supabase) : Au
             client.auth.signInWith(OTP) { this.email = email }
         } catch (e: AuthRestException) {
             // Raised by the Before User Created hook (supabase/migrations).
-            if (e.description?.contains("not_a_member") == true) throw NotInTeamException()
+            if (e.errorDescription == "not_a_member") throw NotInTeamException()
             throw e
         }
     }

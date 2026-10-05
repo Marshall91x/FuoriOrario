@@ -144,7 +144,7 @@ Note:
 ## Autenticazione e collegamento membro
 
 1. Lo staff crea il membro con l'email.
-2. L'utente chiede l'OTP. Un **Before User Created auth hook** (funzione Postgres) rifiuta le email non presenti in `members` → nessun account orfano. *Da verificare in M1; fallback: `signInWithOtp(shouldCreateUser = false)` + creazione utente via invito admin.*
+2. L'utente chiede l'OTP. Un **Before User Created auth hook** (funzione Postgres) rifiuta le email non presenti in `members` → nessun account orfano. Verificato in M1: GoTrue risponde 403 con `msg: "not_a_member"`. In cloud l'hook si attiva con `supabase config push`.
 3. Trigger `after insert on auth.users`: `update members set user_id = new.id where email = new.email and user_id is null`.
 4. Client: legge il proprio `members` → ruolo e `privacy_ack_at`; se null mostra l'informativa e chiama RPC `ack_privacy()`.
 
