@@ -14,7 +14,7 @@ Decisioni motivate in [adr/](adr/). Termini in [CONTEXT.md](../CONTEXT.md).
 | Navigazione | Navigation Compose multiplatform |
 | Stato | ViewModel + `StateFlow` |
 | Date | `kotlinx-datetime`, fuso `Europe/Rome` |
-| Config | BuildKonfig: `SUPABASE_URL`, `SUPABASE_ANON_KEY` da `local.properties` / variabili CI |
+| Config | BuildKonfig: `SUPABASE_URL`, `SUPABASE_ANON_KEY`; Gradle: `APP_VERSION`, `ANDROID_KEYSTORE_*`/`ANDROID_KEY_*` (firma). Tutto da `local.properties` / variabili CI |
 | Grafica | `Canvas` di Compose per mappa e grafico (nessuna libreria di chart) |
 | Font | Saira Condensed, Instrument Sans in Compose Resources |
 | Persistenza locale | Nessuna (oltre alla sessione auth gestita da `supabase-kt`) |
