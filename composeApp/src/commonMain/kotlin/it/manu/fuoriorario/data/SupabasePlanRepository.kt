@@ -30,9 +30,8 @@ class SupabasePlanRepository : PlanRepository {
         }.decodeList<PlanCheck>().toSet()
     }
 
-    override suspend fun check(check: PlanCheck) = mapErrors {
+    override suspend fun check(check: PlanCheck): Unit = mapErrors {
         supabase.from("plan_checks").insert(check)
-        Unit
     }
 
     override suspend fun uncheck(check: PlanCheck) = mapErrors {

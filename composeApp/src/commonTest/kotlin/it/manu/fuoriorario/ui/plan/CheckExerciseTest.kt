@@ -69,6 +69,11 @@ class CheckExerciseTest {
         onNodeWithText("1/3").assertExists()
         onNodeWithContentDescription("Mer: da fare").assertExists()
         assertEquals(setOf(PlanCheck("p2", 5)), plans.checks)
+        plans.failNext = true
+        onNodeWithContentDescription("Sab: fatto").performScrollTo().performClick()
+        awaitText("Salvataggio non riuscito. Riprova tra poco.")
+        onNodeWithContentDescription("Sab: fatto").assertExists()
+        assertEquals(setOf(PlanCheck("p2", 5)), plans.checks)
 
         // Rest days can't be checked.
         onAllNodesWithContentDescription("Mar: riposo").onFirst().assertHasNoClickAction()

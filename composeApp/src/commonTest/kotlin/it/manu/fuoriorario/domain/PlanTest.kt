@@ -16,6 +16,8 @@ class PlanTest {
         assertEquals(monday, weekOf(LocalDate(2026, 10, 11)))
         // Across a month and a year.
         assertEquals(LocalDate(2025, 12, 29), weekOf(LocalDate(2026, 1, 1)))
+        assertEquals(0, dayIndex(monday))
+        assertEquals(6, dayIndex(LocalDate(2026, 10, 11)))
     }
 
     @Test

@@ -98,6 +98,8 @@ import it.manu.fuoriorario.domain.PlanItemError
 import it.manu.fuoriorario.domain.Progress
 import it.manu.fuoriorario.domain.TITLE_MAX
 import it.manu.fuoriorario.domain.VOLUME_MAX
+import it.manu.fuoriorario.domain.checkOn
+import it.manu.fuoriorario.domain.dayIndex
 import it.manu.fuoriorario.domain.newPlanItem
 import it.manu.fuoriorario.domain.planItemError
 import it.manu.fuoriorario.domain.progress
@@ -117,7 +119,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringArrayResource
@@ -156,7 +157,7 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
     var attempt by remember { mutableIntStateOf(0) }
     var adding by remember { mutableStateOf(false) }
     val thisWeek = remember { weekOf(today()) }
-    val todayIndex = remember { today().dayOfWeek.isoDayNumber - 1 }
+    val todayIndex = remember { dayIndex(today()) }
 
     /** A save or a check is in flight. */
     var busy by remember { mutableStateOf(false) }
@@ -384,7 +385,7 @@ private fun Days(item: PlanItem, checks: Set<PlanCheck>, today: Int?, onToggle: 
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         names.forEachIndexed { i, name ->
             val on = i in item.days
-            val check = PlanCheck(item.id.orEmpty(), i)
+            val check = item.checkOn(i)
             val done = on && check in checks
             val isToday = i == today
             val label = stringResource(
