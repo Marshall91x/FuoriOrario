@@ -10,6 +10,9 @@ class FakePlanRepository(vararg items: PlanItem, checks: Set<PlanCheck> = emptyS
     val items = items.toMutableList()
     val checks = checks.toMutableSet()
 
+    /** Notes by (member id, week). */
+    val notes = mutableMapOf<Pair<String, LocalDate>, String>()
+
     /** Next write fails like a network error. */
     var failNext = false
 
@@ -19,6 +22,24 @@ class FakePlanRepository(vararg items: PlanItem, checks: Set<PlanCheck> = emptyS
     override suspend fun add(item: PlanItem): PlanItem {
         failIfAsked()
         return item.copy(id = "p${items.size + 1}").also { items += it }
+    }
+
+    override suspend fun update(item: PlanItem) {
+        failIfAsked()
+        items[items.indexOfFirst { it.id == item.id }] = item
+    }
+
+    override suspend fun remove(item: PlanItem) {
+        failIfAsked()
+        items.removeAll { it.id == item.id }
+        checks.removeAll { it.planItemId == item.id }
+    }
+
+    override suspend fun note(member: Member, week: LocalDate) = notes[member.id!! to week]
+
+    override suspend fun saveNote(member: Member, week: LocalDate, note: String?) {
+        failIfAsked()
+        if (note == null) notes -= member.id!! to week else notes[member.id!! to week] = note
     }
 
     override suspend fun checks(items: List<PlanItem>) = checks.filter { c ->

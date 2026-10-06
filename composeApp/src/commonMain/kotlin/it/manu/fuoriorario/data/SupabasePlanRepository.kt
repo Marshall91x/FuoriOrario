@@ -8,6 +8,19 @@ import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.PlanCheck
 import it.manu.fuoriorario.domain.PlanItem
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+/** A `weekly_notes` row; team is filled by the database from the staff. */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+private data class WeeklyNote(
+    val note: String,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("member_id") val memberId: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val week: LocalDate? = null
+)
 
 class SupabasePlanRepository : PlanRepository {
     override suspend fun items(member: Member, week: LocalDate): List<PlanItem> = supabase.from("plan_items").select {
@@ -21,6 +34,42 @@ class SupabasePlanRepository : PlanRepository {
 
     override suspend fun add(item: PlanItem): PlanItem = mapErrors {
         supabase.from("plan_items").insert(item) { select() }.decodeSingle()
+    }
+
+    override suspend fun update(item: PlanItem) = mapErrors {
+        supabase.from("plan_items").update(item) {
+            select()
+            filter { eq("id", item.id!!) }
+        }.requireRow()
+    }
+
+    override suspend fun remove(item: PlanItem) = mapErrors {
+        supabase.from("plan_items").delete {
+            select()
+            filter { eq("id", item.id!!) }
+        }.requireRow()
+    }
+
+    override suspend fun note(member: Member, week: LocalDate): String? =
+        supabase.from("weekly_notes").select(Columns.list("note")) {
+            filter {
+                eq("member_id", member.id!!)
+                eq("week", week.toString())
+            }
+        }.decodeSingleOrNull<WeeklyNote>()?.note
+
+    override suspend fun saveNote(member: Member, week: LocalDate, note: String?) = mapErrors {
+        if (note == null) {
+            supabase.from("weekly_notes").delete {
+                select()
+                filter {
+                    eq("member_id", member.id!!)
+                    eq("week", week.toString())
+                }
+            }.requireRow()
+        } else {
+            supabase.from("weekly_notes").upsert(WeeklyNote(note, member.id, week)) { select() }.requireRow()
+        }
     }
 
     override suspend fun checks(items: List<PlanItem>): Set<PlanCheck> {

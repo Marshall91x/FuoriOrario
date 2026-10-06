@@ -34,6 +34,7 @@ enum class Category {
 const val TITLE_MAX = 60
 const val VOLUME_MAX = 40
 const val DESCRIPTION_MAX = 400
+const val WEEKLY_NOTE_MAX = 500
 
 /** [date]'s day in its week: 0 = Monday … 6 = Sunday. */
 fun dayIndex(date: LocalDate) = date.dayOfWeek.isoDayNumber - 1

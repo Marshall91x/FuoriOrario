@@ -6,7 +6,7 @@ import it.manu.fuoriorario.domain.PlanItem
 import kotlinx.datetime.LocalDate
 
 /**
- * Weekly plans: RLS lets a player read only their own, staff read and write those of their team's players.
+ * Weekly plans and their notes: RLS lets a player read only their own, staff read and write those of their team's players.
  * Checks are the other way round: only the player checks, staff read them.
  */
 interface PlanRepository {
@@ -15,6 +15,18 @@ interface PlanRepository {
 
     /** Saves [item] under its [PlanItem.memberId], returning it with its id. Throws [PermissionDeniedException]. */
     suspend fun add(item: PlanItem): PlanItem
+
+    /** Saves the edited [item] in place. Throws [PermissionDeniedException]. */
+    suspend fun update(item: PlanItem)
+
+    /** Removes [item] with its checks. Throws [PermissionDeniedException]. */
+    suspend fun remove(item: PlanItem)
+
+    /** [member]'s staff note for [week], if any. */
+    suspend fun note(member: Member, week: LocalDate): String?
+
+    /** Sets [member]'s staff note for [week]; null removes it. Throws [PermissionDeniedException]. */
+    suspend fun saveNote(member: Member, week: LocalDate, note: String?)
 
     /** The checks on [items]. */
     suspend fun checks(items: List<PlanItem>): Set<PlanCheck>
