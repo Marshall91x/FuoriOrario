@@ -1,6 +1,5 @@
 package it.manu.fuoriorario.data
 
-import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import it.manu.fuoriorario.core.supabase
@@ -18,10 +17,7 @@ class SupabasePlanRepository : PlanRepository {
         order("created_at", Order.ASCENDING)
     }.decodeList()
 
-    override suspend fun add(item: PlanItem): PlanItem = try {
+    override suspend fun add(item: PlanItem): PlanItem = mapErrors {
         supabase.from("plan_items").insert(item) { select() }.decodeSingle()
-    } catch (e: PostgrestRestException) {
-        if (e.code == "42501") throw PermissionDeniedException()
-        throw e
     }
 }

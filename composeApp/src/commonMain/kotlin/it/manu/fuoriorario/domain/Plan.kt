@@ -9,8 +9,27 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Area of an exercise, stored as-is in `plan_items.category`. */
-val CATEGORIES = listOf("Ball handling", "Tiro", "Footwork", "Atletica", "Difesa", "Recupero")
+/** Area of an exercise, in the prototype's order; serial names are the values of `plan_items.category`. */
+@Serializable
+enum class Category {
+    @SerialName("Ball handling")
+    BALL_HANDLING,
+
+    @SerialName("Tiro")
+    SHOOTING,
+
+    @SerialName("Footwork")
+    FOOTWORK,
+
+    @SerialName("Atletica")
+    ATHLETICS,
+
+    @SerialName("Difesa")
+    DEFENSE,
+
+    @SerialName("Recupero")
+    RECOVERY
+}
 
 const val TITLE_MAX = 60
 const val VOLUME_MAX = 40
@@ -26,8 +45,7 @@ data class PlanItem(
     /** The week's Monday. */
     val week: LocalDate,
     val title: String,
-    /** One of [CATEGORIES]. */
-    val category: String,
+    val category: Category,
     val volume: String? = null,
     val description: String? = null,
     @SerialName("video_url") val videoUrl: String? = null,
@@ -52,7 +70,7 @@ fun planItemError(title: String, days: Set<Int>, video: String): PlanItemError? 
 fun newPlanItem(
     week: LocalDate,
     title: String,
-    category: String,
+    category: Category,
     volume: String,
     description: String,
     video: String,

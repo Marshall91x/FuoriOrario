@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.json.Json
 
 class PlanTest {
     private val monday = LocalDate(2026, 10, 5)
@@ -30,8 +31,17 @@ class PlanTest {
     @Test
     fun newItemIsTrimmedWithSortedDays() {
         assertEquals(
-            PlanItem(monday, "Mikan", "Footwork", null, "Piedi", "https://x", listOf(0, 2, 4)),
-            newPlanItem(monday, " Mikan ", "Footwork", " ", " Piedi ", " https://x ", setOf(4, 0, 2))
+            PlanItem(monday, "Mikan", Category.FOOTWORK, null, "Piedi", "https://x", listOf(0, 2, 4)),
+            newPlanItem(monday, " Mikan ", Category.FOOTWORK, " ", " Piedi ", " https://x ", setOf(4, 0, 2))
+        )
+    }
+
+    @Test
+    fun categoriesAreStoredAsTheDatabaseExpects() {
+        // Same list as the check on plan_items.category.
+        assertEquals(
+            listOf("Ball handling", "Tiro", "Footwork", "Atletica", "Difesa", "Recupero"),
+            Category.entries.map { Json.encodeToString(it).trim('"') }
         )
     }
 }

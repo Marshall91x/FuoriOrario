@@ -51,6 +51,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fuoriorario.composeapp.generated.resources.Res
+import fuoriorario.composeapp.generated.resources.category_athletics
+import fuoriorario.composeapp.generated.resources.category_ball_handling
+import fuoriorario.composeapp.generated.resources.category_defense
+import fuoriorario.composeapp.generated.resources.category_footwork
+import fuoriorario.composeapp.generated.resources.category_recovery
+import fuoriorario.composeapp.generated.resources.category_shooting
 import fuoriorario.composeapp.generated.resources.close
 import fuoriorario.composeapp.generated.resources.days_short
 import fuoriorario.composeapp.generated.resources.exercise_added
@@ -79,7 +85,7 @@ import fuoriorario.composeapp.generated.resources.plan_this_week
 import fuoriorario.composeapp.generated.resources.plan_video
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.data.PlanRepository
-import it.manu.fuoriorario.domain.CATEGORIES
+import it.manu.fuoriorario.domain.Category
 import it.manu.fuoriorario.domain.DESCRIPTION_MAX
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.PlanItem
@@ -108,6 +114,17 @@ import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
+
+/** Italian name of each area. On web the names load asynchronously: empty until then. */
+private val categoryNames
+    @Composable get() = mapOf(
+        Category.BALL_HANDLING to stringResource(Res.string.category_ball_handling),
+        Category.SHOOTING to stringResource(Res.string.category_shooting),
+        Category.FOOTWORK to stringResource(Res.string.category_footwork),
+        Category.ATHLETICS to stringResource(Res.string.category_athletics),
+        Category.DEFENSE to stringResource(Res.string.category_defense),
+        Category.RECOVERY to stringResource(Res.string.category_recovery)
+    )
 
 /** "Lun"… "Dom", 0 = Monday. On web the names load asynchronously: empty until then. */
 @Composable
@@ -246,7 +263,7 @@ private fun ItemRow(item: PlanItem, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                item.category.uppercase(),
+                categoryNames.getValue(item.category).uppercase(),
                 Modifier
                     .background(c.surface2, RoundedCornerShape(50))
                     .border(1.dp, c.line, RoundedCornerShape(50))
@@ -343,7 +360,7 @@ private fun ExerciseSheet(
 ) {
     val c = FuoriOrarioTheme.colors
     var title by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf(CATEGORIES.first()) }
+    var category by remember { mutableStateOf(Category.entries.first()) }
     var volume by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var video by remember { mutableStateOf("") }
@@ -380,11 +397,12 @@ private fun ExerciseSheet(
             }
             Field(stringResource(Res.string.exercise_title), title, { title = it.take(TITLE_MAX) }, "exercise_title")
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                val names = categoryNames
                 SelectField(
                     stringResource(Res.string.exercise_category),
                     category,
-                    CATEGORIES,
-                    { it },
+                    Category.entries,
+                    { names.getValue(it) },
                     "exercise_category",
                     Modifier.weight(1f)
                 ) { category = it }

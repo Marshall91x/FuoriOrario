@@ -1,21 +1,23 @@
 package it.manu.fuoriorario.data
 
-import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.PostgrestRequestBuilder
-import io.github.jan.supabase.postgrest.result.PostgrestResult
 import it.manu.fuoriorario.core.supabase
 import it.manu.fuoriorario.domain.Member
-import kotlinx.serialization.json.JsonObject
 
 class SupabaseRosterRepository : RosterRepository {
+    private val codes = mapOf(
+        "23505" to ::EmailTakenException, // unique (team_id, email)
+        "FO001" to ::LastStaffException // keep_one_staff trigger
+    )
+
     override suspend fun members(): List<Member> = supabase.from("members").select().decodeList()
 
-    override suspend fun add(member: Member): Member = mapErrors {
+    override suspend fun add(member: Member): Member = mapErrors(codes) {
         supabase.from("members").insert(member) { select() }.decodeSingle()
     }
 
-    override suspend fun update(member: Member) = mapErrors {
+    override suspend fun update(member: Member) = mapErrors(codes) {
         supabase.from("members").update({
             set("display_name", member.displayName)
             set("jersey_number", member.jerseyNumber)
@@ -24,7 +26,7 @@ class SupabaseRosterRepository : RosterRepository {
         }) { only(member) }.requireRow()
     }
 
-    override suspend fun remove(member: Member) = mapErrors {
+    override suspend fun remove(member: Member) = mapErrors(codes) {
         supabase.from("members").delete { only(member) }.requireRow()
     }
 
@@ -32,21 +34,5 @@ class SupabaseRosterRepository : RosterRepository {
     private fun PostgrestRequestBuilder.only(member: Member) {
         select()
         filter { eq("id", member.id!!) }
-    }
-
-    /** RLS filters update/delete silently: no row back means not allowed. */
-    private fun PostgrestResult.requireRow() {
-        if (decodeList<JsonObject>().isEmpty()) throw PermissionDeniedException()
-    }
-
-    private inline fun <T> mapErrors(block: () -> T): T = try {
-        block()
-    } catch (e: PostgrestRestException) {
-        when (e.code) {
-            "23505" -> throw EmailTakenException() // unique (team_id, email)
-            "42501" -> throw PermissionDeniedException()
-            "FO001" -> throw LastStaffException() // keep_one_staff trigger
-            else -> throw e
-        }
     }
 }

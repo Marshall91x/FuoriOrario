@@ -18,6 +18,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import com.russhwolf.settings.MapSettings
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
+import it.manu.fuoriorario.domain.Category
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.PlanItem
 import it.manu.fuoriorario.domain.Role
@@ -95,7 +96,11 @@ class FreeExerciseTest {
         awaitText("FOOTWORK")
         assertEquals(
             PlanItem(
-                nextWeek, "Mikan drill", "Footwork", "3 × 20", "Piedi rapidi", "https://youtu.be/x", listOf(1, 3),
+                nextWeek, "Mikan drill", Category.FOOTWORK, "3 × 20", "Piedi rapidi", "https://youtu.be/x",
+                listOf(
+                    1,
+                    3
+                ),
                 id = "p1", memberId = "luca"
             ),
             plans.items.single()
@@ -110,11 +115,11 @@ class FreeExerciseTest {
     fun playerSeesOwnWeek() = runComposeUiTest {
         val plans = FakePlanRepository(
             PlanItem(
-                week, "Mikan drill", "Footwork", "3 × 20", "Piedi rapidi", "https://youtu.be/x", listOf(0, 2),
+                week, "Mikan drill", Category.FOOTWORK, "3 × 20", "Piedi rapidi", "https://youtu.be/x", listOf(0, 2),
                 id = "p1", memberId = "luca"
             ),
-            PlanItem(week, "Di Marco", "Tiro", days = listOf(0), id = "p2", memberId = "marco"),
-            PlanItem(nextWeek, "Prossima", "Tiro", days = listOf(0), id = "p3", memberId = "luca")
+            PlanItem(week, "Di Marco", Category.SHOOTING, days = listOf(0), id = "p2", memberId = "marco"),
+            PlanItem(nextWeek, "Prossima", Category.SHOOTING, days = listOf(0), id = "p3", memberId = "luca")
         )
         val opened = mutableListOf<String>()
         val uris = object : UriHandler {

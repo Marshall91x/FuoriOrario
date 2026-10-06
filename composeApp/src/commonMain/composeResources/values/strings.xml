@@ -114,6 +114,12 @@
     <string-array name="days_short">
         <item>Lun</item><item>Mar</item><item>Mer</item><item>Gio</item><item>Ven</item><item>Sab</item><item>Dom</item>
     </string-array>
+    <string name="category_ball_handling">Ball handling</string>
+    <string name="category_shooting">Tiro</string>
+    <string name="category_footwork">Footwork</string>
+    <string name="category_athletics">Atletica</string>
+    <string name="category_defense">Difesa</string>
+    <string name="category_recovery">Recupero</string>
     <string name="exercise_new">Nuovo esercizio</string>
     <string name="exercise_title">Esercizio</string>
     <string name="exercise_category">Area</string>
