@@ -7,10 +7,29 @@
     <string name="placeholder_title">Lavori in corso</string>
     <string name="placeholder_shot_log">Qui arriveranno la mappa di tiro, le statistiche e le sessioni.</string>
     <string name="placeholder_plan">Qui arriverà il piano settimanale con gli esercizi.</string>
-    <string name="placeholder_team">Qui arriveranno la rosa e le impostazioni della squadra.</string>
     <string name="tab_shot_log">Diario di tiro</string>
     <string name="tab_plan">Piano</string>
     <string name="tab_team">Squadra</string>
+
+    <string name="save_failed">Salvataggio non riuscito. Riprova tra poco.</string>
+    <string name="save_denied">Non hai i permessi per salvare. Chiedi allo staff.</string>
+    <string name="load_failed">Caricamento non riuscito.</string>
+    <string name="retry">Riprova</string>
+
+    <string name="roster_title">Rosa</string>
+    <string name="roster_empty_title">Inserisci la rosa</string>
+    <string name="roster_empty_hint">Aggiungi i giocatori: ognuno avrà il suo diario di tiro e il suo piano settimanale. Potranno accedere subito con la loro email.</string>
+    <string name="roster_add_title">Aggiungi un giocatore</string>
+    <string name="player_email">Email</string>
+    <string name="player_name">Nome visualizzato</string>
+    <string name="player_number">Numero</string>
+    <string name="player_position">Ruolo in campo</string>
+    <string name="player_add">Aggiungi</string>
+    <string name="player_added">%1$s aggiunto alla rosa</string>
+    <string name="player_error_email">Email non valida.</string>
+    <string name="player_error_email_taken">Questa email è già nella squadra.</string>
+    <string name="player_error_name">Il nome deve avere da 1 a 40 caratteri.</string>
+    <string name="player_error_number">Il numero va da 0 a 99.</string>
 
     <string name="login_title">Accedi</string>
     <string name="login_email_hint">Inserisci l\'email che hai dato allo staff: ti mandiamo un codice di 6 cifre.</string>
