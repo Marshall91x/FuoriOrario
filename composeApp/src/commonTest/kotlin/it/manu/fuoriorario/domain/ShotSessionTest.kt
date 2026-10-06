@@ -53,7 +53,11 @@ class ShotSessionTest {
         val json = """{"date":"2026-10-06","zones":{"pit":[3,5],"tl":[7,10]},"note":"ok"}"""
         assertEquals(json, Json.encodeToString(ShotSession.serializer(), s))
         assertEquals(
-            s.copy(id = "x"),
+            """{"date":"2026-10-06","zones":{"pit":[3,5],"tl":[7,10]},"note":"ok","member_id":"m"}""",
+            Json.encodeToString(ShotSession.serializer(), s.copy(memberId = "m"))
+        )
+        assertEquals(
+            s.copy(id = "x", memberId = "m"),
             Json { ignoreUnknownKeys = true }.decodeFromString(
                 ShotSession.serializer(),
                 """{"id":"x","member_id":"m","date":"2026-10-06","zones":{"pit":[3,5],"tl":[7,10]},"note":"ok"}"""

@@ -5,7 +5,6 @@
     <string name="subtitle_staff">Vista staff</string>
     <string name="sign_out">Esci</string>
     <string name="placeholder_title">Lavori in corso</string>
-    <string name="placeholder_shot_log">Qui arriveranno la mappa di tiro, le statistiche e le sessioni.</string>
     <string name="placeholder_plan">Qui arriverà il piano settimanale con gli esercizi.</string>
     <string name="tab_shot_log">Diario di tiro</string>
     <string name="tab_plan">Piano</string>

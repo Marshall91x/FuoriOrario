@@ -76,11 +76,13 @@ kotlin {
             implementation(libs.supabase.auth)
             implementation(libs.supabase.postgrest)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.multiplatform.settings)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(libs.compose.uiTest)
+            implementation(libs.multiplatform.settings.test)
         }
     }
 }

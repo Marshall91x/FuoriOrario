@@ -78,7 +78,7 @@ internal object ShotsSerializer : KSerializer<Shots> {
     override fun deserialize(decoder: Decoder) = list.deserialize(decoder).let { (m, a) -> Shots(m, a) }
 }
 
-/** A `shot_sessions` row; member, team and author are filled by the database from the signed-in player. */
+/** A `shot_sessions` row; team and author are filled by the database from the signed-in member. */
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class ShotSession(
@@ -87,7 +87,9 @@ data class ShotSession(
     val zones: Map<Zone, Shots>,
     val note: String? = null,
     /** Null until saved; never sent, the database generates it. */
-    @EncodeDefault(EncodeDefault.Mode.NEVER) val id: String? = null
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val id: String? = null,
+    /** Whose session it is; when null the database saves it under the signed-in member. */
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("member_id") val memberId: String? = null
 )
 
 /** Dal campo: every zone but free throws. */

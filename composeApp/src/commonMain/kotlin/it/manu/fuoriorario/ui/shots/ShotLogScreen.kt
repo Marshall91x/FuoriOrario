@@ -54,14 +54,12 @@ import androidx.compose.ui.unit.sp
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.cancel
 import fuoriorario.composeapp.generated.resources.close
-import fuoriorario.composeapp.generated.resources.load_failed
 import fuoriorario.composeapp.generated.resources.months_short
 import fuoriorario.composeapp.generated.resources.ok
 import fuoriorario.composeapp.generated.resources.period
 import fuoriorario.composeapp.generated.resources.period_30
 import fuoriorario.composeapp.generated.resources.period_7
 import fuoriorario.composeapp.generated.resources.period_season
-import fuoriorario.composeapp.generated.resources.retry
 import fuoriorario.composeapp.generated.resources.role_player
 import fuoriorario.composeapp.generated.resources.session_attempted
 import fuoriorario.composeapp.generated.resources.session_date
@@ -115,6 +113,7 @@ import it.manu.fuoriorario.domain.zoneTotals
 import it.manu.fuoriorario.ui.components.Field
 import it.manu.fuoriorario.ui.components.GhostButton
 import it.manu.fuoriorario.ui.components.GhostStyle
+import it.manu.fuoriorario.ui.components.LoadFailed
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
@@ -156,11 +155,11 @@ private val Zone.tag get() = name.lowercase()
 internal fun LocalDate.short() = "$day ${stringArrayResource(Res.array.months_short).getOrElse(month.ordinal) { "" }}"
 
 /**
- * The player's Diario di tiro (PRD F3): header with "Registra sessione", period and its stats,
- * the period's shot map, then its sessions newest first. Each "Elimina" asks for a second tap.
+ * [player]'s Diario di tiro (PRD F3), theirs or followed by staff: header with "Registra sessione", period and its stats,
+ * the period's shot map, then its sessions newest first. [period] is kept by the caller, across players. Each "Elimina" asks for a second tap.
  */
 @Composable
-fun ShotLogScreen(shots: ShotRepository, me: Member) {
+fun ShotLogScreen(shots: ShotRepository, player: Member, period: Period, onPeriod: (Period) -> Unit) {
     val c = FuoriOrarioTheme.colors
     val toast = LocalToast.current
     val scope = rememberCoroutineScope()
@@ -170,7 +169,6 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
     var attempt by remember { mutableIntStateOf(0) }
     var logging by remember { mutableStateOf(false) }
     var confirmingDelete by remember { mutableStateOf<ShotSession?>(null) }
-    var period by remember { mutableStateOf(Period.DAYS_30) }
     val today = remember { today() }
     val inPeriod = sessions?.let { period.filter(it, today) }
 
@@ -181,7 +179,7 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
         try {
             coroutineScope {
                 val teamRefs = async { shots.zoneRefs() }
-                sessions = shots.sessions()
+                sessions = shots.sessions(player)
                 refs = teamRefs.await()
             }
         } catch (e: CancellationException) {
@@ -195,7 +193,7 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
         if (busy) return
         busy = true
         scope.launchWrite(toast, onDone = { busy = false }) {
-            val saved = shots.add(session)
+            val saved = shots.add(session.copy(memberId = player.id))
             // Stable sort: the new one goes first among sessions of the same day.
             sessions = (listOf(saved) + sessions.orEmpty()).sortedByDescending { it.date }
             logging = false
@@ -221,13 +219,13 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
     Panel {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                val role = me.position ?: stringResource(Res.string.role_player)
+                val role = player.position ?: stringResource(Res.string.role_player)
                 Text(
-                    (role + me.jerseyNumber?.let { " · #$it" }.orEmpty()).uppercase(),
+                    (role + player.jerseyNumber?.let { " · #$it" }.orEmpty()).uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     color = c.muted
                 )
-                Text(me.displayName.uppercase(), style = MaterialTheme.typography.titleLarge)
+                Text(player.displayName.uppercase(), style = MaterialTheme.typography.titleLarge)
             }
             PrimaryButton(stringResource(Res.string.shots_log), {
                 confirmingDelete = null
@@ -238,7 +236,7 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
         SegmentedControl(
             periodName,
             period,
-            { period = it },
+            onPeriod,
             tag = { "period_${it.name.lowercase()}" },
             Modifier.semantics { contentDescription = periodLabel }
         )
@@ -246,10 +244,7 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
     }
 
     if (loadFailed) {
-        Panel(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(Res.string.load_failed), color = c.muted)
-            GhostButton(stringResource(Res.string.retry), { attempt++ })
-        }
+        LoadFailed { attempt++ }
     }
     inPeriod?.let { list -> refs?.let { Panel { ShotMap(zoneTotals(list), it) } } }
     inPeriod?.let { Panel { TrendChart(trend(it)) } }
@@ -269,7 +264,7 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
         }
     }
 
-    if (logging) LogSheet(me.displayName, busy, onDismiss = { logging = false }, onSave = ::save)
+    if (logging) LogSheet(player.displayName, busy, onDismiss = { logging = false }, onSave = ::save)
 }
 
 private val periodName = mapOf(
