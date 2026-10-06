@@ -31,6 +31,12 @@ jobs:
           :composeApp:assembleDebug
           :composeApp:wasmJsBrowserDistribution
           :composeApp:wasmJsBrowserTest
+      # The log only says "Error": the messages are in the XML results.
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-test-results
+          path: composeApp/build/test-results/
 
   ios:
     name: iOS
