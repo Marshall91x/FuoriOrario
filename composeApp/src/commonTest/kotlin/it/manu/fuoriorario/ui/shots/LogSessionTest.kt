@@ -35,6 +35,7 @@ class LogSessionTest {
         setContent { App(FakeAuthRepository(luca), FakeRosterRepository(), shots) }
         awaitText("3/5 · 60%")
         awaitText("3 set")
+        awaitText("+ Registra sessione")
         onNodeWithText("+ Registra sessione").performClick()
         awaitText("Salva sessione")
 
