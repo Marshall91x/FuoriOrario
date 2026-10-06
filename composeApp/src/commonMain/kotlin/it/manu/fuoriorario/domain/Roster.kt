@@ -16,6 +16,11 @@ enum class PlayerError { EMAIL_INVALID, EMAIL_TAKEN, NAME_LENGTH, NUMBER_RANGE }
 fun newPlayerError(email: String, name: String, number: String, team: List<Member>): PlayerError? = when {
     !EMAIL.matches(email) -> PlayerError.EMAIL_INVALID
     team.any { it.email.equals(email, ignoreCase = true) } -> PlayerError.EMAIL_TAKEN
+    else -> memberError(name, number)
+}
+
+/** First problem with a member's editable fields (email can't change), or null. */
+fun memberError(name: String, number: String): PlayerError? = when {
     name.length !in 1..40 -> PlayerError.NAME_LENGTH
     number.isNotEmpty() && number.toIntOrNull() !in 0..99 -> PlayerError.NUMBER_RANGE
     else -> null

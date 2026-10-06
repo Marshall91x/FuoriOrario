@@ -45,7 +45,7 @@ class AddPlayerTest {
         awaitText("Guardia")
         onNodeWithText("Guardia").performClick()
 
-        roster.failNextAdd = true
+        roster.failNext = true
         onNodeWithText("Aggiungi").performScrollTo().performClick()
         awaitText("Salvataggio non riuscito. Riprova tra poco.")
         onNodeWithTag("player_name").assertTextEquals("Marco R.")

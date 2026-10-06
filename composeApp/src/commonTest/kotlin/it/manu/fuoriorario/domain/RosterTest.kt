@@ -34,4 +34,12 @@ class RosterTest {
         assertEquals(PlayerError.NUMBER_RANGE, newPlayerError("nuovo@example.com", "Luca", "100", team))
         assertEquals(PlayerError.NUMBER_RANGE, newPlayerError("nuovo@example.com", "Luca", "-1", team))
     }
+
+    @Test
+    fun memberError_onEdit_checksOnlyNameAndNumber() {
+        assertNull(memberError("Luca", ""))
+        assertNull(memberError("Luca", "99"))
+        assertEquals(PlayerError.NAME_LENGTH, memberError("", "7"))
+        assertEquals(PlayerError.NUMBER_RANGE, memberError("Luca", "100"))
+    }
 }
