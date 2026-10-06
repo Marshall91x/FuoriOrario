@@ -1,11 +1,12 @@
 begin;
-select plan(8);
+select plan(9);
 
 -- Another team with its own player, to check staff stay inside their team.
 insert into public.teams (id, name) values ('00000000-0000-0000-0000-000000000002', 'Altra squadra');
 insert into public.members (id, team_id, email, display_name, role) values
   ('20000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000002', 'fuori@example.com', 'Fuori', 'player'),
-  ('20000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000002', 'coach2@example.com', 'Coach 2', 'staff');
+  ('20000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000002', 'coach2@example.com', 'Coach 2', 'staff'),
+  ('20000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000001', 'vice@example.com', 'Vice', 'staff');
 insert into auth.users (id, email) values
   ('10000000-0000-0000-0000-000000000001', 'staff@example.com'),
   ('10000000-0000-0000-0000-000000000002', 'giocatore@example.com');
@@ -32,9 +33,12 @@ select throws_ok($$ insert into public.shot_sessions (member_id, date, zones)
 select throws_ok($$ insert into public.shot_sessions (member_id, team_id, date, zones)
   values ('20000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000002', current_date, '{"pit":[1,2]}') $$,
   '42501', null, 'not even naming the other team');
+select throws_ok($$ insert into public.shot_sessions (member_id, date, zones)
+  values ('20000000-0000-0000-0000-000000000007', current_date, '{"pit":[1,2]}') $$,
+  '42501', null, 'staff log for players, not for another staff member');
 select is_empty($$ delete from public.shot_sessions where member_id = '20000000-0000-0000-0000-000000000009' returning id $$,
   'staff cannot delete another team''s sessions');
-select lives_ok($$ delete from public.shot_sessions where zones ? 'tl' $$, 'staff delete a player''s session');
+select isnt_empty($$ delete from public.shot_sessions where zones ? 'tl' returning id $$, 'staff delete a player''s session');
 reset role;
 select is((select count(*) from public.shot_sessions)::int, 2, 'only that session was deleted');
 

@@ -44,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.last_staff
+import fuoriorario.composeapp.generated.resources.load_failed
+import fuoriorario.composeapp.generated.resources.retry
 import fuoriorario.composeapp.generated.resources.save_denied
 import fuoriorario.composeapp.generated.resources.save_failed
 import it.manu.fuoriorario.data.LastStaffException
@@ -224,6 +226,15 @@ val LocalToast = staticCompositionLocalOf<SnackbarHostState> { error("No ToastHo
 suspend fun SnackbarHostState.show(message: String) {
     currentSnackbarData?.dismiss()
     showSnackbar(message)
+}
+
+/** A load went wrong: the message and "Riprova". */
+@Composable
+fun LoadFailed(onRetry: () -> Unit) {
+    Panel(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(stringResource(Res.string.load_failed), color = FuoriOrarioTheme.colors.muted)
+        GhostButton(stringResource(Res.string.retry), onRetry)
+    }
 }
 
 /** Prototype `.toast`: an ink pill showing [state]'s current message. */

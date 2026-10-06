@@ -44,10 +44,8 @@ import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.ic_tab_plan
 import fuoriorario.composeapp.generated.resources.ic_tab_shot_log
 import fuoriorario.composeapp.generated.resources.ic_tab_team
-import fuoriorario.composeapp.generated.resources.load_failed
 import fuoriorario.composeapp.generated.resources.placeholder_plan
 import fuoriorario.composeapp.generated.resources.placeholder_title
-import fuoriorario.composeapp.generated.resources.retry
 import fuoriorario.composeapp.generated.resources.roster_empty_hint
 import fuoriorario.composeapp.generated.resources.roster_empty_title
 import fuoriorario.composeapp.generated.resources.tab_plan
@@ -57,7 +55,7 @@ import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
-import it.manu.fuoriorario.ui.components.GhostButton
+import it.manu.fuoriorario.ui.components.LoadFailed
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Page
 import it.manu.fuoriorario.ui.components.Panel
@@ -84,7 +82,7 @@ private enum class Tab(
 
 /**
  * Signed-in content under the header: tabs for the member's role, with the toast host. Players have no Squadra route at all.
- * [followed] is whose Diario di tiro to show: the player themselves, or the one staff picked (null while the roster loads).
+ * [followed] is whose Diario di tiro to show: the player themselves, or the one staff picked from [players] (null while loading).
  */
 @Composable
 fun Home(
@@ -92,8 +90,7 @@ fun Home(
     roster: RosterRepository,
     shots: ShotRepository,
     followed: Member?,
-    noPlayers: Boolean,
-    playersFailed: Boolean,
+    players: Result<List<Member>>?,
     onRetryPlayers: () -> Unit,
     onRosterChanged: (Member) -> Unit
 ) {
@@ -114,8 +111,8 @@ fun Home(
                                     tab != Tab.SHOT_LOG -> Placeholder(tab)
                                     // A fresh screen per player: no sessions or pending writes carried over.
                                     followed != null -> key(followed.id) { ShotLogScreen(shots, followed) }
-                                    playersFailed -> LoadFailed(onRetryPlayers)
-                                    noPlayers -> NoPlayers()
+                                    players?.isFailure == true -> LoadFailed(onRetryPlayers)
+                                    players?.getOrNull()?.isEmpty() == true -> NoPlayers()
                                 }
                             }
                         }
@@ -131,14 +128,6 @@ fun Home(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun LoadFailed(onRetry: () -> Unit) {
-    Panel(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(stringResource(Res.string.load_failed), color = FuoriOrarioTheme.colors.muted)
-        GhostButton(stringResource(Res.string.retry), onRetry)
     }
 }
 

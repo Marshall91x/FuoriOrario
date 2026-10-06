@@ -54,14 +54,12 @@ import androidx.compose.ui.unit.sp
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.cancel
 import fuoriorario.composeapp.generated.resources.close
-import fuoriorario.composeapp.generated.resources.load_failed
 import fuoriorario.composeapp.generated.resources.months_short
 import fuoriorario.composeapp.generated.resources.ok
 import fuoriorario.composeapp.generated.resources.period
 import fuoriorario.composeapp.generated.resources.period_30
 import fuoriorario.composeapp.generated.resources.period_7
 import fuoriorario.composeapp.generated.resources.period_season
-import fuoriorario.composeapp.generated.resources.retry
 import fuoriorario.composeapp.generated.resources.role_player
 import fuoriorario.composeapp.generated.resources.session_attempted
 import fuoriorario.composeapp.generated.resources.session_date
@@ -115,6 +113,7 @@ import it.manu.fuoriorario.domain.zoneTotals
 import it.manu.fuoriorario.ui.components.Field
 import it.manu.fuoriorario.ui.components.GhostButton
 import it.manu.fuoriorario.ui.components.GhostStyle
+import it.manu.fuoriorario.ui.components.LoadFailed
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
@@ -246,10 +245,7 @@ fun ShotLogScreen(shots: ShotRepository, player: Member) {
     }
 
     if (loadFailed) {
-        Panel(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(Res.string.load_failed), color = c.muted)
-            GhostButton(stringResource(Res.string.retry), { attempt++ })
-        }
+        LoadFailed { attempt++ }
     }
     inPeriod?.let { list -> refs?.let { Panel { ShotMap(zoneTotals(list), it) } } }
     inPeriod?.let { Panel { TrendChart(trend(it)) } }

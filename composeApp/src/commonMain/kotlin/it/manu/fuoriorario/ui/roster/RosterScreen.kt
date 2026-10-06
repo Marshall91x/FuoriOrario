@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.close
-import fuoriorario.composeapp.generated.resources.load_failed
 import fuoriorario.composeapp.generated.resources.member_add
 import fuoriorario.composeapp.generated.resources.member_added
 import fuoriorario.composeapp.generated.resources.member_edit
@@ -60,7 +59,6 @@ import fuoriorario.composeapp.generated.resources.member_removed
 import fuoriorario.composeapp.generated.resources.member_role
 import fuoriorario.composeapp.generated.resources.member_save
 import fuoriorario.composeapp.generated.resources.member_saved
-import fuoriorario.composeapp.generated.resources.retry
 import fuoriorario.composeapp.generated.resources.role_player
 import fuoriorario.composeapp.generated.resources.role_staff
 import fuoriorario.composeapp.generated.resources.roster_add_title
@@ -81,6 +79,7 @@ import it.manu.fuoriorario.domain.rosterOrder
 import it.manu.fuoriorario.ui.components.Field
 import it.manu.fuoriorario.ui.components.GhostButton
 import it.manu.fuoriorario.ui.components.GhostStyle
+import it.manu.fuoriorario.ui.components.LoadFailed
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
@@ -140,10 +139,7 @@ fun RosterScreen(roster: RosterRepository, onChanged: (Member) -> Unit) {
 
     val team = members
     if (loadFailed) {
-        Panel(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(Res.string.load_failed), color = c.muted)
-            GhostButton(stringResource(Res.string.retry), { attempt++ })
-        }
+        LoadFailed { attempt++ }
     }
     if (team == null) return
 

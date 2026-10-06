@@ -129,8 +129,7 @@ fun App(
                     roster,
                     shots,
                     followed,
-                    noPlayers = players?.getOrNull()?.isEmpty() == true,
-                    playersFailed = players?.isFailure == true,
+                    players,
                     onRetryPlayers = { playersLoad++ },
                     onRosterChanged = {
                         if (it.id == member.id) auth.refresh()
