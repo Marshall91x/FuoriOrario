@@ -50,9 +50,10 @@ data class PlanItem(
     val week: LocalDate,
     val title: String,
     val category: Category,
-    val volume: String? = null,
-    val description: String? = null,
-    @SerialName("video_url") val videoUrl: String? = null,
+    // Always sent, null too: an edit that empties them must clear them.
+    @EncodeDefault val volume: String? = null,
+    @EncodeDefault val description: String? = null,
+    @EncodeDefault @SerialName("video_url") val videoUrl: String? = null,
     /** 0 = Monday … 6 = Sunday, ascending. */
     val days: List<Int>,
     /** Null until saved; never sent, the database generates it. */

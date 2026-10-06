@@ -1,5 +1,5 @@
 begin;
-select plan(14);
+select plan(16);
 
 insert into public.teams (id, name) values ('00000000-0000-0000-0000-000000000002', 'Altra squadra');
 insert into public.members (id, team_id, email, display_name, role) values
@@ -59,6 +59,9 @@ select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-0000000
 
 select isnt_empty($$ update public.weekly_notes set note = 'Nuova' where note like 'Obiettivo%' returning note $$,
   'staff edit a note');
+select is_empty($$ update public.weekly_notes set note = 'Y' where note = 'Fuori' returning note $$,
+  'staff cannot edit another team''s notes');
+select isnt_empty($$ delete from public.weekly_notes where note = 'Nuova' returning note $$, 'staff remove a note');
 
 select * from finish();
 rollback;
