@@ -26,13 +26,14 @@ Un solo modulo `composeApp`. Package `it.manu.fuoriorario`, organizzato per funz
 ```
 composeApp/src/
   commonMain/kotlin/it/manu/fuoriorario/
-    App.kt                 # tema + NavHost + Koin
+    App.kt                 # tema + Koin, header, login → informativa → home
     core/                  # SupabaseClient, Week/Season, utilità date
     domain/                # modelli puri + calcoli (Zones, Stats, Progress) — senza dipendenze
     data/                  # interfacce repository + implementazioni Supabase
     ui/theme/              # token colore/tipografia del prototipo
     ui/components/         # Toast, BottomSheet, Stepper, Pill, SegmentedControl
     ui/auth/               # login OTP, informativa
+    ui/home/               # barra schede per ruolo + NavHost
     ui/shots/              # diario di tiro, mappa, grafico, registra sessione
     ui/plan/               # piano settimanale, editor esercizio, nota
     ui/roster/             # rosa (staff)

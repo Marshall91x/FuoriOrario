@@ -2,18 +2,17 @@ package it.manu.fuoriorario
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,8 +31,6 @@ import androidx.compose.ui.unit.dp
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.brand_first
 import fuoriorario.composeapp.generated.resources.brand_second
-import fuoriorario.composeapp.generated.resources.placeholder_body
-import fuoriorario.composeapp.generated.resources.placeholder_title
 import fuoriorario.composeapp.generated.resources.sign_out
 import fuoriorario.composeapp.generated.resources.subtitle_player
 import fuoriorario.composeapp.generated.resources.subtitle_staff
@@ -45,7 +42,8 @@ import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.LoginScreen
 import it.manu.fuoriorario.ui.auth.PrivacyScreen
 import it.manu.fuoriorario.ui.components.GhostButton
-import it.manu.fuoriorario.ui.components.Panel
+import it.manu.fuoriorario.ui.components.Page
+import it.manu.fuoriorario.ui.home.Home
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -55,39 +53,31 @@ fun App(auth: AuthRepository = remember { SupabaseAuthRepository() }) {
     FuoriOrarioTheme {
         val c = FuoriOrarioTheme.colors
         val session by auth.session.collectAsState(Session.Loading)
+        val member = (session as? Session.SignedIn)?.member
         val scope = rememberCoroutineScope()
-        Box(
-            Modifier.fillMaxSize().background(c.bg).windowInsetsPadding(WindowInsets.safeDrawing),
-            contentAlignment = Alignment.TopCenter
+        // Bottom inset is left to each screen: the home's tab bar runs to the bottom edge.
+        Column(
+            Modifier
+                .fillMaxSize()
+                .background(c.bg)
+                .windowInsetsPadding(
+                    WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
+                )
         ) {
-            // 16dp gutter outside a 560dp column, like the prototype's body padding + `.wrap`.
-            Column(
-                Modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp)
-                    .widthIn(max = 560.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
-            ) {
-                when (val s = session) {
-                    Session.Loading -> Header()
-                    Session.SignedOut -> {
-                        Header()
-                        LoginScreen(auth)
-                    }
-                    is Session.SignedIn -> {
-                        Header(s.member, onSignOut = { scope.launch { auth.signOut() } })
-                        if (s.member.privacyAckAt == null) {
-                            PrivacyScreen(auth)
-                        } else {
-                            Panel(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    stringResource(Res.string.placeholder_title),
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(stringResource(Res.string.placeholder_body), color = c.muted)
-                            }
-                        }
+            // Stays put while the content scrolls, like the prototype's sticky `.top`.
+            Header(
+                member,
+                onSignOut = { scope.launch { auth.signOut() } },
+                Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).widthIn(max = 560.dp)
+            )
+            if (member?.privacyAckAt != null) {
+                Home(member)
+            } else {
+                Page(Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))) {
+                    when (session) {
+                        Session.Loading -> Unit
+                        Session.SignedOut -> LoginScreen(auth)
+                        is Session.SignedIn -> PrivacyScreen(auth)
                     }
                 }
             }
@@ -97,9 +87,9 @@ fun App(auth: AuthRepository = remember { SupabaseAuthRepository() }) {
 
 /** Prototype `.top`: brand + subtitle; when signed in, the `.who` row with name and logout. */
 @Composable
-private fun Header(member: Member? = null, onSignOut: () -> Unit = {}) {
+private fun Header(member: Member?, onSignOut: () -> Unit, modifier: Modifier = Modifier) {
     val c = FuoriOrarioTheme.colors
-    Column(Modifier.padding(top = 14.dp)) {
+    Column(modifier.fillMaxWidth().padding(top = 14.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             val first = stringResource(Res.string.brand_first).uppercase()
             val second = stringResource(Res.string.brand_second).uppercase()
