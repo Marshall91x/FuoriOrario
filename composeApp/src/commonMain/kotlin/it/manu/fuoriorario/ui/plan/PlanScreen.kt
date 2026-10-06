@@ -231,18 +231,22 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
         }
     }
 
-    /** Into a week that already has exercises only on a second tap; the copies go after them. */
+    /** Once the week is loaded; into one that already has exercises only on a second tap, the copies go after them. */
     fun copyPreviousWeek() {
-        if (busy) return
-        if (!items.isNullOrEmpty() && !confirmingCopy) {
+        val current = items
+        if (busy || current == null) return
+        if (current.isNotEmpty() && !confirmingCopy) {
             confirmingCopy = true
             return
         }
         busy = true
-        scope.launchWrite(toast, onDone = { busy = false }) {
-            val copies = plans.copyPreviousWeek(player, week)
+        // Success or not, the next copy asks again.
+        scope.launchWrite(toast, onDone = {
+            busy = false
             confirmingCopy = false
-            items = items.orEmpty() + copies
+        }) {
+            val copies = plans.copyPreviousWeek(player, week)
+            items = current + copies
             launch {
                 toast.show(getString(if (copies.isEmpty()) Res.string.plan_copy_empty else Res.string.plan_copied))
             }
@@ -304,7 +308,15 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
                     { writingNote = true }
                 )
                 GhostButton(
-                    stringResource(if (confirmingCopy) Res.string.plan_copy_confirm else Res.string.plan_copy),
+                    stringResource(
+                        if (confirmingCopy &&
+                            !items.isNullOrEmpty()
+                        ) {
+                            Res.string.plan_copy_confirm
+                        } else {
+                            Res.string.plan_copy
+                        }
+                    ),
                     ::copyPreviousWeek
                 )
             }

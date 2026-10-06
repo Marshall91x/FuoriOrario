@@ -36,5 +36,5 @@ Linguaggio comune del progetto. UI e documentazione in italiano, codice in ingle
 | Spunta | `PlanCheck` | Il giocatore dichiara fatto un esercizio in un giorno. Solo il giocatore può spuntare. |
 | Completamento | `Progress` | Spunte / giorni assegnati nella settimana. |
 | Nota dello staff | `WeeklyNote` | Obiettivo o indicazione per il giocatore in quella settimana. |
-| Copia settimana | `copyPreviousWeek` | Duplica esercizi (non spunte) della settimana precedente in quella corrente. |
+| Copia settimana | `copyPreviousWeek` | Duplica esercizi (non spunte) della settimana precedente in quella mostrata. |
 | Quadro squadra | `TeamOverview` | Tabella staff: completamento piano, tiri 7g, liberi 30g, triple 30g per giocatore. |

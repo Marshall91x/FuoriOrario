@@ -167,6 +167,7 @@ Funzioni helper `security definer stable`:
 | plan_checks | staff; giocatore proprie | solo giocatore proprietario dell'item | — | solo giocatore proprietario |
 
 `ack_privacy()` è l'unica scrittura del giocatore su `members` (RPC, aggiorna solo `privacy_ack_at`).
+`copy_previous_week(player, target)` copia in un colpo gli esercizi della settimana prima (RPC `security invoker`: valgono le RLS di `plan_items`).
 Trigger `keep_one_staff` (`before update of role, team_id or delete on members`): una squadra non resta mai senza staff; togliere o declassare l'ultimo alza `last_staff` (SQLSTATE `FO001`). Cancellare l'intera squadra resta possibile.
 Le RLS sono la vera barriera: la UI nasconde, il database impedisce. Coperte da test pgTAP in `supabase/tests/`.
 
