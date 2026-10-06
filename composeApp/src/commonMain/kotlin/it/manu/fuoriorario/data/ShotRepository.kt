@@ -8,7 +8,7 @@ interface ShotRepository {
     /** Newest first. */
     suspend fun sessions(): List<ShotSession>
 
-    /** The team's riferimenti, in percent. */
+    /** The team's reference percentage per zone. */
     suspend fun zoneRefs(): Map<Zone, Int>
 
     /** Saves [session], returning it with its id. Throws [PermissionDeniedException]. */

@@ -19,7 +19,7 @@ Linguaggio comune del progetto. UI e documentazione in italiano, codice in ingle
 | Sessione di tiro | `ShotSession` | Un allenamento individuale registrato: data, tiri per zona, nota facoltativa. |
 | Zona | `Zone` | Una delle 10 aree di tiro fisse: pitturato, 3 di media, 5 da tre, tiri liberi. Non configurabili. |
 | Segnati / Tentati | `made` / `attempted` | Per ogni zona di una sessione. Vincolo: `made ≤ attempted`. |
-| Riferimento | `ZoneReference` | Percentuale attesa per zona, per squadra, modificabile dallo staff (default: pitturato 55%, media 40%, tripla angolo 36%, tripla 33%, liberi 70%). |
+| Riferimento | `zoneRefs` | Percentuale attesa per zona (`Map<Zone, Int>`, in DB `teams.zone_refs` come frazioni), per squadra, modificabile dallo staff (default: pitturato 55%, media 40%, tripla angolo 36%, tripla 33%, liberi 70%). |
 | Classe zona | `ZoneHeat` | `HOT` (≥110% del riferimento), `EVEN`, `COLD` (<85%), `NONE` (nessun tiro). Colora la mappa. |
 | Dal campo | `fieldGoal` | Tutte le zone escluso i tiri liberi. |
 | Da tre | `three` | Le 5 zone oltre l'arco (triple). |

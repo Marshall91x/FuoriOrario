@@ -39,12 +39,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -166,7 +165,7 @@ private fun arcPath(closed: Boolean) = Path().apply {
 }
 
 /** The 9 zones in viewBox units, disjoint like [zoneAt]: the slices outside the arc, mid-range inside it, the key. */
-private fun zonePaths(): List<Pair<Zone, Path>> {
+private fun zonePaths(): Map<Zone, Path> {
     val inside = arcPath(closed = true)
     fun polygon(vararg p: Float) = Path().apply {
         moveTo(p[0], p[1])
@@ -179,7 +178,7 @@ private fun zonePaths(): List<Pair<Zone, Path>> {
         Path().apply { op(rect(l, t, r, COURT_HEIGHT), inside, PathOperation.Intersect) }
     val w = COURT_WIDTH
     val h = COURT_HEIGHT
-    return listOf(
+    return mapOf(
         Zone.ACS to three(0f, 0f, BASKET_X, 0f, BASKET_X, BASKET_Y, 0f, CORNER_SLICE_Y),
         Zone.ALS to three(BASKET_X, BASKET_Y, 0f, CORNER_SLICE_Y, 0f, h, WING_SLICE_X, h),
         Zone.CEN to three(BASKET_X, BASKET_Y, WING_SLICE_X, h, w - WING_SLICE_X, h),
@@ -221,7 +220,7 @@ private fun Court(totals: Map<Zone, Shots>, heats: Map<Zone, ZoneHeat>, selected
                     drawPath(path, c.fill(heats.getValue(zone)))
                     drawPath(path, c.courtLine.copy(alpha = 0.25f), style = Stroke(1f))
                 }
-                zones.firstOrNull { it.first == selected }?.let { drawPath(it.second, c.ink, style = Stroke(3f)) }
+                zones[selected]?.let { drawPath(it, c.ink, style = Stroke(3f)) }
                 drawLines(arc, c.courtLine)
             }
         }
@@ -255,7 +254,7 @@ private fun DrawScope.drawLines(arc: Path, color: Color) {
 
 /**
  * Percent and made/attempted over a zone, centred on the prototype's anchor. It is the zone's accessible node:
- * named, classed and clickable; touches fall through to the court's hit test.
+ * named, classed and clickable; touches elsewhere go to the court's hit test.
  */
 @Composable
 private fun ZoneLabel(
@@ -270,7 +269,9 @@ private fun ZoneLabel(
     val c = FuoriOrarioTheme.colors
     val name = stringResource(zoneName.getValue(zone))
     val heatLabel = stringResource(heatName.getValue(heat))
-    val k = unit.value
+    // Text scales with the court like the SVG, not with the font size setting.
+    val density = LocalDensity.current
+    fun units(v: Float) = with(density) { (unit * v).toSp() }
     val number = MaterialTheme.typography.headlineMedium
     val p = shots.percent
     Column(
@@ -282,28 +283,25 @@ private fun ZoneLabel(
                 val y = (unit * (label.y + if (label.small) -6f else 2f)).roundToPx() - placeable.height / 2
                 layout(placeable.width, placeable.height) { placeable.place(x, y) }
             }
-            .semantics(mergeDescendants = true) {
+            // Focusable and keyboard-operable like the prototype's tabindex; a tap here hits the same zone anyway.
+            .clickable(role = Role.Button) { onTap(zone) }
+            .semantics {
                 contentDescription = name
                 stateDescription = heatLabel
-                role = Role.Button
                 this.selected = selected
-                onClick {
-                    onTap(zone)
-                    true
-                }
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (label.small) {
-            Text(p?.toString() ?: "—", style = number, fontSize = (16 * k).sp, lineHeight = (16 * k).sp, color = c.ink)
+            Text(p?.toString() ?: "—", style = number, fontSize = units(16f), lineHeight = units(16f), color = c.ink)
         } else {
             Text(
                 p?.let {
                     "$it%"
                 } ?: "—",
                 style = number,
-                fontSize = (24 * k).sp,
-                lineHeight = (24 * k).sp,
+                fontSize = units(24f),
+                lineHeight = units(24f),
                 color = c.ink
             )
             Text(
@@ -315,8 +313,8 @@ private fun ZoneLabel(
                     stringResource(Res.string.map_no_shots)
                 },
                 style = number,
-                fontSize = (14 * k).sp,
-                lineHeight = (16 * k).sp,
+                fontSize = units(14f),
+                lineHeight = units(16f),
                 fontWeight = FontWeight.SemiBold,
                 color = c.ink.copy(alpha = 0.75f)
             )
