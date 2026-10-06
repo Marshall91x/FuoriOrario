@@ -6,10 +6,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -85,11 +83,11 @@ import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.domain.ZoneHeat
 import it.manu.fuoriorario.domain.heat
 import it.manu.fuoriorario.domain.zoneAt
+import it.manu.fuoriorario.ui.components.Legend
 import it.manu.fuoriorario.ui.theme.FuoriOrarioColors
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlin.math.PI
 import kotlin.math.atan2
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /** Prototype `.z-*` fills. */
@@ -149,23 +147,6 @@ fun ShotMap(totals: Map<Zone, Shots>, refs: Map<Zone, Int>) {
         c.even to heatName.getValue(ZoneHeat.EVEN),
         c.hot to heatName.getValue(ZoneHeat.HOT)
     )
-}
-
-/** Prototype `.legend`: a swatch per colour. */
-@Composable
-internal fun Legend(vararg items: Pair<Color, StringResource>, modifier: Modifier = Modifier) {
-    FlowRow(
-        modifier,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        items.forEach { (color, label) ->
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                Box(Modifier.size(12.dp).background(color, RoundedCornerShape(3.dp)))
-                Text(stringResource(label), fontSize = 12.5.sp, color = FuoriOrarioTheme.colors.muted)
-            }
-        }
-    }
 }
 
 /** The three-point line, open at the baseline; [closed] runs back along the baseline to bound the inside. */

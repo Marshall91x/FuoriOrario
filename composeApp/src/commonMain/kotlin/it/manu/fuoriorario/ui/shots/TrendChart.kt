@@ -24,16 +24,17 @@ import fuoriorario.composeapp.generated.resources.trend_description
 import fuoriorario.composeapp.generated.resources.trend_title
 import fuoriorario.composeapp.generated.resources.trend_too_few
 import it.manu.fuoriorario.domain.TrendPoint
+import it.manu.fuoriorario.ui.components.Legend
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import org.jetbrains.compose.resources.stringResource
 
 // Prototype `trendSvg` viewBox and plot margins.
-private const val W = 340f
-private const val H = 170f
-private const val LEFT = 32f
-private const val RIGHT = 10f
-private const val TOP = 10f
-private const val BOTTOM = 26f
+private const val CHART_WIDTH = 340f
+private const val CHART_HEIGHT = 170f
+private const val PLOT_LEFT = 32f
+private const val PLOT_RIGHT = 10f
+private const val PLOT_TOP = 10f
+private const val PLOT_BOTTOM = 26f
 
 /**
  * Prototype "Andamento" panel content: dal campo as a line with its area, liberi dashed, axis 0–100 and the
@@ -55,13 +56,17 @@ fun TrendChart(points: List<TrendPoint>) {
     val description = stringResource(Res.string.trend_description)
     val first = points.first().date.short()
     val last = points.last().date.short()
-    Canvas(Modifier.fillMaxWidth().aspectRatio(W / H).semantics { contentDescription = description }) {
+    Canvas(
+        Modifier.fillMaxWidth().aspectRatio(CHART_WIDTH / CHART_HEIGHT).semantics {
+            contentDescription = description
+        }
+    ) {
         // Everything in viewBox units times s, so text and strokes scale with the width like the SVG.
-        val s = size.width / W
-        val plotWidth = W - LEFT - RIGHT
-        val plotHeight = H - TOP - BOTTOM
-        fun x(i: Int) = (LEFT + i * plotWidth / (points.size - 1)) * s
-        fun y(v: Int) = (TOP + plotHeight - v / 100f * plotHeight) * s
+        val s = size.width / CHART_WIDTH
+        val plotWidth = CHART_WIDTH - PLOT_LEFT - PLOT_RIGHT
+        val plotHeight = CHART_HEIGHT - PLOT_TOP - PLOT_BOTTOM
+        fun x(i: Int) = (PLOT_LEFT + i * plotWidth / (points.size - 1)) * s
+        fun y(v: Int) = (PLOT_TOP + plotHeight - v / 100f * plotHeight) * s
         val axis = body.copy(color = c.muted, fontSize = (11f * s).toSp(), lineHeight = (11f * s).toSp())
 
         /** [end] aligns the text's end to [x], like `text-anchor="end"`. */
@@ -71,8 +76,8 @@ fun TrendChart(points: List<TrendPoint>) {
         }
 
         listOf(0, 25, 50, 75, 100).forEach { v ->
-            drawLine(c.line, Offset(LEFT * s, y(v)), Offset((W - RIGHT) * s, y(v)), s)
-            label("$v", (LEFT - 6) * s, y(v) + 4 * s, end = true)
+            drawLine(c.line, Offset(PLOT_LEFT * s, y(v)), Offset((CHART_WIDTH - PLOT_RIGHT) * s, y(v)), s)
+            label("$v", (PLOT_LEFT - 6) * s, y(v) + 4 * s, end = true)
         }
         fun series(value: (TrendPoint) -> Int?) =
             points.indices.mapNotNull { i -> value(points[i])?.let { Offset(x(i), y(it)) } }
@@ -93,7 +98,7 @@ fun TrendChart(points: List<TrendPoint>) {
         )
         points.last().fieldGoal?.let { drawCircle(c.accent, 4.5f * s, Offset(x(points.lastIndex), y(it))) }
         points.last().freeThrows?.let { drawCircle(c.cold, 4f * s, Offset(x(points.lastIndex), y(it))) }
-        label(first, LEFT * s, (H - 6) * s)
-        label(last, (W - RIGHT) * s, (H - 6) * s, end = true)
+        label(first, PLOT_LEFT * s, (CHART_HEIGHT - 6) * s)
+        label(last, (CHART_WIDTH - PLOT_RIGHT) * s, (CHART_HEIGHT - 6) * s, end = true)
     }
 }
