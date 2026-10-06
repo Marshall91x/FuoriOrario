@@ -110,6 +110,7 @@ import it.manu.fuoriorario.domain.freeThrows
 import it.manu.fuoriorario.domain.newSession
 import it.manu.fuoriorario.domain.sessionError
 import it.manu.fuoriorario.domain.stats
+import it.manu.fuoriorario.domain.trend
 import it.manu.fuoriorario.domain.zoneTotals
 import it.manu.fuoriorario.ui.components.Field
 import it.manu.fuoriorario.ui.components.GhostButton
@@ -152,7 +153,7 @@ private val Zone.tag get() = name.lowercase()
 
 /** Prototype `fmtShort`: "6 ott". On web the months load asynchronously: empty until then. */
 @Composable
-private fun LocalDate.short() = "$day ${stringArrayResource(Res.array.months_short).getOrElse(month.ordinal) { "" }}"
+internal fun LocalDate.short() = "$day ${stringArrayResource(Res.array.months_short).getOrElse(month.ordinal) { "" }}"
 
 /**
  * The player's Diario di tiro (PRD F3): header with "Registra sessione", period and its stats,
@@ -251,6 +252,7 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
         }
     }
     inPeriod?.let { list -> refs?.let { Panel { ShotMap(zoneTotals(list), it) } } }
+    inPeriod?.let { Panel { TrendChart(trend(it)) } }
     inPeriod?.let { list ->
         Panel {
             Text(stringResource(Res.string.shots_title), style = MaterialTheme.typography.titleMedium)

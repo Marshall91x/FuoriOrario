@@ -98,6 +98,9 @@
     <string name="heat_even">In linea</string>
     <string name="heat_cold">Sotto il riferimento</string>
     <string name="heat_none">Nessun tiro</string>
+    <string name="trend_title">Andamento</string>
+    <string name="trend_description">Percentuali per sessione</string>
+    <string name="trend_too_few">Servono almeno due sessioni per vedere l'andamento.</string>
 
     <string name="login_title">Accedi</string>
     <string name="login_email_hint">Inserisci l'email che hai dato allo staff: ti mandiamo un codice di 6 cifre.</string>

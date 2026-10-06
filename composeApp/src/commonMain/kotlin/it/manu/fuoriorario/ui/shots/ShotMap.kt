@@ -6,10 +6,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -85,6 +83,7 @@ import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.domain.ZoneHeat
 import it.manu.fuoriorario.domain.heat
 import it.manu.fuoriorario.domain.zoneAt
+import it.manu.fuoriorario.ui.components.Legend
 import it.manu.fuoriorario.ui.theme.FuoriOrarioColors
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlin.math.PI
@@ -143,14 +142,11 @@ fun ShotMap(totals: Map<Zone, Shots>, refs: Map<Zone, Int>) {
     Court(totals, heats, selected, toggle)
     FreeThrows(totals.getValue(Zone.TL), heats.getValue(Zone.TL), selected == Zone.TL) { toggle(Zone.TL) }
     selected?.let { Detail(it, totals.getValue(it), refs.getValue(it)) }
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        listOf(c.cold to ZoneHeat.COLD, c.even to ZoneHeat.EVEN, c.hot to ZoneHeat.HOT).forEach { (color, heat) ->
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                Box(Modifier.size(12.dp).background(color, RoundedCornerShape(3.dp)))
-                Text(stringResource(heatName.getValue(heat)), fontSize = 12.5.sp, color = c.muted)
-            }
-        }
-    }
+    Legend(
+        c.cold to heatName.getValue(ZoneHeat.COLD),
+        c.even to heatName.getValue(ZoneHeat.EVEN),
+        c.hot to heatName.getValue(ZoneHeat.HOT)
+    )
 }
 
 /** The three-point line, open at the baseline; [closed] runs back along the baseline to bound the inside. */
