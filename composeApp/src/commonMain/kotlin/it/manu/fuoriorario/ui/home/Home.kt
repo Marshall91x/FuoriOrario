@@ -1,5 +1,7 @@
 package it.manu.fuoriorario.ui.home
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -105,7 +107,13 @@ fun Home(
     CompositionLocalProvider(LocalToast provides toast) {
         Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {
-                NavHost(nav, startDestination = Tab.SHOT_LOG.name) {
+                // Tabs switch at once, like the prototype: a crossfade would show both screens at the same time.
+                NavHost(
+                    nav,
+                    startDestination = Tab.SHOT_LOG.name,
+                    enterTransition = { EnterTransition.None },
+                    exitTransition = { ExitTransition.None }
+                ) {
                     tabs.forEach { tab ->
                         composable(tab.name) {
                             Page {

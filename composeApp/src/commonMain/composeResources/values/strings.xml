@@ -111,6 +111,8 @@
     <string name="plan_video">Guarda il video ↗</string>
     <string name="plan_day_todo">%1$s: da fare</string>
     <string name="plan_day_rest">%1$s: riposo</string>
+    <string name="plan_day_done">%1$s: fatto</string>
+    <string name="plan_done">Completati</string>
     <string-array name="days_short">
         <item>Lun</item><item>Mar</item><item>Mer</item><item>Gio</item><item>Ven</item><item>Sab</item><item>Dom</item>
     </string-array>

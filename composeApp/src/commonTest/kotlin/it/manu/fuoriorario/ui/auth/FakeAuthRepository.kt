@@ -2,6 +2,7 @@ package it.manu.fuoriorario.ui.auth
 
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasText
 import it.manu.fuoriorario.data.AuthRepository
 import it.manu.fuoriorario.data.InvalidCodeException
@@ -47,10 +48,13 @@ class FakeAuthRepository(signedIn: Member? = null, private val roster: FakeRoste
 
 /** Like waitUntilExactlyOneExists, but suspends: on web, resources load asynchronously and a blocking wait starves them. */
 @OptIn(ExperimentalTestApi::class)
-suspend fun ComposeUiTest.awaitText(text: String) {
+suspend fun ComposeUiTest.awaitText(text: String) = awaitNode(hasText(text))
+
+@OptIn(ExperimentalTestApi::class)
+suspend fun ComposeUiTest.awaitNode(matcher: SemanticsMatcher) {
     repeat(200) {
-        if (onAllNodes(hasText(text)).fetchSemanticsNodes().size == 1) return
+        if (onAllNodes(matcher).fetchSemanticsNodes().size == 1) return
         withContext(Dispatchers.Default) { delay(25) }
     }
-    fail("\"$text\" not shown")
+    fail("${matcher.description} not shown")
 }

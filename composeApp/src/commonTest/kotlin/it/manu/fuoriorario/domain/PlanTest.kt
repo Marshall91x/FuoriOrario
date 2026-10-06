@@ -16,6 +16,8 @@ class PlanTest {
         assertEquals(monday, weekOf(LocalDate(2026, 10, 11)))
         // Across a month and a year.
         assertEquals(LocalDate(2025, 12, 29), weekOf(LocalDate(2026, 1, 1)))
+        assertEquals(0, dayIndex(monday))
+        assertEquals(6, dayIndex(LocalDate(2026, 10, 11)))
     }
 
     @Test
@@ -43,5 +45,20 @@ class PlanTest {
             listOf("Ball handling", "Tiro", "Footwork", "Atletica", "Difesa", "Recupero"),
             Category.entries.map { Json.encodeToString(it).trim('"') }
         )
+    }
+
+    @Test
+    fun progressCountsChecksOnAssignedDays() {
+        val items = listOf(
+            PlanItem(monday, "Mikan", Category.FOOTWORK, days = listOf(0, 2, 4), id = "a"),
+            PlanItem(monday, "Liberi", Category.SHOOTING, days = listOf(1), id = "b")
+        )
+        assertEquals(Progress(0, 4), progress(items, emptySet()))
+        assertEquals(
+            Progress(2, 4),
+            // A check left on a day no longer assigned, or on another week's exercise, does not count.
+            progress(items, setOf(PlanCheck("a", 0), PlanCheck("b", 1), PlanCheck("a", 1), PlanCheck("z", 0)))
+        )
+        assertEquals(Progress(0, 0), progress(emptyList(), emptySet()))
     }
 }

@@ -35,8 +35,11 @@ const val TITLE_MAX = 60
 const val VOLUME_MAX = 40
 const val DESCRIPTION_MAX = 400
 
+/** [date]'s day in its week: 0 = Monday … 6 = Sunday. */
+fun dayIndex(date: LocalDate) = date.dayOfWeek.isoDayNumber - 1
+
 /** The week [date] falls in, as its Monday (CONTEXT "Settimana"). */
-fun weekOf(date: LocalDate): LocalDate = date.minus(DatePeriod(days = date.dayOfWeek.isoDayNumber - 1))
+fun weekOf(date: LocalDate): LocalDate = date.minus(DatePeriod(days = dayIndex(date)))
 
 /** A `plan_items` row: an exercise for one player in one [week]; team is filled by the database from the staff. */
 @OptIn(ExperimentalSerializationApi::class)
@@ -83,4 +86,20 @@ fun newPlanItem(
     description.trim().ifEmpty { null },
     video.trim().ifEmpty { null },
     days.sorted()
+)
+
+/** A `plan_checks` row: the player did exercise [planItemId] on [day] (0 = Monday) of its week. */
+@Serializable
+data class PlanCheck(@SerialName("plan_item_id") val planItemId: String, val day: Int)
+
+/** The check for [day] of this saved exercise. */
+fun PlanItem.checkOn(day: Int) = PlanCheck(id!!, day)
+
+/** Completamento: [done] checks out of [total] assigned days. */
+data class Progress(val done: Int, val total: Int)
+
+/** The week's [Progress] over [items]; checks on days no longer assigned don't count. */
+fun progress(items: List<PlanItem>, checks: Set<PlanCheck>) = Progress(
+    items.sumOf { item -> item.days.count { item.checkOn(it) in checks } },
+    items.sumOf { it.days.size }
 )
