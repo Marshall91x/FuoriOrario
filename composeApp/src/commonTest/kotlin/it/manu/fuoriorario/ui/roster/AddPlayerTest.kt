@@ -31,6 +31,7 @@ class AddPlayerTest {
 
         onNodeWithTag("player_email").performTextInput("marco")
         onNodeWithTag("player_name").performTextInput("Marco R.")
+        awaitText("Aggiungi")
         onNodeWithText("Aggiungi").performScrollTo().performClick()
         awaitText("Email non valida.")
 
