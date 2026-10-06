@@ -8,11 +8,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -29,11 +32,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.last_staff
 import fuoriorario.composeapp.generated.resources.save_denied
@@ -44,7 +50,9 @@ import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 
 /** Scrolling page: 16dp gutter outside a 560dp column, like the prototype's body padding + `.wrap`. */
 @Composable
@@ -135,6 +143,41 @@ fun GhostButton(
         ),
         contentPadding = if (pill) PaddingValues(10.dp, 6.dp) else PaddingValues(11.dp, 7.dp)
     ) { Text(text, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold) }
+}
+
+/** Prototype `.seg`: one pill per option, the selected one inked. [tag] gives each option's test tag. */
+@Composable
+fun <T> SegmentedControl(
+    options: Map<T, StringResource>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    tag: (T) -> String,
+    modifier: Modifier = Modifier
+) {
+    val c = FuoriOrarioTheme.colors
+    Row(
+        modifier
+            .background(c.surface2, RoundedCornerShape(50))
+            .border(1.dp, c.line, RoundedCornerShape(50))
+            .padding(3.dp)
+            .selectableGroup()
+    ) {
+        options.forEach { (option, label) ->
+            val isSelected = option == selected
+            Text(
+                stringResource(label),
+                Modifier
+                    .testTag(tag(option))
+                    .background(if (isSelected) c.ink else Color.Transparent, RoundedCornerShape(50))
+                    .selectable(isSelected, role = Role.RadioButton) { onSelect(option) }
+                    .padding(horizontal = 12.dp, vertical = 5.dp),
+                color = if (isSelected) c.bg else c.muted,
+                style = MaterialTheme.typography.bodyMedium,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
 }
 
 /** Prototype `.field`: uppercase label over a filled input; [singleLine] false for a `textarea`. [tag] is the test tag. */

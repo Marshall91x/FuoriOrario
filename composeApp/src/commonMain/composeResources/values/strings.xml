@@ -45,7 +45,15 @@
 
     <string name="shots_log">+ Registra sessione</string>
     <string name="shots_title">Sessioni</string>
-    <string name="shots_empty">Nessuna sessione. Registra la prima dopo il prossimo allenamento.</string>
+    <string name="shots_empty">Nessuna sessione nel periodo. Registra la prima dopo il prossimo allenamento.</string>
+    <string name="period">Periodo</string>
+    <string name="period_7">7 giorni</string>
+    <string name="period_30">30 giorni</string>
+    <string name="period_season">Stagione</string>
+    <string name="stat_attempted">Tiri presi</string>
+    <string name="stat_field">Dal campo</string>
+    <string name="stat_three">Da tre</string>
+    <string name="stat_free">Liberi</string>
     <string name="shots_delete">Elimina</string>
     <string name="shots_delete_confirm">Conferma</string>
     <string name="shots_deleted">Sessione eliminata</string>

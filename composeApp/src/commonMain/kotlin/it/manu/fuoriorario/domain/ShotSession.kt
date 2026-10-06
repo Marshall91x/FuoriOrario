@@ -95,6 +95,11 @@ val ShotSession.fieldGoal get() = zones.filterKeys { it != Zone.TL }.values.fold
 
 val ShotSession.freeThrows get() = zones[Zone.TL] ?: Shots()
 
+private val THREES = setOf(Zone.ACS, Zone.ALS, Zone.CEN, Zone.ALD, Zone.ACD)
+
+/** Da tre: the five zones beyond the arc. */
+val ShotSession.three get() = zones.filterKeys { it in THREES }.values.fold(Shots(), Shots::plus)
+
 sealed interface SessionError {
     data class MadeOverAttempted(val zone: Zone) : SessionError
 
