@@ -114,6 +114,10 @@
     <string name="plan_day_done">%1$s: fatto</string>
     <string name="plan_done">Completati</string>
     <string name="plan_edit">Modifica</string>
+    <string name="plan_copy">Copia settimana precedente</string>
+    <string name="plan_copy_confirm">Conferma copia</string>
+    <string name="plan_copy_empty">La settimana precedente non ha esercizi</string>
+    <string name="plan_copied">Esercizi copiati</string>
     <string name="note_label">Nota dello staff</string>
     <string name="note_write">Scrivi una nota</string>
     <string name="note_edit">Modifica nota</string>

@@ -22,6 +22,12 @@ interface PlanRepository {
     /** Removes [item] with its checks. Throws [PermissionDeniedException]. */
     suspend fun remove(item: PlanItem)
 
+    /**
+     * Copies [member]'s exercises from the week before [week] into it, without checks; returns the copies, none when
+     * that week was empty. Throws [PermissionDeniedException].
+     */
+    suspend fun copyPreviousWeek(member: Member, week: LocalDate): List<PlanItem>
+
     /** [member]'s staff note for [week], if any. */
     suspend fun note(member: Member, week: LocalDate): String?
 

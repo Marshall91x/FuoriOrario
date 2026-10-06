@@ -1,6 +1,7 @@
 package it.manu.fuoriorario.data
 
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import it.manu.fuoriorario.core.supabase
@@ -12,6 +13,8 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /** A `weekly_notes` row; team is filled by the database from the staff. */
 @OptIn(ExperimentalSerializationApi::class)
@@ -48,6 +51,16 @@ class SupabasePlanRepository : PlanRepository {
             select()
             filter { eq("id", item.id!!) }
         }.requireRow()
+    }
+
+    override suspend fun copyPreviousWeek(member: Member, week: LocalDate): List<PlanItem> = mapErrors {
+        supabase.postgrest.rpc(
+            "copy_previous_week",
+            buildJsonObject {
+                put("player", member.id!!)
+                put("target", week.toString())
+            }
+        ).decodeList()
     }
 
     override suspend fun note(member: Member, week: LocalDate): String? =

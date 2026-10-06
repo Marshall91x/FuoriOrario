@@ -89,6 +89,10 @@ import fuoriorario.composeapp.generated.resources.note_text
 import fuoriorario.composeapp.generated.resources.note_write
 import fuoriorario.composeapp.generated.resources.plan_add
 import fuoriorario.composeapp.generated.resources.plan_back
+import fuoriorario.composeapp.generated.resources.plan_copied
+import fuoriorario.composeapp.generated.resources.plan_copy
+import fuoriorario.composeapp.generated.resources.plan_copy_confirm
+import fuoriorario.composeapp.generated.resources.plan_copy_empty
 import fuoriorario.composeapp.generated.resources.plan_day_done
 import fuoriorario.composeapp.generated.resources.plan_day_rest
 import fuoriorario.composeapp.generated.resources.plan_day_todo
@@ -176,6 +180,7 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
     var adding by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<PlanItem?>(null) }
     var writingNote by remember { mutableStateOf(false) }
+    var confirmingCopy by remember(week) { mutableStateOf(false) }
     val thisWeek = remember { weekOf(today()) }
     val todayIndex = remember { dayIndex(today()) }
 
@@ -226,6 +231,24 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
         }
     }
 
+    /** Into a week that already has exercises only on a second tap; the copies go after them. */
+    fun copyPreviousWeek() {
+        if (busy) return
+        if (!items.isNullOrEmpty() && !confirmingCopy) {
+            confirmingCopy = true
+            return
+        }
+        busy = true
+        scope.launchWrite(toast, onDone = { busy = false }) {
+            val copies = plans.copyPreviousWeek(player, week)
+            confirmingCopy = false
+            items = items.orEmpty() + copies
+            launch {
+                toast.show(getString(if (copies.isEmpty()) Res.string.plan_copy_empty else Res.string.plan_copied))
+            }
+        }
+    }
+
     /** Trimmed; emptied, the note goes. */
     fun saveNote(text: String) {
         if (busy) return
@@ -271,11 +294,18 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
         items?.let { Completion(progress(it, checks)) }
         note?.let { StaffNote(it) }
         if (staff) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 PrimaryButton(stringResource(Res.string.plan_add), { adding = true })
                 GhostButton(
                     stringResource(if (note == null) Res.string.note_write else Res.string.note_edit),
                     { writingNote = true }
+                )
+                GhostButton(
+                    stringResource(if (confirmingCopy) Res.string.plan_copy_confirm else Res.string.plan_copy),
+                    ::copyPreviousWeek
                 )
             }
         }
