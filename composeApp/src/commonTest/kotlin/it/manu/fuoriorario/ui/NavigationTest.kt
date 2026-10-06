@@ -10,6 +10,7 @@ import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.plan.FakePlanRepository
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
 import kotlin.test.Test
@@ -22,14 +23,19 @@ class NavigationTest {
     @Test
     fun player_seesShotLogAndPlanOnly() = runComposeUiTest {
         setContent {
-            App(FakeAuthRepository(Member("Luca B.", Role.PLAYER, ACK)), FakeRosterRepository(), FakeShotRepository())
+            App(
+                FakeAuthRepository(Member("Luca B.", Role.PLAYER, ACK)),
+                FakeRosterRepository(),
+                FakeShotRepository(),
+                plans = FakePlanRepository()
+            )
         }
 
         awaitText("LAVORO INDIVIDUALE")
         awaitText("+ Registra sessione")
         awaitText("Piano")
         onNodeWithText("Piano").performClick()
-        awaitText("Qui arriverà il piano settimanale con gli esercizi.")
+        awaitText("PIANO INDIVIDUALE")
         assertTrue(onAllNodes(hasText("Squadra")).fetchSemanticsNodes().isEmpty())
     }
 

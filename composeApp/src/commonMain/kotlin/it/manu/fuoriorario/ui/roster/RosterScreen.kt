@@ -1,10 +1,7 @@
 package it.manu.fuoriorario.ui.roster
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,8 +11,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.Role as SemanticsRole
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -84,6 +78,7 @@ import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
 import it.manu.fuoriorario.ui.components.SegmentedControl
+import it.manu.fuoriorario.ui.components.SelectField
 import it.manu.fuoriorario.ui.components.launchWrite
 import it.manu.fuoriorario.ui.components.show
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
@@ -357,7 +352,14 @@ private fun MemberFields(tag: String, draft: Member, onChange: (Member) -> Unit)
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done)
         )
     }
-    PositionField(tag, draft.position) { onChange(draft.copy(position = it)) }
+    // Optional: "—" for none.
+    SelectField(
+        stringResource(Res.string.member_position),
+        draft.position,
+        listOf(null) + POSITIONS,
+        { it ?: "—" },
+        "${tag}_position"
+    ) { onChange(draft.copy(position = it)) }
     RoleField(tag, draft.role) { onChange(draft.copy(role = it)) }
 }
 
@@ -377,44 +379,5 @@ private fun RoleField(tag: String, value: Role, onChange: (Role) -> Unit) {
             onChange,
             tag = { "${tag}_role_${it.name.lowercase()}" }
         )
-    }
-}
-
-/** Prototype `.field select`: optional, "—" for none. */
-@Composable
-private fun PositionField(tag: String, value: String?, onChange: (String?) -> Unit) {
-    val c = FuoriOrarioTheme.colors
-    var open by remember { mutableStateOf(false) }
-    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-        Text(
-            stringResource(Res.string.member_position).uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = c.muted
-        )
-        Box {
-            Text(
-                value ?: "—",
-                Modifier
-                    .fillMaxWidth()
-                    .testTag("${tag}_position")
-                    .background(c.surface2, RoundedCornerShape(9.dp))
-                    .border(1.dp, c.line, RoundedCornerShape(9.dp))
-                    .clickable(role = SemanticsRole.DropdownList) { open = true }
-                    .padding(horizontal = 11.dp, vertical = 9.dp),
-                style = MaterialTheme.typography.bodyLarge,
-                color = c.ink
-            )
-            DropdownMenu(open, { open = false }, containerColor = c.surface) {
-                (listOf(null) + POSITIONS).forEach { p ->
-                    DropdownMenuItem(
-                        text = { Text(p ?: "—", color = c.ink) },
-                        onClick = {
-                            onChange(p)
-                            open = false
-                        }
-                    )
-                }
-            }
-        }
     }
 }
