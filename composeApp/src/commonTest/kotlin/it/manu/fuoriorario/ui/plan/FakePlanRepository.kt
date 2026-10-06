@@ -21,6 +21,9 @@ class FakePlanRepository(
     /** Notes by (member id, week). */
     val notes = mutableMapOf<Pair<String, LocalDate>, String>()
 
+    /** Next library load fails like a network error. */
+    var failLibrary = false
+
     /** Next write fails like a network error. */
     var failNext = false
 
@@ -51,7 +54,13 @@ class FakePlanRepository(
         }
     }
 
-    override suspend fun library() = library
+    override suspend fun library(): List<LibraryExercise> {
+        if (failLibrary) {
+            failLibrary = false
+            error("offline")
+        }
+        return library
+    }
 
     override suspend fun note(member: Member, week: LocalDate) = notes[member.id!! to week]
 

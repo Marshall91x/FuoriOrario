@@ -136,6 +136,7 @@
     <string name="category_recovery">Recupero</string>
     <string name="exercise_new">Nuovo esercizio</string>
     <string name="exercise_library">Dalla libreria</string>
+    <string name="exercise_library_failed">Libreria non disponibile: scrivi l'esercizio a mano.</string>
     <string name="exercise_title">Esercizio</string>
     <string name="exercise_category">Area</string>
     <string name="exercise_volume">Volume</string>

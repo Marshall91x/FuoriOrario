@@ -90,4 +90,30 @@ class LibraryExerciseTest {
         awaitText("Salva modifiche")
         assertTrue(onAllNodesWithText("DALLA LIBRERIA").fetchSemanticsNodes().isEmpty())
     }
+
+    @Test
+    fun libraryFailsThenLoads() = runComposeUiTest {
+        val plans = FakePlanRepository(library = listOf(mikan)).apply { failLibrary = true }
+        setContent {
+            App(
+                FakeAuthRepository(coach),
+                FakeRosterRepository(coach, luca),
+                FakeShotRepository(),
+                MapSettings(),
+                plans
+            )
+        }
+        awaitText("Piano")
+        onNodeWithText("Piano").performClick()
+        awaitText("+ Aggiungi esercizio")
+        onNodeWithText("+ Aggiungi esercizio").performClick()
+        awaitText("Libreria non disponibile: scrivi l'esercizio a mano.")
+        assertTrue(onAllNodesWithText("DALLA LIBRERIA").fetchSemanticsNodes().isEmpty())
+
+        // The next sheet tries again.
+        onNodeWithText("Chiudi").performClick()
+        onNodeWithText("+ Aggiungi esercizio").performClick()
+        awaitText("DALLA LIBRERIA")
+        awaitText("Mikan drill")
+    }
 }

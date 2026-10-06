@@ -45,7 +45,7 @@ composeApp/src/
 iosApp/                    # progetto Xcode del wizard
 supabase/
   migrations/              # schema + RLS versionati
-  seed.sql                 # squadra, primo staff, libreria e riferimenti di default
+  seed.sql                 # squadra e primo staff (libreria e riferimenti di default arrivano dallo schema)
   tests/                   # test pgTAP delle RLS
 ```
 
@@ -107,7 +107,7 @@ shot_sessions (
 
 exercise_library (
   id uuid pk, team_id uuid fk teams,
-  title text not null, category text not null, volume text, description text, video_url text,
+  title text not null, category category not null, volume text, description text, video_url text,   -- category: dominio condiviso con plan_items
   sort int not null default 0
 )
 
@@ -162,7 +162,7 @@ Funzioni helper `security definer stable`:
 | teams | membri della squadra | — (seed) | staff | — |
 | members | staff della squadra; il giocatore solo la propria riga | staff | staff | staff |
 | shot_sessions | staff; giocatore proprie | staff; giocatore con `member_id` proprio | — | staff; giocatore proprie |
-| exercise_library | membri della squadra | staff (F5) | staff (F5) | staff (F5) |
+| exercise_library | membri della squadra | staff | staff | staff |
 | plan_items, weekly_notes | staff; giocatore proprie | staff | staff | staff |
 | plan_checks | staff; giocatore proprie | solo giocatore proprietario dell'item | — | solo giocatore proprietario |
 

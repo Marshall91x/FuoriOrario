@@ -72,6 +72,7 @@ import fuoriorario.composeapp.generated.resources.exercise_error_days
 import fuoriorario.composeapp.generated.resources.exercise_error_title
 import fuoriorario.composeapp.generated.resources.exercise_error_video
 import fuoriorario.composeapp.generated.resources.exercise_library
+import fuoriorario.composeapp.generated.resources.exercise_library_failed
 import fuoriorario.composeapp.generated.resources.exercise_new
 import fuoriorario.composeapp.generated.resources.exercise_remove
 import fuoriorario.composeapp.generated.resources.exercise_remove_confirm
@@ -206,7 +207,7 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
         }
     }
 
-    // On the first "Aggiungi esercizio", again on the next if it failed: without it the exercise is typed freely.
+    // On the first "Aggiungi esercizio", again on the next if it failed: meanwhile the exercise is typed freely.
     LaunchedEffect(adding) {
         if (!adding || library.isNotEmpty()) return@LaunchedEffect
         try {
@@ -214,6 +215,7 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
+            launch { toast.show(getString(Res.string.exercise_library_failed)) }
         }
     }
 
