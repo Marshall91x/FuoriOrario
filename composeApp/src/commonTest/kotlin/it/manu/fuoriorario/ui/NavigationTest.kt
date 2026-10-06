@@ -23,6 +23,7 @@ class NavigationTest {
 
         awaitText("LAVORO INDIVIDUALE")
         awaitText("Qui arriveranno la mappa di tiro, le statistiche e le sessioni.")
+        awaitText("Piano")
         onNodeWithText("Piano").performClick()
         awaitText("Qui arriverà il piano settimanale con gli esercizi.")
         assertTrue(onAllNodes(hasText("Squadra")).fetchSemanticsNodes().isEmpty())
@@ -33,8 +34,10 @@ class NavigationTest {
         setContent { App(FakeAuthRepository(Member("Coach", Role.STAFF, ACK))) }
 
         awaitText("VISTA STAFF")
+        awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
         awaitText("Qui arriveranno la rosa e le impostazioni della squadra.")
+        awaitText("Diario di tiro")
         onNodeWithText("Diario di tiro").performClick()
         awaitText("Qui arriveranno la mappa di tiro, le statistiche e le sessioni.")
     }
