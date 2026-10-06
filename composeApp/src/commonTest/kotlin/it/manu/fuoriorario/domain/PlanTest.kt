@@ -44,4 +44,19 @@ class PlanTest {
             Category.entries.map { Json.encodeToString(it).trim('"') }
         )
     }
+
+    @Test
+    fun progressCountsChecksOnAssignedDays() {
+        val items = listOf(
+            PlanItem(monday, "Mikan", Category.FOOTWORK, days = listOf(0, 2, 4), id = "a"),
+            PlanItem(monday, "Liberi", Category.SHOOTING, days = listOf(1), id = "b")
+        )
+        assertEquals(Progress(0, 4), progress(items, emptySet()))
+        assertEquals(
+            Progress(2, 4),
+            // A check left on a day no longer assigned, or on another week's exercise, does not count.
+            progress(items, setOf(PlanCheck("a", 0), PlanCheck("b", 1), PlanCheck("a", 1), PlanCheck("z", 0)))
+        )
+        assertEquals(Progress(0, 0), progress(emptyList(), emptySet()))
+    }
 }

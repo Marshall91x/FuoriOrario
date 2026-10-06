@@ -131,8 +131,7 @@ weekly_notes (
 
 plan_checks (
   plan_item_id uuid fk plan_items on delete cascade,
-  day smallint check (day between 0 and 6),
-  team_id uuid fk teams,
+  day smallint check (day between 0 and 6),        -- solo un giorno assegnato all'esercizio (RLS)
   checked_at timestamptz default now(),
   primary key (plan_item_id, day)
 )

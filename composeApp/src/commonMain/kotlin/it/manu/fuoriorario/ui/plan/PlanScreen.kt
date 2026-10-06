@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -73,8 +75,10 @@ import fuoriorario.composeapp.generated.resources.exercise_video
 import fuoriorario.composeapp.generated.resources.exercise_volume
 import fuoriorario.composeapp.generated.resources.plan_add
 import fuoriorario.composeapp.generated.resources.plan_back
+import fuoriorario.composeapp.generated.resources.plan_day_done
 import fuoriorario.composeapp.generated.resources.plan_day_rest
 import fuoriorario.composeapp.generated.resources.plan_day_todo
+import fuoriorario.composeapp.generated.resources.plan_done
 import fuoriorario.composeapp.generated.resources.plan_empty_player
 import fuoriorario.composeapp.generated.resources.plan_empty_staff
 import fuoriorario.composeapp.generated.resources.plan_items
@@ -88,12 +92,15 @@ import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.domain.Category
 import it.manu.fuoriorario.domain.DESCRIPTION_MAX
 import it.manu.fuoriorario.domain.Member
+import it.manu.fuoriorario.domain.PlanCheck
 import it.manu.fuoriorario.domain.PlanItem
 import it.manu.fuoriorario.domain.PlanItemError
+import it.manu.fuoriorario.domain.Progress
 import it.manu.fuoriorario.domain.TITLE_MAX
 import it.manu.fuoriorario.domain.VOLUME_MAX
 import it.manu.fuoriorario.domain.newPlanItem
 import it.manu.fuoriorario.domain.planItemError
+import it.manu.fuoriorario.domain.progress
 import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.ui.components.Field
 import it.manu.fuoriorario.ui.components.GhostButton
@@ -110,6 +117,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringArrayResource
@@ -134,7 +142,8 @@ private fun dayNames() = stringArrayResource(Res.array.days_short).let { names -
 
 /**
  * [player]'s Piano (PRD F4), theirs or followed by staff: [week] with ‹ › navigation, then its exercises with the
- * assigned days. [week] (a Monday) is kept by the caller, across players. [staff] add exercises.
+ * assigned days and the week's completion. [week] (a Monday) is kept by the caller, across players. [staff] add
+ * exercises, the player checks the days done.
  */
 @Composable
 fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: LocalDate, onWeek: (LocalDate) -> Unit) {
@@ -142,18 +151,22 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
     val toast = LocalToast.current
     val scope = rememberCoroutineScope()
     var items by remember { mutableStateOf<List<PlanItem>?>(null) }
+    var checks by remember { mutableStateOf(emptySet<PlanCheck>()) }
     var loadFailed by remember { mutableStateOf(false) }
     var attempt by remember { mutableIntStateOf(0) }
     var adding by remember { mutableStateOf(false) }
     val thisWeek = remember { weekOf(today()) }
+    val todayIndex = remember { today().dayOfWeek.isoDayNumber - 1 }
 
-    /** A save is in flight. */
+    /** A save or a check is in flight. */
     var busy by remember { mutableStateOf(false) }
     LaunchedEffect(week, attempt) {
         items = null
         loadFailed = false
         try {
-            items = plans.items(player, week)
+            val loaded = plans.items(player, week)
+            checks = plans.checks(loaded)
+            items = loaded
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
@@ -172,6 +185,21 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
         }
     }
 
+    /** Only once saved: a failure leaves the dot as it was. */
+    fun toggle(check: PlanCheck) {
+        if (busy) return
+        busy = true
+        scope.launchWrite(toast, onDone = { busy = false }) {
+            if (check in checks) {
+                plans.uncheck(check)
+                checks = checks - check
+            } else {
+                plans.check(check)
+                checks = checks + check
+            }
+        }
+    }
+
     Panel {
         Column {
             Text(
@@ -182,6 +210,7 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
             Text(player.displayName.uppercase(), style = MaterialTheme.typography.titleLarge)
         }
         WeekNav(week, thisWeek, onWeek)
+        items?.let { Completion(progress(it, checks)) }
         if (staff) PrimaryButton(stringResource(Res.string.plan_add), { adding = true })
     }
 
@@ -196,7 +225,14 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
                 Column {
                     list.forEachIndexed { i, item ->
                         if (i > 0) HorizontalDivider(color = c.line)
-                        ItemRow(item, Modifier.padding(top = if (i > 0) 14.dp else 4.dp, bottom = 14.dp))
+                        ItemRow(
+                            item,
+                            checks,
+                            todayIndex.takeIf { week == thisWeek },
+                            // Only the player checks.
+                            onToggle = if (staff) null else ::toggle,
+                            Modifier.padding(top = if (i > 0) 14.dp else 4.dp, bottom = 14.dp)
+                        )
                     }
                 }
             }
@@ -257,7 +293,13 @@ private fun WeekNav(week: LocalDate, thisWeek: LocalDate, onWeek: (LocalDate) ->
 
 /** Prototype `.ex`: area chip, title, volume, description, video link and the week's day dots. */
 @Composable
-private fun ItemRow(item: PlanItem, modifier: Modifier = Modifier) {
+private fun ItemRow(
+    item: PlanItem,
+    checks: Set<PlanCheck>,
+    today: Int?,
+    onToggle: ((PlanCheck) -> Unit)?,
+    modifier: Modifier = Modifier
+) {
     val c = FuoriOrarioTheme.colors
     val uris = LocalUriHandler.current
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -296,37 +338,101 @@ private fun ItemRow(item: PlanItem, modifier: Modifier = Modifier) {
                 color = c.accent
             )
         }
-        Days(item.days)
+        Days(item, checks, today, onToggle)
     }
 }
 
-/** Prototype `.days`: a column per weekday, the dot ringed in accent when assigned, dashed and faded on rest days. */
+/** Prototype `.bar` under "Completati x/y". */
 @Composable
-private fun Days(days: List<Int>) {
+private fun Completion(progress: Progress) {
+    val c = FuoriOrarioTheme.colors
+    val fraction = if (progress.total == 0) 0f else progress.done.toFloat() / progress.total
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            stringResource(Res.string.plan_done).uppercase(),
+            Modifier.weight(1f),
+            style = MaterialTheme.typography.labelSmall,
+            color = c.muted
+        )
+        Text(
+            "${progress.done}/${progress.total}",
+            style = MaterialTheme.typography.titleMedium,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(10.dp)
+            .progressSemantics(fraction)
+            .background(c.surface2, RoundedCornerShape(50))
+            .border(1.dp, c.line, RoundedCornerShape(50))
+    ) {
+        Box(Modifier.fillMaxWidth(fraction).height(10.dp).background(c.accent, RoundedCornerShape(50)))
+    }
+}
+
+/**
+ * Prototype `.days`: a column per weekday, the dot ringed in accent when assigned, filled with ✓ when done, dashed
+ * and faded on rest days. [today] (0 = Monday) is highlighted. Assigned days toggle with [onToggle], if given.
+ */
+@Composable
+private fun Days(item: PlanItem, checks: Set<PlanCheck>, today: Int?, onToggle: ((PlanCheck) -> Unit)?) {
     val c = FuoriOrarioTheme.colors
     val names = dayNames()
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         names.forEachIndexed { i, name ->
-            val on = i in days
-            val label = stringResource(if (on) Res.string.plan_day_todo else Res.string.plan_day_rest, name)
+            val on = i in item.days
+            val check = PlanCheck(item.id.orEmpty(), i)
+            val done = on && check in checks
+            val isToday = i == today
+            val label = stringResource(
+                when {
+                    done -> Res.string.plan_day_done
+                    on -> Res.string.plan_day_todo
+                    else -> Res.string.plan_day_rest
+                },
+                name
+            )
             Column(
                 Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
-                Text(name.uppercase(), style = MaterialTheme.typography.labelSmall, fontSize = 11.sp, color = c.muted)
+                Text(
+                    name.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 11.sp,
+                    color = if (isToday) c.ink else c.muted
+                )
                 Box(
                     Modifier
                         .widthIn(max = 40.dp)
                         .fillMaxWidth()
                         .aspectRatio(1f)
+                        .then(
+                            if (on && onToggle != null) {
+                                Modifier.toggleable(done, role = SemanticsRole.Checkbox) { onToggle(check) }
+                            } else {
+                                Modifier
+                            }
+                        )
                         .semantics { contentDescription = label }
                         .drawBehind {
                             val stroke = 2.dp.toPx()
+                            val center = Offset(size.width / 2, size.height / 2)
+                            val radius = (size.minDimension - stroke) / 2
+                            // A 3dp halo just outside the ring.
+                            if (isToday && on && !done) {
+                                val halo = 3.dp.toPx()
+                                drawCircle(c.accentSoft, radius + (stroke + halo) / 2, center, style = Stroke(halo))
+                            }
+                            if (done) drawCircle(c.accent, radius + stroke / 2, center)
                             drawCircle(
                                 if (on) c.accent else c.line.copy(alpha = 0.35f),
-                                radius = (size.minDimension - stroke) / 2,
-                                center = Offset(size.width / 2, size.height / 2),
+                                radius = radius,
+                                center = center,
                                 style = Stroke(
                                     stroke,
                                     pathEffect = if (on) {
@@ -338,8 +444,11 @@ private fun Days(days: List<Int>) {
                                     }
                                 )
                             )
-                        }
-                )
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (done) Text("✓", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = c.accentInk)
+                }
             }
         }
     }
