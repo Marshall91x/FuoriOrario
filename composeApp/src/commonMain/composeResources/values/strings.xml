@@ -113,6 +113,13 @@
     <string name="plan_day_rest">%1$s: riposo</string>
     <string name="plan_day_done">%1$s: fatto</string>
     <string name="plan_done">Completati</string>
+    <string name="plan_edit">Modifica</string>
+    <string name="note_label">Nota dello staff</string>
+    <string name="note_write">Scrivi una nota</string>
+    <string name="note_edit">Modifica nota</string>
+    <string name="note_text">Obiettivo o indicazione per la settimana</string>
+    <string name="note_save">Salva nota</string>
+    <string name="note_saved">Nota salvata</string>
     <string-array name="days_short">
         <item>Lun</item><item>Mar</item><item>Mer</item><item>Gio</item><item>Ven</item><item>Sab</item><item>Dom</item>
     </string-array>
@@ -131,6 +138,12 @@
     <string name="exercise_days">Giorni</string>
     <string name="exercise_save">Aggiungi al piano</string>
     <string name="exercise_added">Esercizio aggiunto</string>
+    <string name="exercise_edit">Modifica esercizio</string>
+    <string name="exercise_update">Salva modifiche</string>
+    <string name="exercise_updated">Esercizio aggiornato</string>
+    <string name="exercise_remove">Rimuovi</string>
+    <string name="exercise_remove_confirm">Conferma rimozione</string>
+    <string name="exercise_removed">Esercizio rimosso</string>
     <string name="exercise_error_title">Scrivi il nome dell'esercizio.</string>
     <string name="exercise_error_days">Scegli almeno un giorno.</string>
     <string name="exercise_error_video">Il link deve iniziare con https://</string>
