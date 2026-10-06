@@ -1,5 +1,6 @@
 package it.manu.fuoriorario.data
 
+import it.manu.fuoriorario.domain.LibraryExercise
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.PlanCheck
 import it.manu.fuoriorario.domain.PlanItem
@@ -31,6 +32,9 @@ interface PlanRepository {
      * Throws [PlanChangedException], [PermissionDeniedException].
      */
     suspend fun copyPreviousWeek(member: Member, week: LocalDate, seen: Int): List<PlanItem>
+
+    /** The team's library, in its order. */
+    suspend fun library(): List<LibraryExercise>
 
     /** [member]'s staff note for [week], if any. */
     suspend fun note(member: Member, week: LocalDate): String?

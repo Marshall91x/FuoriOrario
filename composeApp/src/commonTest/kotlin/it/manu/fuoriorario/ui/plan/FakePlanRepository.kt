@@ -2,6 +2,7 @@ package it.manu.fuoriorario.ui.plan
 
 import it.manu.fuoriorario.data.PlanChangedException
 import it.manu.fuoriorario.data.PlanRepository
+import it.manu.fuoriorario.domain.LibraryExercise
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.PlanCheck
 import it.manu.fuoriorario.domain.PlanItem
@@ -9,7 +10,11 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 
-class FakePlanRepository(vararg items: PlanItem, checks: Set<PlanCheck> = emptySet()) : PlanRepository {
+class FakePlanRepository(
+    vararg items: PlanItem,
+    checks: Set<PlanCheck> = emptySet(),
+    val library: List<LibraryExercise> = emptyList()
+) : PlanRepository {
     val items = items.toMutableList()
     val checks = checks.toMutableSet()
 
@@ -45,6 +50,8 @@ class FakePlanRepository(vararg items: PlanItem, checks: Set<PlanCheck> = emptyS
             item.copy(week = week, id = "p${items.size + 1}").also { items += it }
         }
     }
+
+    override suspend fun library() = library
 
     override suspend fun note(member: Member, week: LocalDate) = notes[member.id!! to week]
 

@@ -61,6 +61,17 @@ data class PlanItem(
     @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("member_id") val memberId: String? = null
 )
 
+/** An `exercise_library` row: a model exercise of the team (Libreria); plans copy it, never refer to it. */
+@Serializable
+data class LibraryExercise(
+    val title: String,
+    val category: Category,
+    val volume: String? = null,
+    val description: String? = null,
+    @SerialName("video_url") val videoUrl: String? = null,
+    val id: String? = null
+)
+
 enum class PlanItemError { TITLE, NO_DAYS, VIDEO }
 
 /** First problem with the exercise form as typed, or null. */
