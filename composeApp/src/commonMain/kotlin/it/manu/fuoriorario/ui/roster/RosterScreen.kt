@@ -22,7 +22,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.close
-import fuoriorario.composeapp.generated.resources.last_staff
 import fuoriorario.composeapp.generated.resources.load_failed
 import fuoriorario.composeapp.generated.resources.member_add
 import fuoriorario.composeapp.generated.resources.member_added
@@ -72,12 +70,8 @@ import fuoriorario.composeapp.generated.resources.roster_add_title
 import fuoriorario.composeapp.generated.resources.roster_empty_hint
 import fuoriorario.composeapp.generated.resources.roster_empty_title
 import fuoriorario.composeapp.generated.resources.roster_title
-import fuoriorario.composeapp.generated.resources.save_denied
-import fuoriorario.composeapp.generated.resources.save_failed
 import fuoriorario.composeapp.generated.resources.staff_title
 import it.manu.fuoriorario.data.EmailTakenException
-import it.manu.fuoriorario.data.LastStaffException
-import it.manu.fuoriorario.data.PermissionDeniedException
 import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.MemberError
@@ -93,6 +87,7 @@ import it.manu.fuoriorario.ui.components.GhostStyle
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
+import it.manu.fuoriorario.ui.components.launchWrite
 import it.manu.fuoriorario.ui.components.show
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlinx.coroutines.CancellationException
@@ -220,28 +215,6 @@ fun RosterScreen(roster: RosterRepository, me: Member, onSelfChanged: () -> Unit
         AddMemberForm(team, roster) { members = team + it }
     }
     editing?.let { EditSheet(it, busy, onDismiss = { editing = null }, onSave = ::save) }
-}
-
-/** Launches a roster write; a failure toasts its cause and leaves the form as typed, for a retry. */
-private fun CoroutineScope.launchWrite(
-    toast: SnackbarHostState,
-    onDone: () -> Unit = {},
-    action: suspend CoroutineScope.() -> Unit
-) = launch {
-    try {
-        action()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        val message = when (e) {
-            is LastStaffException -> Res.string.last_staff
-            is PermissionDeniedException -> Res.string.save_denied
-            else -> Res.string.save_failed
-        }
-        launch { toast.show(getString(message)) }
-    } finally {
-        onDone()
-    }
 }
 
 /** Prototype `.item`: `#num` then name over position, and the "Togli" → "Conferma" button. */

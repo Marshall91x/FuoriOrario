@@ -37,8 +37,10 @@ import fuoriorario.composeapp.generated.resources.subtitle_staff
 import it.manu.fuoriorario.data.AuthRepository
 import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.data.Session
+import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.data.SupabaseAuthRepository
 import it.manu.fuoriorario.data.SupabaseRosterRepository
+import it.manu.fuoriorario.data.SupabaseShotRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.LoginScreen
@@ -54,7 +56,8 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun App(
     auth: AuthRepository = remember { SupabaseAuthRepository() },
-    roster: RosterRepository = remember { SupabaseRosterRepository() }
+    roster: RosterRepository = remember { SupabaseRosterRepository() },
+    shots: ShotRepository = remember { SupabaseShotRepository() }
 ) {
     FuoriOrarioTheme {
         val c = FuoriOrarioTheme.colors
@@ -77,7 +80,7 @@ fun App(
                 Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).widthIn(max = 560.dp)
             )
             if (member?.privacyAckAt != null) {
-                Home(member, roster, onSelfChanged = auth::refresh)
+                Home(member, roster, shots, onSelfChanged = auth::refresh)
             } else {
                 Page(Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))) {
                     when (session) {
