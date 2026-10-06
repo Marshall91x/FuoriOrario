@@ -21,20 +21,23 @@ import it.manu.fuoriorario.ui.auth.awaitText
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlinx.datetime.LocalDate
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.minus
 
 /** UI test 2 (ARCHITECTURE "Test"): log a session, with validation. */
 @OptIn(ExperimentalTestApi::class)
 class LogSessionTest {
     private val luca = Member("Luca B.", Role.PLAYER, "2026-10-01T10:00:00Z", jerseyNumber = "7", position = "Guardia")
-    private val older = ShotSession(LocalDate(2026, 9, 3), mapOf(Zone.PIT to Shots(3, 5)), "Prima", id = "old")
+
+    // Inside the default 30-day period.
+    private val older =
+        ShotSession(today().minus(DatePeriod(days = 3)), mapOf(Zone.PIT to Shots(3, 5)), "Prima", id = "old")
 
     @Test
     fun playerLogsSessionWithValidation() = runComposeUiTest {
         val shots = FakeShotRepository(older)
         setContent { App(FakeAuthRepository(luca), FakeRosterRepository(), shots) }
         awaitText("3/5 · 60%")
-        awaitText("3 set")
         awaitText("+ Registra sessione")
         onNodeWithText("+ Registra sessione").performClick()
         awaitText("Salva sessione")
@@ -89,7 +92,7 @@ class LogSessionTest {
         assertEquals(1, shots.sessions.size)
         onNodeWithTag("delete_old").performClick()
         awaitText("Sessione eliminata")
-        awaitText("Nessuna sessione. Registra la prima dopo il prossimo allenamento.")
+        awaitText("Nessuna sessione nel periodo. Registra la prima dopo il prossimo allenamento.")
         assertEquals(emptyList(), shots.sessions)
     }
 }

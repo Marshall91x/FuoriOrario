@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -36,14 +40,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role as SemanticsRole
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fuoriorario.composeapp.generated.resources.Res
@@ -52,6 +62,10 @@ import fuoriorario.composeapp.generated.resources.close
 import fuoriorario.composeapp.generated.resources.load_failed
 import fuoriorario.composeapp.generated.resources.months_short
 import fuoriorario.composeapp.generated.resources.ok
+import fuoriorario.composeapp.generated.resources.period
+import fuoriorario.composeapp.generated.resources.period_30
+import fuoriorario.composeapp.generated.resources.period_7
+import fuoriorario.composeapp.generated.resources.period_season
 import fuoriorario.composeapp.generated.resources.retry
 import fuoriorario.composeapp.generated.resources.role_player
 import fuoriorario.composeapp.generated.resources.session_attempted
@@ -72,6 +86,10 @@ import fuoriorario.composeapp.generated.resources.shots_deleted
 import fuoriorario.composeapp.generated.resources.shots_empty
 import fuoriorario.composeapp.generated.resources.shots_log
 import fuoriorario.composeapp.generated.resources.shots_title
+import fuoriorario.composeapp.generated.resources.stat_attempted
+import fuoriorario.composeapp.generated.resources.stat_field
+import fuoriorario.composeapp.generated.resources.stat_free
+import fuoriorario.composeapp.generated.resources.stat_three
 import fuoriorario.composeapp.generated.resources.zone_acd
 import fuoriorario.composeapp.generated.resources.zone_acs
 import fuoriorario.composeapp.generated.resources.zone_ald
@@ -86,14 +104,17 @@ import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.NOTE_MAX
+import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.SessionError
 import it.manu.fuoriorario.domain.ShotSession
 import it.manu.fuoriorario.domain.Shots
+import it.manu.fuoriorario.domain.Stats
 import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.domain.fieldGoal
 import it.manu.fuoriorario.domain.freeThrows
 import it.manu.fuoriorario.domain.newSession
 import it.manu.fuoriorario.domain.sessionError
+import it.manu.fuoriorario.domain.stats
 import it.manu.fuoriorario.ui.components.Field
 import it.manu.fuoriorario.ui.components.GhostButton
 import it.manu.fuoriorario.ui.components.GhostStyle
@@ -135,8 +156,8 @@ private val Zone.tag get() = name.lowercase()
 private fun LocalDate.short() = "$day ${stringArrayResource(Res.array.months_short).getOrElse(month.ordinal) { "" }}"
 
 /**
- * The player's Diario di tiro (PRD F3): header with "Registra sessione", then their sessions newest first.
- * Each "Elimina" asks for a second tap.
+ * The player's Diario di tiro (PRD F3): header with "Registra sessione", period and its stats,
+ * then the period's sessions newest first. Each "Elimina" asks for a second tap.
  */
 @Composable
 fun ShotLogScreen(shots: ShotRepository, me: Member) {
@@ -148,6 +169,9 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
     var attempt by remember { mutableIntStateOf(0) }
     var logging by remember { mutableStateOf(false) }
     var confirmingDelete by remember { mutableStateOf<ShotSession?>(null) }
+    var period by remember { mutableStateOf(Period.DAYS_30) }
+    val today = remember { today() }
+    val inPeriod = sessions?.let { period.filter(it, today) }
 
     /** A save or delete is in flight. */
     var busy by remember { mutableStateOf(false) }
@@ -205,6 +229,8 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
                 logging = true
             })
         }
+        PeriodPicker(period) { period = it }
+        inPeriod?.let { StatsGrid(stats(it)) }
     }
 
     if (loadFailed) {
@@ -213,7 +239,7 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
             GhostButton(stringResource(Res.string.retry), { attempt++ })
         }
     }
-    sessions?.let { list ->
+    inPeriod?.let { list ->
         Panel {
             Text(stringResource(Res.string.shots_title), style = MaterialTheme.typography.titleMedium)
             if (list.isEmpty()) {
@@ -230,6 +256,91 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
     }
 
     if (logging) LogSheet(me.displayName, busy, onDismiss = { logging = false }, onSave = ::save)
+}
+
+private val periodLabel = mapOf(
+    Period.DAYS_7 to Res.string.period_7,
+    Period.DAYS_30 to Res.string.period_30,
+    Period.SEASON to Res.string.period_season
+)
+
+/** Prototype `.seg`: one pill per period, the selected one inked. */
+@Composable
+private fun PeriodPicker(selected: Period, onSelect: (Period) -> Unit) {
+    val c = FuoriOrarioTheme.colors
+    val label = stringResource(Res.string.period)
+    Row(
+        Modifier
+            .border(1.dp, c.line, CircleShape)
+            .background(c.surface2, CircleShape)
+            .padding(3.dp)
+            .selectableGroup()
+            .semantics { contentDescription = label }
+    ) {
+        Period.entries.forEach { p ->
+            val on = p == selected
+            Text(
+                stringResource(periodLabel.getValue(p)),
+                Modifier
+                    .clip(CircleShape)
+                    .background(if (on) c.ink else Color.Transparent)
+                    .selectable(on, role = SemanticsRole.Tab) { onSelect(p) }
+                    .padding(12.dp, 5.dp),
+                color = if (on) c.bg else c.muted,
+                style = MaterialTheme.typography.bodyMedium,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+/** Prototype `.stats`: 4 columns, 2 when narrow. Percentages show "—" without attempts. */
+@Composable
+private fun StatsGrid(stats: Stats) {
+    val c = FuoriOrarioTheme.colors
+    val small = SpanStyle(fontSize = 15.sp, color = c.muted, fontWeight = FontWeight.SemiBold)
+    fun percent(shots: Shots) = buildAnnotatedString {
+        val p = shots.percent
+        if (p == null) {
+            withStyle(small) { append("—") }
+        } else {
+            append("$p")
+            withStyle(small) { append("%") }
+        }
+    }
+    val items = listOf(
+        Triple("attempted", Res.string.stat_attempted, AnnotatedString("${stats.attempted}")),
+        Triple("field", Res.string.stat_field, percent(stats.fieldGoal)),
+        Triple("three", Res.string.stat_three, percent(stats.three)),
+        Triple("free", Res.string.stat_free, percent(stats.freeThrows))
+    )
+    // The prototype goes to 2 columns under a 400px viewport: about 340dp inside the panel.
+    BoxWithConstraints {
+        val columns = if (maxWidth < 340.dp) 2 else 4
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            items.chunked(columns).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    row.forEach { (tag, label, value) ->
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                stringResource(label).uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = c.muted
+                            )
+                            Text(
+                                value,
+                                Modifier.testTag("stat_$tag"),
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontSize = 30.sp,
+                                lineHeight = 30.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /** Prototype `sessionRow`: date, dal campo m/a · %, TL m/a, note, and "Elimina" → "Conferma". */
