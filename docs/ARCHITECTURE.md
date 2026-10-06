@@ -1,6 +1,6 @@
 # Fuori Orario — Architettura
 
-Decisioni motivate in [adr/](adr/). Termini in [CONTEXT.md](../CONTEXT.md).
+Decisioni motivate in [adr/](adr/). Termini in [CONTEXT.md](../CONTEXT.md). Limiti noti in [NOTE.md](NOTE.md).
 
 ## Stack
 
