@@ -89,6 +89,7 @@ import it.manu.fuoriorario.ui.theme.FuoriOrarioColors
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlin.math.PI
 import kotlin.math.atan2
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /** Prototype `.z-*` fills. */
@@ -143,11 +144,25 @@ fun ShotMap(totals: Map<Zone, Shots>, refs: Map<Zone, Int>) {
     Court(totals, heats, selected, toggle)
     FreeThrows(totals.getValue(Zone.TL), heats.getValue(Zone.TL), selected == Zone.TL) { toggle(Zone.TL) }
     selected?.let { Detail(it, totals.getValue(it), refs.getValue(it)) }
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        listOf(c.cold to ZoneHeat.COLD, c.even to ZoneHeat.EVEN, c.hot to ZoneHeat.HOT).forEach { (color, heat) ->
+    Legend(
+        c.cold to heatName.getValue(ZoneHeat.COLD),
+        c.even to heatName.getValue(ZoneHeat.EVEN),
+        c.hot to heatName.getValue(ZoneHeat.HOT)
+    )
+}
+
+/** Prototype `.legend`: a swatch per colour. */
+@Composable
+internal fun Legend(vararg items: Pair<Color, StringResource>, modifier: Modifier = Modifier) {
+    FlowRow(
+        modifier,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        items.forEach { (color, label) ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 Box(Modifier.size(12.dp).background(color, RoundedCornerShape(3.dp)))
-                Text(stringResource(heatName.getValue(heat)), fontSize = 12.5.sp, color = c.muted)
+                Text(stringResource(label), fontSize = 12.5.sp, color = FuoriOrarioTheme.colors.muted)
             }
         }
     }
