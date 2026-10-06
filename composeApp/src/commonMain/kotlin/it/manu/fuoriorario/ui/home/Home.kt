@@ -45,38 +45,39 @@ import fuoriorario.composeapp.generated.resources.ic_tab_shot_log
 import fuoriorario.composeapp.generated.resources.ic_tab_team
 import fuoriorario.composeapp.generated.resources.placeholder_plan
 import fuoriorario.composeapp.generated.resources.placeholder_shot_log
-import fuoriorario.composeapp.generated.resources.placeholder_team
 import fuoriorario.composeapp.generated.resources.placeholder_title
 import fuoriorario.composeapp.generated.resources.tab_plan
 import fuoriorario.composeapp.generated.resources.tab_shot_log
 import fuoriorario.composeapp.generated.resources.tab_team
+import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Page
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.ToastHost
+import it.manu.fuoriorario.ui.roster.RosterScreen
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-/** Bottom bar sections; [name] is the route. */
+/** Bottom bar sections; [name] is the route. [placeholder] until the section is built. */
 private enum class Tab(
     val label: StringResource,
     val icon: DrawableResource,
-    val placeholder: StringResource,
+    val placeholder: StringResource?,
     val staffOnly: Boolean = false
 ) {
     SHOT_LOG(Res.string.tab_shot_log, Res.drawable.ic_tab_shot_log, Res.string.placeholder_shot_log),
     PLAN(Res.string.tab_plan, Res.drawable.ic_tab_plan, Res.string.placeholder_plan),
-    TEAM(Res.string.tab_team, Res.drawable.ic_tab_team, Res.string.placeholder_team, staffOnly = true)
+    TEAM(Res.string.tab_team, Res.drawable.ic_tab_team, null, staffOnly = true)
 }
 
 /** Signed-in content under the header: tabs for the member's role, with the toast host. Players have no Squadra route at all. */
 @Composable
-fun Home(member: Member) {
+fun Home(member: Member, roster: RosterRepository) {
     val tabs = Tab.entries.filter { !it.staffOnly || member.role == Role.STAFF }
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
@@ -88,7 +89,12 @@ fun Home(member: Member) {
                 NavHost(nav, startDestination = Tab.SHOT_LOG.name) {
                     tabs.forEach { tab ->
                         composable(tab.name) {
-                            Page { Placeholder(tab) }
+                            Page {
+                                when (tab) {
+                                    Tab.TEAM -> RosterScreen(roster)
+                                    else -> Placeholder(tab)
+                                }
+                            }
                         }
                     }
                 }
@@ -109,7 +115,7 @@ fun Home(member: Member) {
 private fun Placeholder(tab: Tab) {
     Panel(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(stringResource(Res.string.placeholder_title), style = MaterialTheme.typography.titleMedium)
-        Text(stringResource(tab.placeholder), color = FuoriOrarioTheme.colors.muted)
+        Text(stringResource(tab.placeholder!!), color = FuoriOrarioTheme.colors.muted)
     }
 }
 

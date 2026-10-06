@@ -137,8 +137,14 @@ fun Field(
     }
 }
 
-/** Where screens send toasts: `LocalToast.current.showSnackbar("Sessione salvata")`. Provided by the home. */
+/** Where screens send toasts: `LocalToast.current.show("Sessione salvata")`. Provided by the home. */
 val LocalToast = staticCompositionLocalOf<SnackbarHostState> { error("No ToastHost in composition") }
+
+/** Like the prototype's `toast()`: replaces the message on screen instead of queueing behind it. */
+suspend fun SnackbarHostState.show(message: String) {
+    currentSnackbarData?.dismiss()
+    showSnackbar(message)
+}
 
 /** Prototype `.toast`: an ink pill showing [state]'s current message. */
 @Composable

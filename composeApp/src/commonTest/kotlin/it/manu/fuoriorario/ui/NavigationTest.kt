@@ -10,6 +10,7 @@ import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -31,12 +32,12 @@ class NavigationTest {
 
     @Test
     fun staff_reachesTeam() = runComposeUiTest {
-        setContent { App(FakeAuthRepository(Member("Coach", Role.STAFF, ACK))) }
+        setContent { App(FakeAuthRepository(Member("Coach", Role.STAFF, ACK)), FakeRosterRepository()) }
 
         awaitText("VISTA STAFF")
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
-        awaitText("Qui arriveranno la rosa e le impostazioni della squadra.")
+        awaitText("INSERISCI LA ROSA")
         awaitText("Diario di tiro")
         onNodeWithText("Diario di tiro").performClick()
         awaitText("Qui arriveranno la mappa di tiro, le statistiche e le sessioni.")
