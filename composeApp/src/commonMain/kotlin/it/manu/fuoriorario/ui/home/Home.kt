@@ -28,7 +28,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role as SemanticsRole
@@ -54,6 +56,7 @@ import fuoriorario.composeapp.generated.resources.tab_team
 import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.domain.Member
+import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.components.LoadFailed
 import it.manu.fuoriorario.ui.components.LocalToast
@@ -98,6 +101,7 @@ fun Home(
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
     val toast = remember { SnackbarHostState() }
+    var period by remember { mutableStateOf(Period.DAYS_30) }
 
     CompositionLocalProvider(LocalToast provides toast) {
         Column(Modifier.fillMaxSize()) {
@@ -110,7 +114,12 @@ fun Home(
                                     tab == Tab.TEAM -> RosterScreen(roster, onRosterChanged)
                                     tab != Tab.SHOT_LOG -> Placeholder(tab)
                                     // A fresh screen per player: no sessions or pending writes carried over.
-                                    followed != null -> key(followed.id) { ShotLogScreen(shots, followed) }
+                                    followed != null -> key(followed.id) {
+                                        ShotLogScreen(shots, followed, period) {
+                                            period =
+                                                it
+                                        }
+                                    }
                                     players?.isFailure == true -> LoadFailed(onRetryPlayers)
                                     players?.getOrNull()?.isEmpty() == true -> NoPlayers()
                                 }

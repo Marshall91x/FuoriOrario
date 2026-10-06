@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(10);
 
 -- Another team with its own player, to check staff stay inside their team.
 insert into public.teams (id, name) values ('00000000-0000-0000-0000-000000000002', 'Altra squadra');
@@ -36,6 +36,8 @@ select throws_ok($$ insert into public.shot_sessions (member_id, team_id, date, 
 select throws_ok($$ insert into public.shot_sessions (member_id, date, zones)
   values ('20000000-0000-0000-0000-000000000007', current_date, '{"pit":[1,2]}') $$,
   '42501', null, 'staff log for players, not for another staff member');
+select throws_ok($$ insert into public.shot_sessions (date, zones) values (current_date, '{"pit":[1,2]}') $$,
+  '42501', null, 'staff have no sessions of their own');
 select is_empty($$ delete from public.shot_sessions where member_id = '20000000-0000-0000-0000-000000000009' returning id $$,
   'staff cannot delete another team''s sessions');
 select isnt_empty($$ delete from public.shot_sessions where zones ? 'tl' returning id $$, 'staff delete a player''s session');

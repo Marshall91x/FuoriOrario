@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.russhwolf.settings.Settings
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.brand_first
 import fuoriorario.composeapp.generated.resources.brand_second
@@ -76,7 +77,9 @@ import org.jetbrains.compose.resources.stringResource
 fun App(
     auth: AuthRepository = remember { SupabaseAuthRepository() },
     roster: RosterRepository = remember { SupabaseRosterRepository() },
-    shots: ShotRepository = remember { SupabaseShotRepository() }
+    shots: ShotRepository = remember { SupabaseShotRepository() },
+    /** The device's own storage: only the staff's picked player. */
+    prefs: Settings = remember { Settings() }
 ) {
     FuoriOrarioTheme {
         val c = FuoriOrarioTheme.colors
@@ -85,10 +88,11 @@ fun App(
         val scope = rememberCoroutineScope()
         val staff = member?.role == Role.STAFF
 
-        // Staff's player menu (#12): the team's players, null while loading. Kept here so the pick survives tab changes.
+        // Staff's player menu (#12): the team's players, null while loading. Kept here so the pick survives tab changes,
+        // and in [prefs] so it survives restarts.
         var players by remember(member?.id) { mutableStateOf<Result<List<Member>>?>(null) }
         var playersLoad by remember { mutableIntStateOf(0) }
-        var pickedId by remember(member?.id) { mutableStateOf<String?>(null) }
+        var pickedId by remember(member?.id) { mutableStateOf(prefs.getStringOrNull(PICKED_PLAYER)) }
         LaunchedEffect(member?.id, staff, playersLoad) {
             if (!staff) return@LaunchedEffect
             players = try {
@@ -119,7 +123,10 @@ fun App(
                 member,
                 players?.getOrNull().takeIf { staff }.orEmpty(),
                 followed,
-                onPick = { pickedId = it.id },
+                onPick = {
+                    pickedId = it.id
+                    prefs.putString(PICKED_PLAYER, it.id!!)
+                },
                 onSignOut = { scope.launch { auth.signOut() } },
                 Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).widthIn(max = 560.dp)
             )
@@ -148,6 +155,8 @@ fun App(
         }
     }
 }
+
+private const val PICKED_PLAYER = "picked_player"
 
 /** Prototype `.top`: brand + subtitle; when signed in, the `.who` row with logout and the name, or for staff with [players] the menu. */
 @Composable

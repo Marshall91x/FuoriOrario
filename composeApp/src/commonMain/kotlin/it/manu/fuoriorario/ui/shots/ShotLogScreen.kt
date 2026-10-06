@@ -156,10 +156,10 @@ internal fun LocalDate.short() = "$day ${stringArrayResource(Res.array.months_sh
 
 /**
  * [player]'s Diario di tiro (PRD F3), theirs or followed by staff: header with "Registra sessione", period and its stats,
- * the period's shot map, then its sessions newest first. Each "Elimina" asks for a second tap.
+ * the period's shot map, then its sessions newest first. [period] is kept by the caller, across players. Each "Elimina" asks for a second tap.
  */
 @Composable
-fun ShotLogScreen(shots: ShotRepository, player: Member) {
+fun ShotLogScreen(shots: ShotRepository, player: Member, period: Period, onPeriod: (Period) -> Unit) {
     val c = FuoriOrarioTheme.colors
     val toast = LocalToast.current
     val scope = rememberCoroutineScope()
@@ -169,7 +169,6 @@ fun ShotLogScreen(shots: ShotRepository, player: Member) {
     var attempt by remember { mutableIntStateOf(0) }
     var logging by remember { mutableStateOf(false) }
     var confirmingDelete by remember { mutableStateOf<ShotSession?>(null) }
-    var period by remember { mutableStateOf(Period.DAYS_30) }
     val today = remember { today() }
     val inPeriod = sessions?.let { period.filter(it, today) }
 
@@ -237,7 +236,7 @@ fun ShotLogScreen(shots: ShotRepository, player: Member) {
         SegmentedControl(
             periodName,
             period,
-            { period = it },
+            onPeriod,
             tag = { "period_${it.name.lowercase()}" },
             Modifier.semantics { contentDescription = periodLabel }
         )

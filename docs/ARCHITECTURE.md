@@ -17,7 +17,7 @@ Decisioni motivate in [adr/](adr/). Termini in [CONTEXT.md](../CONTEXT.md). Limi
 | Config | BuildKonfig: `SUPABASE_URL`, `SUPABASE_ANON_KEY`; Gradle: `APP_VERSION`, `ANDROID_KEYSTORE_*`/`ANDROID_KEY_*` (firma). Tutto da `local.properties` / variabili CI |
 | Grafica | `Canvas` di Compose per mappa e grafico (nessuna libreria di chart) |
 | Font | Saira Condensed, Instrument Sans in Compose Resources |
-| Persistenza locale | Nessuna (oltre alla sessione auth gestita da `supabase-kt`) |
+| Persistenza locale | Solo la sessione auth gestita da `supabase-kt` e il giocatore scelto dallo staff (`multiplatform-settings`, la stessa libreria di `supabase-kt`) |
 
 ## Struttura del codice
 
