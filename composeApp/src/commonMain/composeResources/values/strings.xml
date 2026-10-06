@@ -43,6 +43,41 @@
     <string name="last_staff">Serve almeno un membro dello staff nella squadra.</string>
     <string name="close">Chiudi</string>
 
+    <string name="shots_log">+ Registra sessione</string>
+    <string name="shots_title">Sessioni</string>
+    <string name="shots_empty">Nessuna sessione. Registra la prima dopo il prossimo allenamento.</string>
+    <string name="shots_delete">Elimina</string>
+    <string name="shots_delete_confirm">Conferma</string>
+    <string name="shots_deleted">Sessione eliminata</string>
+    <string name="session_new">Nuova sessione</string>
+    <string name="session_date">Data</string>
+    <string name="session_hint">Inserisci solo le zone in cui hai tirato. Il tasto + sui tentati aggiunge 5 alla volta.</string>
+    <string name="session_made">Segnati</string>
+    <string name="session_attempted">Tentati</string>
+    <string name="session_more">Più %1$s</string>
+    <string name="session_less">Meno %1$s</string>
+    <string name="session_note">Nota (facoltativa)</string>
+    <string name="session_save">Salva sessione</string>
+    <string name="session_saved">Sessione salvata</string>
+    <string name="session_error_made">%1$s: i canestri segnati non possono superare i tentativi.</string>
+    <string name="session_error_empty">Inserisci almeno una zona con dei tentativi.</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Annulla</string>
+    <string-array name="months_short">
+        <item>gen</item><item>feb</item><item>mar</item><item>apr</item><item>mag</item><item>giu</item>
+        <item>lug</item><item>ago</item><item>set</item><item>ott</item><item>nov</item><item>dic</item>
+    </string-array>
+    <string name="zone_pit">Pitturato</string>
+    <string name="zone_mls">Media sinistra</string>
+    <string name="zone_mlc">Media centrale</string>
+    <string name="zone_mld">Media destra</string>
+    <string name="zone_acs">Tripla angolo sx</string>
+    <string name="zone_als">Tripla ala sx</string>
+    <string name="zone_cen">Tripla centrale</string>
+    <string name="zone_ald">Tripla ala dx</string>
+    <string name="zone_acd">Tripla angolo dx</string>
+    <string name="zone_tl">Tiri liberi</string>
+
     <string name="login_title">Accedi</string>
     <string name="login_email_hint">Inserisci l\'email che hai dato allo staff: ti mandiamo un codice di 6 cifre.</string>
     <string name="login_email">Email</string>

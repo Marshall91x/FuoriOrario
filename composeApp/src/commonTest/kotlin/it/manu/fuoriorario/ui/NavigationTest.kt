@@ -11,6 +11,7 @@ import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
+import it.manu.fuoriorario.ui.shots.FakeShotRepository
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -20,10 +21,12 @@ private const val ACK = "2026-10-01T10:00:00Z"
 class NavigationTest {
     @Test
     fun player_seesShotLogAndPlanOnly() = runComposeUiTest {
-        setContent { App(FakeAuthRepository(Member("Luca B.", Role.PLAYER, ACK))) }
+        setContent {
+            App(FakeAuthRepository(Member("Luca B.", Role.PLAYER, ACK)), FakeRosterRepository(), FakeShotRepository())
+        }
 
         awaitText("LAVORO INDIVIDUALE")
-        awaitText("Qui arriveranno la mappa di tiro, le statistiche e le sessioni.")
+        awaitText("+ Registra sessione")
         awaitText("Piano")
         onNodeWithText("Piano").performClick()
         awaitText("Qui arriverà il piano settimanale con gli esercizi.")

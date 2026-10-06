@@ -10,6 +10,7 @@ composeMultiplatform = "1.10.0"
 kotlin = "2.4.20"
 ktlint-gradle = "12.1.1"
 ktor = "3.5.1"
+kotlinx-datetime = "0.8.0"
 kotlinx-io = "0.9.1"
 material3 = "1.10.0-alpha05"
 navigation = "2.9.2"
@@ -32,6 +33,7 @@ supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
 androidx-compose-uiTestJunit4 = { module = "androidx.compose.ui:ui-test-junit4-android", version.ref = "androidx-compose" }
 androidx-compose-uiTestManifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "androidx-compose" }

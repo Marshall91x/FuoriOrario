@@ -34,7 +34,17 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import fuoriorario.composeapp.generated.resources.Res
+import fuoriorario.composeapp.generated.resources.last_staff
+import fuoriorario.composeapp.generated.resources.save_denied
+import fuoriorario.composeapp.generated.resources.save_failed
+import it.manu.fuoriorario.data.LastStaffException
+import it.manu.fuoriorario.data.PermissionDeniedException
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 
 /** Scrolling page: 16dp gutter outside a 560dp column, like the prototype's body padding + `.wrap`. */
 @Composable
@@ -127,7 +137,7 @@ fun GhostButton(
     ) { Text(text, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold) }
 }
 
-/** Prototype `.field`: uppercase label over a filled input. [tag] is the test tag. */
+/** Prototype `.field`: uppercase label over a filled input; [singleLine] false for a `textarea`. [tag] is the test tag. */
 @Composable
 fun Field(
     label: String,
@@ -137,7 +147,8 @@ fun Field(
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     onDone: () -> Unit = {},
-    textStyle: TextStyle = MaterialTheme.typography.bodyLarge
+    textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    singleLine: Boolean = true
 ) {
     val c = FuoriOrarioTheme.colors
     Column(modifier, verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -153,7 +164,8 @@ fun Field(
                 .padding(horizontal = 11.dp, vertical = 9.dp),
             textStyle = textStyle.copy(color = c.ink),
             cursorBrush = SolidColor(c.accent),
-            singleLine = true,
+            singleLine = singleLine,
+            minLines = if (singleLine) 1 else 3,
             keyboardOptions = keyboardOptions,
             keyboardActions = KeyboardActions(onDone = { onDone() })
         )
@@ -182,5 +194,27 @@ fun ToastHost(state: SnackbarHostState, modifier: Modifier = Modifier) {
             color = c.bg,
             style = MaterialTheme.typography.bodyMedium
         )
+    }
+}
+
+/** Launches a write; a failure toasts its cause and leaves the form as typed, for a retry. */
+fun CoroutineScope.launchWrite(
+    toast: SnackbarHostState,
+    onDone: () -> Unit = {},
+    action: suspend CoroutineScope.() -> Unit
+) = launch {
+    try {
+        action()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        val message = when (e) {
+            is LastStaffException -> Res.string.last_staff
+            is PermissionDeniedException -> Res.string.save_denied
+            else -> Res.string.save_failed
+        }
+        launch { toast.show(getString(message)) }
+    } finally {
+        onDone()
     }
 }

@@ -50,6 +50,7 @@ import fuoriorario.composeapp.generated.resources.tab_plan
 import fuoriorario.composeapp.generated.resources.tab_shot_log
 import fuoriorario.composeapp.generated.resources.tab_team
 import it.manu.fuoriorario.data.RosterRepository
+import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.components.LocalToast
@@ -57,6 +58,7 @@ import it.manu.fuoriorario.ui.components.Page
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.ToastHost
 import it.manu.fuoriorario.ui.roster.RosterScreen
+import it.manu.fuoriorario.ui.shots.ShotLogScreen
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
@@ -77,7 +79,7 @@ private enum class Tab(
 
 /** Signed-in content under the header: tabs for the member's role, with the toast host. Players have no Squadra route at all. */
 @Composable
-fun Home(member: Member, roster: RosterRepository, onSelfChanged: () -> Unit) {
+fun Home(member: Member, roster: RosterRepository, shots: ShotRepository, onSelfChanged: () -> Unit) {
     val tabs = Tab.entries.filter { !it.staffOnly || member.role == Role.STAFF }
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
@@ -90,8 +92,10 @@ fun Home(member: Member, roster: RosterRepository, onSelfChanged: () -> Unit) {
                     tabs.forEach { tab ->
                         composable(tab.name) {
                             Page {
-                                when (tab) {
-                                    Tab.TEAM -> RosterScreen(roster, member, onSelfChanged)
+                                when {
+                                    tab == Tab.TEAM -> RosterScreen(roster, member, onSelfChanged)
+                                    // Staff get a player picker first (#12).
+                                    tab == Tab.SHOT_LOG && member.role == Role.PLAYER -> ShotLogScreen(shots, member)
                                     else -> Placeholder(tab)
                                 }
                             }

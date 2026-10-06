@@ -13,6 +13,7 @@ import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.shots.FakeShotRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -74,7 +75,7 @@ class EditMemberTest {
     @Test
     fun staffDemotingThemselvesBecomesPlayer() = runComposeUiTest {
         val roster = FakeRosterRepository(staff, vice)
-        setContent { App(FakeAuthRepository(staff, roster), roster) }
+        setContent { App(FakeAuthRepository(staff, roster), roster, FakeShotRepository()) }
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
 
@@ -85,7 +86,7 @@ class EditMemberTest {
         onNodeWithText("Salva modifiche").performScrollTo().performClick()
 
         awaitText("LAVORO INDIVIDUALE")
-        awaitText("Qui arriveranno la mappa di tiro, le statistiche e le sessioni.")
+        awaitText("+ Registra sessione")
         assertTrue(onAllNodes(hasText("Squadra")).fetchSemanticsNodes().isEmpty())
     }
 
