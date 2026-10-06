@@ -110,6 +110,7 @@ import it.manu.fuoriorario.domain.freeThrows
 import it.manu.fuoriorario.domain.newSession
 import it.manu.fuoriorario.domain.sessionError
 import it.manu.fuoriorario.domain.stats
+import it.manu.fuoriorario.domain.zoneTotals
 import it.manu.fuoriorario.ui.components.Field
 import it.manu.fuoriorario.ui.components.GhostButton
 import it.manu.fuoriorario.ui.components.GhostStyle
@@ -122,6 +123,8 @@ import it.manu.fuoriorario.ui.components.show
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlin.time.Instant
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -131,7 +134,7 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 
-private val zoneName = mapOf(
+internal val zoneName = mapOf(
     Zone.PIT to Res.string.zone_pit,
     Zone.MLS to Res.string.zone_mls,
     Zone.MLC to Res.string.zone_mlc,
@@ -153,7 +156,7 @@ private fun LocalDate.short() = "$day ${stringArrayResource(Res.array.months_sho
 
 /**
  * The player's Diario di tiro (PRD F3): header with "Registra sessione", period and its stats,
- * then the period's sessions newest first. Each "Elimina" asks for a second tap.
+ * the period's shot map, then its sessions newest first. Each "Elimina" asks for a second tap.
  */
 @Composable
 fun ShotLogScreen(shots: ShotRepository, me: Member) {
@@ -161,6 +164,7 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
     val toast = LocalToast.current
     val scope = rememberCoroutineScope()
     var sessions by remember { mutableStateOf<List<ShotSession>?>(null) }
+    var refs by remember { mutableStateOf<Map<Zone, Int>?>(null) }
     var loadFailed by remember { mutableStateOf(false) }
     var attempt by remember { mutableIntStateOf(0) }
     var logging by remember { mutableStateOf(false) }
@@ -174,7 +178,11 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
     LaunchedEffect(attempt) {
         loadFailed = false
         try {
-            sessions = shots.sessions()
+            coroutineScope {
+                val teamRefs = async { shots.zoneRefs() }
+                sessions = shots.sessions()
+                refs = teamRefs.await()
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
@@ -242,6 +250,7 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
             GhostButton(stringResource(Res.string.retry), { attempt++ })
         }
     }
+    inPeriod?.let { list -> refs?.let { Panel { ShotMap(zoneTotals(list), it) } } }
     inPeriod?.let { list ->
         Panel {
             Text(stringResource(Res.string.shots_title), style = MaterialTheme.typography.titleMedium)

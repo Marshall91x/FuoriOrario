@@ -85,6 +85,19 @@
     <string name="zone_ald">Tripla ala dx</string>
     <string name="zone_acd">Tripla angolo dx</string>
     <string name="zone_tl">Tiri liberi</string>
+    <string name="map_title">Mappa di tiro</string>
+    <string name="map_hint">Tocca una zona</string>
+    <string name="map_description">Mappa di tiro sul mezzo campo</string>
+    <string name="map_no_shots">nessun tiro</string>
+    <string name="map_free_line">Linea del tiro libero</string>
+    <string name="map_free_none">Nessun tiro registrato</string>
+    <string name="map_detail_shots">%1$s su %2$s</string>
+    <string name="map_detail_none">nessun tiro nel periodo</string>
+    <string name="map_detail_ref">riferimento %1$s</string>
+    <string name="heat_hot">Sopra il riferimento</string>
+    <string name="heat_even">In linea</string>
+    <string name="heat_cold">Sotto il riferimento</string>
+    <string name="heat_none">Nessun tiro</string>
 
     <string name="login_title">Accedi</string>
     <string name="login_email_hint">Inserisci l\'email che hai dato allo staff: ti mandiamo un codice di 6 cifre.</string>
