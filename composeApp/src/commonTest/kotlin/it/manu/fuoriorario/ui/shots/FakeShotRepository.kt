@@ -1,6 +1,7 @@
 package it.manu.fuoriorario.ui.shots
 
 import it.manu.fuoriorario.data.ShotRepository
+import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.ShotSession
 import it.manu.fuoriorario.domain.Zone
 
@@ -16,7 +17,8 @@ class FakeShotRepository(vararg sessions: ShotSession) : ShotRepository {
         Zone.ALS to 33, Zone.CEN to 33, Zone.ALD to 33, Zone.ACD to 36, Zone.TL to 70
     )
 
-    override suspend fun sessions() = sessions.sortedByDescending { it.date }
+    override suspend fun sessions(member: Member) =
+        sessions.filter { it.memberId == member.id }.sortedByDescending { it.date }
 
     override suspend fun zoneRefs() = refs
 

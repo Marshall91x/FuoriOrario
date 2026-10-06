@@ -5,6 +5,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import it.manu.fuoriorario.core.supabase
+import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.ShotSession
 import it.manu.fuoriorario.domain.Zone
 import kotlin.math.roundToInt
@@ -13,7 +14,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 class SupabaseShotRepository : ShotRepository {
-    override suspend fun sessions(): List<ShotSession> = supabase.from("shot_sessions").select {
+    override suspend fun sessions(member: Member): List<ShotSession> = supabase.from("shot_sessions").select {
+        filter { eq("member_id", member.id!!) }
         order("date", Order.DESCENDING)
         order("created_at", Order.DESCENDING)
     }.decodeList()

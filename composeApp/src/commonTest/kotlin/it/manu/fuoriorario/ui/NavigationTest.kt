@@ -43,6 +43,8 @@ class NavigationTest {
         awaitText("INSERISCI LA ROSA")
         awaitText("Diario di tiro")
         onNodeWithText("Diario di tiro").performClick()
-        awaitText("Qui arriveranno la mappa di tiro, le statistiche e le sessioni.")
+        // No players yet: nobody to follow.
+        awaitText("INSERISCI LA ROSA")
+        assertTrue(onAllNodes(hasText("+ Registra sessione")).fetchSemanticsNodes().isEmpty())
     }
 }

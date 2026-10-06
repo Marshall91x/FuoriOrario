@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,9 +44,12 @@ import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.ic_tab_plan
 import fuoriorario.composeapp.generated.resources.ic_tab_shot_log
 import fuoriorario.composeapp.generated.resources.ic_tab_team
+import fuoriorario.composeapp.generated.resources.load_failed
 import fuoriorario.composeapp.generated.resources.placeholder_plan
-import fuoriorario.composeapp.generated.resources.placeholder_shot_log
 import fuoriorario.composeapp.generated.resources.placeholder_title
+import fuoriorario.composeapp.generated.resources.retry
+import fuoriorario.composeapp.generated.resources.roster_empty_hint
+import fuoriorario.composeapp.generated.resources.roster_empty_title
 import fuoriorario.composeapp.generated.resources.tab_plan
 import fuoriorario.composeapp.generated.resources.tab_shot_log
 import fuoriorario.composeapp.generated.resources.tab_team
@@ -53,6 +57,7 @@ import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
+import it.manu.fuoriorario.ui.components.GhostButton
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Page
 import it.manu.fuoriorario.ui.components.Panel
@@ -72,14 +77,26 @@ private enum class Tab(
     val placeholder: StringResource?,
     val staffOnly: Boolean = false
 ) {
-    SHOT_LOG(Res.string.tab_shot_log, Res.drawable.ic_tab_shot_log, Res.string.placeholder_shot_log),
+    SHOT_LOG(Res.string.tab_shot_log, Res.drawable.ic_tab_shot_log, null),
     PLAN(Res.string.tab_plan, Res.drawable.ic_tab_plan, Res.string.placeholder_plan),
     TEAM(Res.string.tab_team, Res.drawable.ic_tab_team, null, staffOnly = true)
 }
 
-/** Signed-in content under the header: tabs for the member's role, with the toast host. Players have no Squadra route at all. */
+/**
+ * Signed-in content under the header: tabs for the member's role, with the toast host. Players have no Squadra route at all.
+ * [followed] is whose Diario di tiro to show: the player themselves, or the one staff picked (null while the roster loads).
+ */
 @Composable
-fun Home(member: Member, roster: RosterRepository, shots: ShotRepository, onSelfChanged: () -> Unit) {
+fun Home(
+    member: Member,
+    roster: RosterRepository,
+    shots: ShotRepository,
+    followed: Member?,
+    noPlayers: Boolean,
+    playersFailed: Boolean,
+    onRetryPlayers: () -> Unit,
+    onRosterChanged: (Member) -> Unit
+) {
     val tabs = Tab.entries.filter { !it.staffOnly || member.role == Role.STAFF }
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
@@ -93,10 +110,12 @@ fun Home(member: Member, roster: RosterRepository, shots: ShotRepository, onSelf
                         composable(tab.name) {
                             Page {
                                 when {
-                                    tab == Tab.TEAM -> RosterScreen(roster, member, onSelfChanged)
-                                    // Staff get a player picker first (#12).
-                                    tab == Tab.SHOT_LOG && member.role == Role.PLAYER -> ShotLogScreen(shots, member)
-                                    else -> Placeholder(tab)
+                                    tab == Tab.TEAM -> RosterScreen(roster, onRosterChanged)
+                                    tab != Tab.SHOT_LOG -> Placeholder(tab)
+                                    // A fresh screen per player: no sessions or pending writes carried over.
+                                    followed != null -> key(followed.id) { ShotLogScreen(shots, followed) }
+                                    playersFailed -> LoadFailed(onRetryPlayers)
+                                    noPlayers -> NoPlayers()
                                 }
                             }
                         }
@@ -112,6 +131,23 @@ fun Home(member: Member, roster: RosterRepository, shots: ShotRepository, onSelf
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LoadFailed(onRetry: () -> Unit) {
+    Panel(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(stringResource(Res.string.load_failed), color = FuoriOrarioTheme.colors.muted)
+        GhostButton(stringResource(Res.string.retry), onRetry)
+    }
+}
+
+/** Prototype `emptyRoster`, without the form: that's in Squadra. */
+@Composable
+private fun NoPlayers() {
+    Panel {
+        Text(stringResource(Res.string.roster_empty_title).uppercase(), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(Res.string.roster_empty_hint), color = FuoriOrarioTheme.colors.muted)
     }
 }
 

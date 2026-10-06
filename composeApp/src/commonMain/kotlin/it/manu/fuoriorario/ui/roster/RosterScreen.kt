@@ -112,10 +112,10 @@ private val MemberSaver =
 
 /**
  * Staff roster (PRD F2): players by number then name, then staff, then the add form. Tap a row to edit; "Togli" twice to remove.
- * [onSelfChanged] runs after [me] edits or removes their own row, so the session catches up (new role, or signed out).
+ * [onChanged] runs after a member is added, edited or removed, so the player menu and the signed-in member catch up.
  */
 @Composable
-fun RosterScreen(roster: RosterRepository, me: Member, onSelfChanged: () -> Unit) {
+fun RosterScreen(roster: RosterRepository, onChanged: (Member) -> Unit) {
     val c = FuoriOrarioTheme.colors
     val toast = LocalToast.current
     val scope = rememberCoroutineScope()
@@ -163,7 +163,7 @@ fun RosterScreen(roster: RosterRepository, me: Member, onSelfChanged: () -> Unit
             roster.remove(member)
             members = members.orEmpty().filter { it.id != member.id }
             launch { toast.show(getString(Res.string.member_removed, member.displayName)) }
-            if (member.id == me.id) onSelfChanged()
+            onChanged(member)
         }
     }
 
@@ -174,7 +174,7 @@ fun RosterScreen(roster: RosterRepository, me: Member, onSelfChanged: () -> Unit
             members = members.orEmpty().map { if (it.id == edited.id) edited else it }
             editing = null
             launch { toast.show(getString(Res.string.member_saved)) }
-            if (edited.id == me.id) onSelfChanged()
+            onChanged(edited)
         }
     }
 
@@ -210,7 +210,10 @@ fun RosterScreen(roster: RosterRepository, me: Member, onSelfChanged: () -> Unit
         } else {
             Text(stringResource(Res.string.roster_add_title), style = MaterialTheme.typography.titleMedium)
         }
-        AddMemberForm(team, roster) { members = team + it }
+        AddMemberForm(team, roster) {
+            members = team + it
+            onChanged(it)
+        }
     }
     editing?.let { EditSheet(it, busy, onDismiss = { editing = null }, onSave = ::save) }
 }
