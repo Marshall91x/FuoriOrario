@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.last_staff
 import fuoriorario.composeapp.generated.resources.load_failed
+import fuoriorario.composeapp.generated.resources.months_short
 import fuoriorario.composeapp.generated.resources.retry
 import fuoriorario.composeapp.generated.resources.save_denied
 import fuoriorario.composeapp.generated.resources.save_failed
@@ -61,8 +62,10 @@ import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 
 /** Scrolling page: 16dp gutter outside a 560dp column, like the prototype's body padding + `.wrap`. */
@@ -268,6 +271,10 @@ fun <T> SelectField(
         }
     }
 }
+
+/** Prototype `fmtShort`: "6 ott". On web the months load asynchronously: empty until then. */
+@Composable
+fun LocalDate.short() = "$day ${stringArrayResource(Res.array.months_short).getOrElse(month.ordinal) { "" }}"
 
 /** Where screens send toasts: `LocalToast.current.show("Sessione salvata")`. Provided by the home. */
 val LocalToast = staticCompositionLocalOf<SnackbarHostState> { error("No ToastHost in composition") }

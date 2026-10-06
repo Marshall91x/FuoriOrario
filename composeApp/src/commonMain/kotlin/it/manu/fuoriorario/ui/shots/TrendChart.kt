@@ -25,6 +25,7 @@ import fuoriorario.composeapp.generated.resources.trend_title
 import fuoriorario.composeapp.generated.resources.trend_too_few
 import it.manu.fuoriorario.domain.TrendPoint
 import it.manu.fuoriorario.ui.components.Legend
+import it.manu.fuoriorario.ui.components.short
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import org.jetbrains.compose.resources.stringResource
 

@@ -54,7 +54,6 @@ import androidx.compose.ui.unit.sp
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.cancel
 import fuoriorario.composeapp.generated.resources.close
-import fuoriorario.composeapp.generated.resources.months_short
 import fuoriorario.composeapp.generated.resources.ok
 import fuoriorario.composeapp.generated.resources.period
 import fuoriorario.composeapp.generated.resources.period_30
@@ -119,6 +118,7 @@ import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
 import it.manu.fuoriorario.ui.components.SegmentedControl
 import it.manu.fuoriorario.ui.components.launchWrite
+import it.manu.fuoriorario.ui.components.short
 import it.manu.fuoriorario.ui.components.show
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlin.time.Instant
@@ -131,7 +131,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.getString
-import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 
 internal val zoneName = mapOf(
@@ -149,10 +148,6 @@ internal val zoneName = mapOf(
 
 /** Zone ids as in the database, for test tags: `made_pit`, `attempted_tl_plus`. */
 private val Zone.tag get() = name.lowercase()
-
-/** Prototype `fmtShort`: "6 ott". On web the months load asynchronously: empty until then. */
-@Composable
-internal fun LocalDate.short() = "$day ${stringArrayResource(Res.array.months_short).getOrElse(month.ordinal) { "" }}"
 
 /**
  * [player]'s Diario di tiro (PRD F3), theirs or followed by staff: header with "Registra sessione", period and its stats,

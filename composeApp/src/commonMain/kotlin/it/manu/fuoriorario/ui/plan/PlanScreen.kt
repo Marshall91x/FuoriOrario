@@ -97,8 +97,8 @@ import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
 import it.manu.fuoriorario.ui.components.SelectField
 import it.manu.fuoriorario.ui.components.launchWrite
+import it.manu.fuoriorario.ui.components.short
 import it.manu.fuoriorario.ui.components.show
-import it.manu.fuoriorario.ui.shots.short
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -270,7 +270,10 @@ private fun ItemRow(item: PlanItem, modifier: Modifier = Modifier) {
         item.videoUrl?.let { url ->
             Text(
                 stringResource(Res.string.plan_video),
-                Modifier.clickable(role = SemanticsRole.Button) { uris.openUri(url) },
+                Modifier.clickable(role = SemanticsRole.Button) {
+                    // No app for the link: nothing to open, but no crash.
+                    runCatching { uris.openUri(url) }
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = c.accent
