@@ -119,4 +119,32 @@ class CopyWeekTest {
         assertEquals(2, plans.items.size)
         assertTrue(plans.items.none { it.week == week.plus(DatePeriod(days = 7)) })
     }
+
+    @Test
+    fun emptyPreviousWeekDoesNotAskToConfirm() = runComposeUiTest {
+        val plans = plans()
+        open(plans)
+        // Last week has exercises, the one before has none.
+        onNodeWithContentDescription("Settimana precedente").performClick()
+        awaitText("Mikan drill")
+        onNodeWithText("Copia settimana precedente").performClick()
+        awaitText("La settimana precedente non ha esercizi")
+        assertTrue(onAllNodesWithText("Conferma copia").fetchSemanticsNodes().isEmpty())
+        assertEquals(2, plans.items.size)
+    }
+
+    @Test
+    fun weekChangedMeanwhileCopiesNothing() = runComposeUiTest {
+        val plans = plans()
+        open(plans)
+        awaitText("Nessun esercizio assegnato. Aggiungilo con “Aggiungi esercizio”.")
+        // Another staff fills the week after it was loaded here.
+        plans.items +=
+            PlanItem(week, "Tiro dal palleggio", Category.SHOOTING, days = listOf(1), id = "x1", memberId = "luca")
+
+        onNodeWithText("Copia settimana precedente").performClick()
+        awaitText("Il piano è cambiato nel frattempo: ecco quello aggiornato. Riprova.")
+        awaitText("Tiro dal palleggio")
+        assertEquals(listOf("x1"), plans.items.filter { it.week == week }.map { it.id })
+    }
 }

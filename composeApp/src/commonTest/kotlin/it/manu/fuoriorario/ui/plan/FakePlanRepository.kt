@@ -1,5 +1,6 @@
 package it.manu.fuoriorario.ui.plan
 
+import it.manu.fuoriorario.data.PlanChangedException
 import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.PlanCheck
@@ -37,8 +38,9 @@ class FakePlanRepository(vararg items: PlanItem, checks: Set<PlanCheck> = emptyS
         checks.removeAll { it.planItemId == item.id }
     }
 
-    override suspend fun copyPreviousWeek(member: Member, week: LocalDate): List<PlanItem> {
+    override suspend fun copyPreviousWeek(member: Member, week: LocalDate, seen: Int): List<PlanItem> {
         failIfAsked()
+        if (items(member, week).size != seen) throw PlanChangedException()
         return items(member, week.minus(DatePeriod(days = 7))).map { item ->
             item.copy(week = week, id = "p${items.size + 1}").also { items += it }
         }

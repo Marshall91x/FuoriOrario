@@ -53,11 +53,13 @@ import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.last_staff
 import fuoriorario.composeapp.generated.resources.load_failed
 import fuoriorario.composeapp.generated.resources.months_short
+import fuoriorario.composeapp.generated.resources.plan_changed
 import fuoriorario.composeapp.generated.resources.retry
 import fuoriorario.composeapp.generated.resources.save_denied
 import fuoriorario.composeapp.generated.resources.save_failed
 import it.manu.fuoriorario.data.LastStaffException
 import it.manu.fuoriorario.data.PermissionDeniedException
+import it.manu.fuoriorario.data.PlanChangedException
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -323,6 +325,7 @@ fun CoroutineScope.launchWrite(
     } catch (e: Exception) {
         val message = when (e) {
             is LastStaffException -> Res.string.last_staff
+            is PlanChangedException -> Res.string.plan_changed
             is PermissionDeniedException -> Res.string.save_denied
             else -> Res.string.save_failed
         }

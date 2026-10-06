@@ -53,12 +53,15 @@ class SupabasePlanRepository : PlanRepository {
         }.requireRow()
     }
 
-    override suspend fun copyPreviousWeek(member: Member, week: LocalDate): List<PlanItem> = mapErrors {
+    override suspend fun copyPreviousWeek(member: Member, week: LocalDate, seen: Int): List<PlanItem> = mapErrors(
+        mapOf("FO002" to ::PlanChangedException)
+    ) {
         supabase.postgrest.rpc(
             "copy_previous_week",
             buildJsonObject {
                 put("player", member.id!!)
                 put("target", week.toString())
+                put("seen", seen)
             }
         ).decodeList()
     }

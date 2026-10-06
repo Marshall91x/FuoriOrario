@@ -107,6 +107,7 @@ import fuoriorario.composeapp.generated.resources.plan_prev
 import fuoriorario.composeapp.generated.resources.plan_this_week
 import fuoriorario.composeapp.generated.resources.plan_video
 import it.manu.fuoriorario.core.today
+import it.manu.fuoriorario.data.PlanChangedException
 import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.domain.Category
 import it.manu.fuoriorario.domain.DESCRIPTION_MAX
@@ -140,6 +141,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringArrayResource
@@ -231,21 +233,29 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
         }
     }
 
-    /** Once the week is loaded; into one that already has exercises only on a second tap, the copies go after them. */
+    /** Once the week is loaded; into one with exercises only on a second tap, and only if there is something to copy. */
     fun copyPreviousWeek() {
         val current = items
         if (busy || current == null) return
-        if (current.isNotEmpty() && !confirmingCopy) {
-            confirmingCopy = true
-            return
-        }
         busy = true
-        // Success or not, the next copy asks again.
-        scope.launchWrite(toast, onDone = {
-            busy = false
+        scope.launchWrite(toast, onDone = { busy = false }) {
+            if (current.isNotEmpty() && !confirmingCopy) {
+                // Asks only when there is something to copy.
+                if (plans.items(player, week.minus(DatePeriod(days = 7))).isEmpty()) {
+                    launch { toast.show(getString(Res.string.plan_copy_empty)) }
+                } else {
+                    confirmingCopy = true
+                }
+                return@launchWrite
+            }
+            // Success or not, the next copy asks again.
             confirmingCopy = false
-        }) {
-            val copies = plans.copyPreviousWeek(player, week)
+            val copies = try {
+                plans.copyPreviousWeek(player, week, current.size)
+            } catch (e: PlanChangedException) {
+                attempt++
+                throw e
+            }
             items = current + copies
             launch {
                 toast.show(getString(if (copies.isEmpty()) Res.string.plan_copy_empty else Res.string.plan_copied))
