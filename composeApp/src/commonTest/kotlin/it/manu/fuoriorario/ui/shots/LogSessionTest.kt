@@ -87,10 +87,10 @@ class LogSessionTest {
         val shots = FakeShotRepository(older)
         setContent { App(FakeAuthRepository(luca), FakeRosterRepository(), shots) }
         awaitText("Prima")
-        onNodeWithTag("delete_old").performClick()
+        onNodeWithTag("delete_old").performScrollTo().performClick()
         awaitText("Conferma")
         assertEquals(1, shots.sessions.size)
-        onNodeWithTag("delete_old").performClick()
+        onNodeWithTag("delete_old").performScrollTo().performClick()
         awaitText("Sessione eliminata")
         awaitText("Nessuna sessione nel periodo. Registra la prima dopo il prossimo allenamento.")
         assertEquals(emptyList(), shots.sessions)

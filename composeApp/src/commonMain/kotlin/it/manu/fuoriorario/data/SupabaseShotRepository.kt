@@ -2,9 +2,14 @@ package it.manu.fuoriorario.data
 
 import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import it.manu.fuoriorario.core.supabase
 import it.manu.fuoriorario.domain.ShotSession
+import it.manu.fuoriorario.domain.Zone
+import kotlin.math.roundToInt
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 class SupabaseShotRepository : ShotRepository {
@@ -12,6 +17,12 @@ class SupabaseShotRepository : ShotRepository {
         order("date", Order.DESCENDING)
         order("created_at", Order.DESCENDING)
     }.decodeList()
+
+    // RLS shows only the signed-in member's team; stored as fractions (0.40).
+    override suspend fun zoneRefs(): Map<Zone, Int> = supabase.from("teams")
+        .select(Columns.list("zone_refs"))
+        .decodeSingle<TeamRefs>()
+        .zoneRefs.mapValues { (it.value * 100).roundToInt() }
 
     override suspend fun add(session: ShotSession): ShotSession = mapErrors {
         supabase.from("shot_sessions").insert(session) { select() }.decodeSingle()
@@ -33,3 +44,6 @@ class SupabaseShotRepository : ShotRepository {
         throw e
     }
 }
+
+@Serializable
+private class TeamRefs(@SerialName("zone_refs") val zoneRefs: Map<Zone, Double>)
