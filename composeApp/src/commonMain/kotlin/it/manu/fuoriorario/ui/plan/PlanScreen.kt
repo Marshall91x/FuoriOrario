@@ -89,6 +89,10 @@ import fuoriorario.composeapp.generated.resources.note_text
 import fuoriorario.composeapp.generated.resources.note_write
 import fuoriorario.composeapp.generated.resources.plan_add
 import fuoriorario.composeapp.generated.resources.plan_back
+import fuoriorario.composeapp.generated.resources.plan_copied
+import fuoriorario.composeapp.generated.resources.plan_copy
+import fuoriorario.composeapp.generated.resources.plan_copy_confirm
+import fuoriorario.composeapp.generated.resources.plan_copy_empty
 import fuoriorario.composeapp.generated.resources.plan_day_done
 import fuoriorario.composeapp.generated.resources.plan_day_rest
 import fuoriorario.composeapp.generated.resources.plan_day_todo
@@ -103,6 +107,7 @@ import fuoriorario.composeapp.generated.resources.plan_prev
 import fuoriorario.composeapp.generated.resources.plan_this_week
 import fuoriorario.composeapp.generated.resources.plan_video
 import it.manu.fuoriorario.core.today
+import it.manu.fuoriorario.data.PlanChangedException
 import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.domain.Category
 import it.manu.fuoriorario.domain.DESCRIPTION_MAX
@@ -136,6 +141,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringArrayResource
@@ -176,6 +182,7 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
     var adding by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<PlanItem?>(null) }
     var writingNote by remember { mutableStateOf(false) }
+    var confirmingCopy by remember(week) { mutableStateOf(false) }
     val thisWeek = remember { weekOf(today()) }
     val todayIndex = remember { dayIndex(today()) }
 
@@ -226,6 +233,36 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
         }
     }
 
+    /** Once the week is loaded; into one with exercises only on a second tap, and only if there is something to copy. */
+    fun copyPreviousWeek() {
+        val current = items
+        if (busy || current == null) return
+        busy = true
+        scope.launchWrite(toast, onDone = { busy = false }) {
+            if (current.isNotEmpty() && !confirmingCopy) {
+                // Asks only when there is something to copy.
+                if (plans.items(player, week.minus(DatePeriod(days = 7))).isEmpty()) {
+                    launch { toast.show(getString(Res.string.plan_copy_empty)) }
+                } else {
+                    confirmingCopy = true
+                }
+                return@launchWrite
+            }
+            // Success or not, the next copy asks again.
+            confirmingCopy = false
+            val copies = try {
+                plans.copyPreviousWeek(player, week, current.size)
+            } catch (e: PlanChangedException) {
+                attempt++
+                throw e
+            }
+            items = current + copies
+            launch {
+                toast.show(getString(if (copies.isEmpty()) Res.string.plan_copy_empty else Res.string.plan_copied))
+            }
+        }
+    }
+
     /** Trimmed; emptied, the note goes. */
     fun saveNote(text: String) {
         if (busy) return
@@ -271,11 +308,26 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
         items?.let { Completion(progress(it, checks)) }
         note?.let { StaffNote(it) }
         if (staff) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 PrimaryButton(stringResource(Res.string.plan_add), { adding = true })
                 GhostButton(
                     stringResource(if (note == null) Res.string.note_write else Res.string.note_edit),
                     { writingNote = true }
+                )
+                GhostButton(
+                    stringResource(
+                        if (confirmingCopy &&
+                            !items.isNullOrEmpty()
+                        ) {
+                            Res.string.plan_copy_confirm
+                        } else {
+                            Res.string.plan_copy
+                        }
+                    ),
+                    ::copyPreviousWeek
                 )
             }
         }

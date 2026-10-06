@@ -5,6 +5,9 @@ import it.manu.fuoriorario.domain.PlanCheck
 import it.manu.fuoriorario.domain.PlanItem
 import kotlinx.datetime.LocalDate
 
+/** The week changed since it was loaded: reload before writing again. */
+class PlanChangedException : Exception()
+
 /**
  * Weekly plans and their notes: RLS lets a player read only their own, staff read and write those of their team's players.
  * Checks are the other way round: only the player checks, staff read them.
@@ -21,6 +24,13 @@ interface PlanRepository {
 
     /** Removes [item] with its checks. Throws [PermissionDeniedException]. */
     suspend fun remove(item: PlanItem)
+
+    /**
+     * Copies [member]'s exercises from the week before [week] into it, without checks; returns the copies, none when
+     * that week was empty. [seen] is how many exercises [week] had when loaded: if that changed, nothing is copied.
+     * Throws [PlanChangedException], [PermissionDeniedException].
+     */
+    suspend fun copyPreviousWeek(member: Member, week: LocalDate, seen: Int): List<PlanItem>
 
     /** [member]'s staff note for [week], if any. */
     suspend fun note(member: Member, week: LocalDate): String?
