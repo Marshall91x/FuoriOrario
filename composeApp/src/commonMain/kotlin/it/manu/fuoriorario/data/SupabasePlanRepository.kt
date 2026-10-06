@@ -5,6 +5,7 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import it.manu.fuoriorario.core.supabase
+import it.manu.fuoriorario.domain.LibraryExercise
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.PlanCheck
 import it.manu.fuoriorario.domain.PlanItem
@@ -65,6 +66,10 @@ class SupabasePlanRepository : PlanRepository {
             }
         ).decodeList()
     }
+
+    override suspend fun library(): List<LibraryExercise> = supabase.from("exercise_library").select {
+        order("sort", Order.ASCENDING)
+    }.decodeList()
 
     override suspend fun note(member: Member, week: LocalDate): String? =
         supabase.from("weekly_notes").select(Columns.list("note")) {

@@ -71,6 +71,8 @@ import fuoriorario.composeapp.generated.resources.exercise_edit
 import fuoriorario.composeapp.generated.resources.exercise_error_days
 import fuoriorario.composeapp.generated.resources.exercise_error_title
 import fuoriorario.composeapp.generated.resources.exercise_error_video
+import fuoriorario.composeapp.generated.resources.exercise_library
+import fuoriorario.composeapp.generated.resources.exercise_library_failed
 import fuoriorario.composeapp.generated.resources.exercise_new
 import fuoriorario.composeapp.generated.resources.exercise_remove
 import fuoriorario.composeapp.generated.resources.exercise_remove_confirm
@@ -111,6 +113,7 @@ import it.manu.fuoriorario.data.PlanChangedException
 import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.domain.Category
 import it.manu.fuoriorario.domain.DESCRIPTION_MAX
+import it.manu.fuoriorario.domain.LibraryExercise
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.PlanCheck
 import it.manu.fuoriorario.domain.PlanItem
@@ -183,6 +186,7 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
     var editing by remember { mutableStateOf<PlanItem?>(null) }
     var writingNote by remember { mutableStateOf(false) }
     var confirmingCopy by remember(week) { mutableStateOf(false) }
+    var library by remember { mutableStateOf(emptyList<LibraryExercise>()) }
     val thisWeek = remember { weekOf(today()) }
     val todayIndex = remember { dayIndex(today()) }
 
@@ -200,6 +204,18 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
             throw e
         } catch (_: Exception) {
             loadFailed = true
+        }
+    }
+
+    // On the first "Aggiungi esercizio", again on the next if it failed: meanwhile the exercise is typed freely.
+    LaunchedEffect(adding) {
+        if (!adding || library.isNotEmpty()) return@LaunchedEffect
+        try {
+            library = plans.library()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            launch { toast.show(getString(Res.string.exercise_library_failed)) }
         }
     }
 
@@ -364,6 +380,7 @@ fun PlanScreen(plans: PlanRepository, player: Member, staff: Boolean, week: Loca
             player.displayName,
             week,
             editing,
+            library,
             busy,
             onDismiss = {
                 adding = false
@@ -646,14 +663,15 @@ private fun Sheet(label: String, name: String, onDismiss: () -> Unit, content: @
 
 /**
  * Prototype `openEx`: title, area, volume, description, video and days, empty for a new exercise (Mon, Wed, Fri by
- * default) or filled from [item] to edit it, which can also be removed with a second tap. The screen saves, so a
- * failure leaves the sheet open as typed.
+ * default) or filled from [item] to edit it, which can also be removed with a second tap. A new one can start from an
+ * exercise of the [library], copied into the form. The screen saves, so a failure leaves the sheet open as typed.
  */
 @Composable
 private fun ExerciseSheet(
     name: String,
     week: LocalDate,
     item: PlanItem?,
+    library: List<LibraryExercise>,
     busy: Boolean,
     onDismiss: () -> Unit,
     onSave: (PlanItem) -> Unit,
@@ -677,6 +695,14 @@ private fun ExerciseSheet(
     }
 
     Sheet(stringResource(if (item == null) Res.string.exercise_new else Res.string.exercise_edit), name, onDismiss) {
+        if (item == null && library.isNotEmpty()) {
+            LibraryPicker(library) {
+                title = it.title
+                category = it.category
+                volume = it.volume.orEmpty()
+                description = it.description.orEmpty()
+            }
+        }
         Field(stringResource(Res.string.exercise_title), title, { title = it.take(TITLE_MAX) }, "exercise_title")
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             val names = categoryNames
@@ -732,6 +758,21 @@ private fun ExerciseSheet(
                     style = GhostStyle.DANGER
                 )
             }
+        }
+    }
+}
+
+/** Prototype `.lib`: a pill per library exercise. */
+@Composable
+private fun LibraryPicker(library: List<LibraryExercise>, onPick: (LibraryExercise) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+        Text(
+            stringResource(Res.string.exercise_library).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = FuoriOrarioTheme.colors.muted
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            library.forEach { GhostButton(it.title, { onPick(it) }, style = GhostStyle.PILL) }
         }
     }
 }

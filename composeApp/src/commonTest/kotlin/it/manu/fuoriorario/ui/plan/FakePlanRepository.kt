@@ -2,6 +2,7 @@ package it.manu.fuoriorario.ui.plan
 
 import it.manu.fuoriorario.data.PlanChangedException
 import it.manu.fuoriorario.data.PlanRepository
+import it.manu.fuoriorario.domain.LibraryExercise
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.PlanCheck
 import it.manu.fuoriorario.domain.PlanItem
@@ -9,12 +10,19 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 
-class FakePlanRepository(vararg items: PlanItem, checks: Set<PlanCheck> = emptySet()) : PlanRepository {
+class FakePlanRepository(
+    vararg items: PlanItem,
+    checks: Set<PlanCheck> = emptySet(),
+    private val library: List<LibraryExercise> = emptyList()
+) : PlanRepository {
     val items = items.toMutableList()
     val checks = checks.toMutableSet()
 
     /** Notes by (member id, week). */
     val notes = mutableMapOf<Pair<String, LocalDate>, String>()
+
+    /** Next library load fails like a network error. */
+    var failLibrary = false
 
     /** Next write fails like a network error. */
     var failNext = false
@@ -44,6 +52,14 @@ class FakePlanRepository(vararg items: PlanItem, checks: Set<PlanCheck> = emptyS
         return items(member, week.minus(DatePeriod(days = 7))).map { item ->
             item.copy(week = week, id = "p${items.size + 1}").also { items += it }
         }
+    }
+
+    override suspend fun library(): List<LibraryExercise> {
+        if (failLibrary) {
+            failLibrary = false
+            error("offline")
+        }
+        return library
     }
 
     override suspend fun note(member: Member, week: LocalDate) = notes[member.id!! to week]

@@ -45,7 +45,7 @@ composeApp/src/
 iosApp/                    # progetto Xcode del wizard
 supabase/
   migrations/              # schema + RLS versionati
-  seed.sql                 # squadra, primo staff, libreria e riferimenti di default
+  seed.sql                 # squadra e primo staff (libreria e riferimenti di default arrivano dallo schema)
   tests/                   # test pgTAP delle RLS
 ```
 
@@ -107,7 +107,7 @@ shot_sessions (
 
 exercise_library (
   id uuid pk, team_id uuid fk teams,
-  title text not null, category text not null, volume text, description text, video_url text,
+  title text not null, category category not null, volume text, description text, video_url text,   -- category: dominio condiviso con plan_items
   sort int not null default 0
 )
 
