@@ -68,7 +68,6 @@ data class LibraryExercise(
     val category: Category,
     val volume: String? = null,
     val description: String? = null,
-    @SerialName("video_url") val videoUrl: String? = null,
     val id: String? = null
 )
 

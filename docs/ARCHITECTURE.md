@@ -162,7 +162,7 @@ Funzioni helper `security definer stable`:
 | teams | membri della squadra | — (seed) | staff | — |
 | members | staff della squadra; il giocatore solo la propria riga | staff | staff | staff |
 | shot_sessions | staff; giocatore proprie | staff; giocatore con `member_id` proprio | — | staff; giocatore proprie |
-| exercise_library | membri della squadra | staff | staff | staff |
+| exercise_library | membri della squadra | staff (F5) | staff (F5) | staff (F5) |
 | plan_items, weekly_notes | staff; giocatore proprie | staff | staff | staff |
 | plan_checks | staff; giocatore proprie | solo giocatore proprietario dell'item | — | solo giocatore proprietario |
 

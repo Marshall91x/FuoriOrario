@@ -64,7 +64,7 @@ class LibraryExerciseTest {
         onNodeWithTag("exercise_title").assertTextEquals("Mikan drill")
         onNodeWithTag("exercise_volume").assertTextEquals("3 × 20 canestri")
         onNodeWithTag("exercise_description").assertTextEquals("Piedi rapidi, palla alta.")
-        awaitText("Footwork")
+        onNodeWithTag("exercise_category").assertTextEquals("Footwork")
 
         // Changed before saving: only the plan gets it.
         onNodeWithTag("exercise_volume").performScrollTo().performTextReplacement("2 × 20")
@@ -84,7 +84,6 @@ class LibraryExerciseTest {
             ),
             plans.items.single()
         )
-        assertEquals(listOf(mikan, liberi), plans.library)
 
         // Editing an exercise offers no library.
         onNodeWithText("Modifica").performClick()

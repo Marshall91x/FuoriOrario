@@ -699,7 +699,6 @@ private fun ExerciseSheet(
                 category = it.category
                 volume = it.volume.orEmpty()
                 description = it.description.orEmpty()
-                video = it.videoUrl.orEmpty()
             }
         }
         Field(stringResource(Res.string.exercise_title), title, { title = it.take(TITLE_MAX) }, "exercise_title")

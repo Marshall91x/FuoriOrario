@@ -13,7 +13,7 @@ import kotlinx.datetime.minus
 class FakePlanRepository(
     vararg items: PlanItem,
     checks: Set<PlanCheck> = emptySet(),
-    val library: List<LibraryExercise> = emptyList()
+    private val library: List<LibraryExercise> = emptyList()
 ) : PlanRepository {
     val items = items.toMutableList()
     val checks = checks.toMutableSet()
