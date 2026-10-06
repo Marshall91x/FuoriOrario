@@ -16,6 +16,8 @@ class ShotSessionTest {
         assertEquals(Shots(0, 5), Shots(0, 5).stepMade(up = false))
         assertEquals(Shots(2, 10), Shots(2, 5).stepAttempted(up = true))
         assertEquals(Shots(2, 0), Shots(2, 3).stepAttempted(up = false))
+        assertEquals(Shots(12, 12), Shots(1, 5).withMade(12))
+        assertEquals(Shots(3, 5), Shots(1, 5).withMade(3))
     }
 
     @Test

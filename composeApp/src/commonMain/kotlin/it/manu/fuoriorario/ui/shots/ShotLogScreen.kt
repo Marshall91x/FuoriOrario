@@ -82,6 +82,7 @@ import fuoriorario.composeapp.generated.resources.zone_mld
 import fuoriorario.composeapp.generated.resources.zone_mls
 import fuoriorario.composeapp.generated.resources.zone_pit
 import fuoriorario.composeapp.generated.resources.zone_tl
+import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.NOTE_MAX
@@ -102,7 +103,6 @@ import it.manu.fuoriorario.ui.components.PrimaryButton
 import it.manu.fuoriorario.ui.components.launchWrite
 import it.manu.fuoriorario.ui.components.show
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
-import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -110,7 +110,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
@@ -201,7 +200,10 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
                 )
                 Text(me.displayName.uppercase(), style = MaterialTheme.typography.titleLarge)
             }
-            PrimaryButton(stringResource(Res.string.shots_log), { logging = true })
+            PrimaryButton(stringResource(Res.string.shots_log), {
+                confirmingDelete = null
+                logging = true
+            })
         }
     }
 
@@ -275,7 +277,7 @@ private fun SessionRow(session: ShotSession, confirming: Boolean, onDelete: () -
 @Composable
 private fun LogSheet(name: String, busy: Boolean, onDismiss: () -> Unit, onSave: (ShotSession) -> Unit) {
     val c = FuoriOrarioTheme.colors
-    val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
+    val today = remember { today() }
     var date by remember { mutableStateOf(today) }
     var zones by remember { mutableStateOf(Zone.entries.associateWith { Shots() }) }
     var note by remember { mutableStateOf("") }
@@ -398,7 +400,7 @@ private fun ZoneRow(zone: Zone, shots: Shots, onChange: (Shots) -> Unit) {
             "made_${zone.tag}",
             stringResource(Res.string.session_made),
             shots.made,
-            onType = { onChange(shots.copy(made = it)) },
+            onType = { onChange(shots.withMade(it)) },
             onStep = { onChange(shots.stepMade(it)) }
         )
         Stepper(

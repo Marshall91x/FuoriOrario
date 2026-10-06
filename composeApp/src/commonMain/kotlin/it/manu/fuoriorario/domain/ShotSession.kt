@@ -54,11 +54,11 @@ data class Shots(val made: Int = 0, val attempted: Int = 0) {
 
     operator fun plus(other: Shots) = Shots(made + other.made, attempted + other.attempted)
 
-    /** "+" on made adds 1 and raises attempted to match. */
-    fun stepMade(up: Boolean): Shots {
-        val m = (made + if (up) 1 else -1).coerceAtLeast(0)
-        return Shots(m, maxOf(attempted, m))
-    }
+    /** Made more than attempted raises attempted to match. */
+    fun withMade(made: Int) = Shots(made, maxOf(attempted, made))
+
+    /** "+" on made adds 1. */
+    fun stepMade(up: Boolean) = withMade((made + if (up) 1 else -1).coerceAtLeast(0))
 
     /** "+" on attempted adds [ATTEMPTS_STEP]. */
     fun stepAttempted(up: Boolean) =
