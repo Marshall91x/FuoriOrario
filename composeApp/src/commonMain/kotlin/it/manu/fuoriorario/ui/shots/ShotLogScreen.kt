@@ -13,9 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -40,8 +37,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role as SemanticsRole
@@ -121,6 +116,7 @@ import it.manu.fuoriorario.ui.components.GhostStyle
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
+import it.manu.fuoriorario.ui.components.SegmentedControl
 import it.manu.fuoriorario.ui.components.launchWrite
 import it.manu.fuoriorario.ui.components.show
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
@@ -229,7 +225,14 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
                 logging = true
             })
         }
-        PeriodPicker(period) { period = it }
+        val periodLabel = stringResource(Res.string.period)
+        SegmentedControl(
+            periodName,
+            period,
+            { period = it },
+            tag = { "period_${it.name.lowercase()}" },
+            Modifier.semantics { contentDescription = periodLabel }
+        )
         inPeriod?.let { StatsGrid(stats(it)) }
     }
 
@@ -258,42 +261,11 @@ fun ShotLogScreen(shots: ShotRepository, me: Member) {
     if (logging) LogSheet(me.displayName, busy, onDismiss = { logging = false }, onSave = ::save)
 }
 
-private val periodLabel = mapOf(
+private val periodName = mapOf(
     Period.DAYS_7 to Res.string.period_7,
     Period.DAYS_30 to Res.string.period_30,
     Period.SEASON to Res.string.period_season
 )
-
-/** Prototype `.seg`: one pill per period, the selected one inked. */
-@Composable
-private fun PeriodPicker(selected: Period, onSelect: (Period) -> Unit) {
-    val c = FuoriOrarioTheme.colors
-    val label = stringResource(Res.string.period)
-    Row(
-        Modifier
-            .border(1.dp, c.line, CircleShape)
-            .background(c.surface2, CircleShape)
-            .padding(3.dp)
-            .selectableGroup()
-            .semantics { contentDescription = label }
-    ) {
-        Period.entries.forEach { p ->
-            val on = p == selected
-            Text(
-                stringResource(periodLabel.getValue(p)),
-                Modifier
-                    .clip(CircleShape)
-                    .background(if (on) c.ink else Color.Transparent)
-                    .selectable(on, role = SemanticsRole.Tab) { onSelect(p) }
-                    .padding(12.dp, 5.dp),
-                color = if (on) c.bg else c.muted,
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-    }
-}
 
 /** Prototype `.stats`: 4 columns, 2 when narrow. Percentages show "—" without attempts. */
 @Composable

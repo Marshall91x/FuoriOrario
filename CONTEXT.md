@@ -22,6 +22,8 @@ Linguaggio comune del progetto. UI e documentazione in italiano, codice in ingle
 | Riferimento | `ZoneReference` | Percentuale attesa per zona, per squadra, modificabile dallo staff (default: pitturato 55%, media 40%, tripla angolo 36%, tripla 33%, liberi 70%). |
 | Classe zona | `ZoneHeat` | `HOT` (≥110% del riferimento), `EVEN`, `COLD` (<85%), `NONE` (nessun tiro). Colora la mappa. |
 | Dal campo | `fieldGoal` | Tutte le zone escluso i tiri liberi. |
+| Da tre | `three` | Le 5 zone oltre l'arco (triple). |
+| Tiri presi | `attempted` | Tentati in tutte le zone, liberi compresi. |
 | Periodo | `Period` | Filtro statistiche: 7 giorni, 30 giorni, Stagione. |
 | Stagione | `Season` | Dal 1° settembre dell'anno N al 31 agosto dell'anno N+1. |
 | Andamento | `Trend` | Grafico delle percentuali (dal campo e liberi) per sessione, ultime 14. |

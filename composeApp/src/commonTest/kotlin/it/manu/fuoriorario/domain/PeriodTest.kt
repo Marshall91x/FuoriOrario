@@ -29,6 +29,8 @@ class PeriodTest {
         fun on(date: LocalDate) = ShotSession(date, mapOf(Zone.TL to Shots(1, 1)))
         val sessions = listOf(today, LocalDate(2026, 9, 30), LocalDate(2026, 9, 29), LocalDate(2026, 8, 31)).map(::on)
         assertEquals(sessions.take(2), Period.DAYS_7.filter(sessions, today))
+        // From 29 October, 30 September is the 30th day, 29 September is out.
+        assertEquals(sessions.take(2), Period.DAYS_30.filter(sessions, LocalDate(2026, 10, 29)))
         assertEquals(sessions.take(3), Period.SEASON.filter(sessions, today))
         // The previous season ends on 31 August.
         assertEquals(sessions.takeLast(1), Period.SEASON.filter(sessions, LocalDate(2026, 8, 31)))

@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -35,7 +33,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role as SemanticsRole
 import androidx.compose.ui.text.font.FontWeight
@@ -87,6 +84,7 @@ import it.manu.fuoriorario.ui.components.GhostStyle
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
+import it.manu.fuoriorario.ui.components.SegmentedControl
 import it.manu.fuoriorario.ui.components.launchWrite
 import it.manu.fuoriorario.ui.components.show
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
@@ -374,32 +372,12 @@ private fun RoleField(tag: String, value: Role, onChange: (Role) -> Unit) {
             style = MaterialTheme.typography.labelSmall,
             color = c.muted
         )
-        Row(
-            Modifier
-                .background(c.surface2, RoundedCornerShape(50))
-                .border(1.dp, c.line, RoundedCornerShape(50))
-                .padding(3.dp)
-                .selectableGroup()
-        ) {
-            listOf(
-                Role.PLAYER to Res.string.role_player,
-                Role.STAFF to Res.string.role_staff
-            ).forEach { (role, label) ->
-                val selected = role == value
-                Text(
-                    stringResource(label),
-                    Modifier
-                        .testTag("${tag}_role_${role.name.lowercase()}")
-                        .background(if (selected) c.ink else Color.Transparent, RoundedCornerShape(50))
-                        .selectable(selected, role = SemanticsRole.RadioButton) { onChange(role) }
-                        .padding(horizontal = 12.dp, vertical = 5.dp),
-                    color = if (selected) c.bg else c.muted,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
+        SegmentedControl(
+            mapOf(Role.PLAYER to Res.string.role_player, Role.STAFF to Res.string.role_staff),
+            value,
+            onChange,
+            tag = { "${tag}_role_${it.name.lowercase()}" }
+        )
     }
 }
 
