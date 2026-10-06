@@ -12,8 +12,11 @@ class SupabaseRosterRepository : RosterRepository {
         try {
             supabase.from("members").insert(member)
         } catch (e: PostgrestRestException) {
-            if (e.code == "23505") throw EmailTakenException() // unique (team_id, email)
-            throw e
+            when (e.code) {
+                "23505" -> throw EmailTakenException() // unique (team_id, email)
+                "42501" -> throw PermissionDeniedException()
+                else -> throw e
+            }
         }
     }
 }

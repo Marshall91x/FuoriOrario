@@ -15,6 +15,7 @@ import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 @OptIn(ExperimentalTestApi::class)
 class AddPlayerTest {
@@ -53,6 +54,6 @@ class AddPlayerTest {
         awaitText("Marco R. aggiunto alla rosa")
         awaitText("Guardia")
         onNodeWithTag("player_name").assertTextEquals("")
-        kotlin.test.assertEquals("marco@example.com", roster.members.last().email)
+        assertEquals("marco@example.com", roster.members.last().email)
     }
 }

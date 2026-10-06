@@ -52,8 +52,10 @@ import fuoriorario.composeapp.generated.resources.roster_add_title
 import fuoriorario.composeapp.generated.resources.roster_empty_hint
 import fuoriorario.composeapp.generated.resources.roster_empty_title
 import fuoriorario.composeapp.generated.resources.roster_title
+import fuoriorario.composeapp.generated.resources.save_denied
 import fuoriorario.composeapp.generated.resources.save_failed
 import it.manu.fuoriorario.data.EmailTakenException
+import it.manu.fuoriorario.data.PermissionDeniedException
 import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.POSITIONS
@@ -196,6 +198,8 @@ private fun PlayerForm(team: List<Member>, roster: RosterRepository, onAdded: (M
                 throw e
             } catch (_: EmailTakenException) {
                 error = PlayerError.EMAIL_TAKEN
+            } catch (_: PermissionDeniedException) {
+                launch { toast.show(getString(Res.string.save_denied)) }
             } catch (_: Exception) {
                 launch { toast.show(getString(Res.string.save_failed)) }
             } finally {
