@@ -100,7 +100,7 @@
     <string name="heat_none">Nessun tiro</string>
 
     <string name="login_title">Accedi</string>
-    <string name="login_email_hint">Inserisci l\'email che hai dato allo staff: ti mandiamo un codice di 6 cifre.</string>
+    <string name="login_email_hint">Inserisci l'email che hai dato allo staff: ti mandiamo un codice di 6 cifre.</string>
     <string name="login_email">Email</string>
     <string name="login_send">Invia codice</string>
     <string name="login_code_title">Controlla la posta</string>
@@ -116,13 +116,13 @@
     <string name="privacy_title">Informativa privacy</string>
     <string name="privacy_intro">Prima di iniziare, ecco come vengono usati i tuoi dati.</string>
     <string name="privacy_controller_title">Chi li tratta</string>
-    <string name="privacy_controller_body">Il titolare del trattamento è Emanuele Del Monte, che gestisce l\'app per la squadra.</string>
+    <string name="privacy_controller_body">Il titolare del trattamento è Emanuele Del Monte, che gestisce l'app per la squadra.</string>
     <string name="privacy_data_title">Quali dati</string>
     <string name="privacy_data_body">Email e nome visualizzato (anche un soprannome); numero di maglia e ruolo in campo se li indichi; le sessioni di tiro, i piani settimanali e le spunte degli esercizi. Niente data di nascita, foto o altro.</string>
     <string name="privacy_purpose_title">Perché</string>
     <string name="privacy_purpose_body">Solo per farti accedere e seguire il tuo lavoro individuale insieme allo staff della squadra. Niente pubblicità, profilazione o cessione a terzi.</string>
     <string name="privacy_where_title">Dove</string>
-    <string name="privacy_where_body">Su Supabase, con server nell\'Unione Europea. Li vedi tu e lo staff della tua squadra.</string>
+    <string name="privacy_where_body">Su Supabase, con server nell'Unione Europea. Li vedi tu e lo staff della tua squadra.</string>
     <string name="privacy_delete_title">Cancellazione</string>
     <string name="privacy_delete_body">Chiedila allo staff o al titolare e i tuoi dati vengono eliminati. Quando un membro viene tolto dalla squadra, tutti i suoi dati vengono eliminati.</string>
     <string name="privacy_accept">Ho letto</string>
