@@ -23,6 +23,8 @@ class PrivacyTest {
         }
 
         awaitText("Ho letto")
+        // Compose resources keep a backslash before an apostrophe: strings.xml must not escape it.
+        awaitText("Su Supabase, con server nell'Unione Europea. Li vedi tu e lo staff della tua squadra.")
         assertTrue(onAllNodes(hasText("+ Registra sessione")).fetchSemanticsNodes().isEmpty())
 
         onNodeWithText("Ho letto").performScrollTo().performClick()
