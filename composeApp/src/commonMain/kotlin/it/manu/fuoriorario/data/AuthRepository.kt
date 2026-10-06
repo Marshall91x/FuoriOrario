@@ -30,5 +30,8 @@ interface AuthRepository {
     /** Records the privacy notice acceptance; [session] then emits the updated member. */
     suspend fun acknowledgePrivacy()
 
+    /** Reloads the member after staff changed their own row: [session] emits it again, or [Session.SignedOut] if they were removed. */
+    fun refresh()
+
     suspend fun signOut()
 }

@@ -148,6 +148,7 @@ Note:
 2. L'utente chiede l'OTP. Un **Before User Created auth hook** (funzione Postgres) rifiuta le email non presenti in `members` → nessun account orfano. Verificato in M1: GoTrue risponde 403 con `msg: "not_a_member"`. In cloud l'hook si attiva con `supabase config push`.
 3. Trigger `after insert on auth.users`: `update members set user_id = new.id where email = new.email and user_id is null`.
 4. Client: legge il proprio `members` → ruolo e `privacy_ack_at`; se null mostra l'informativa e chiama RPC `ack_privacy()`.
+5. Togliere un membro (trigger `after delete on members`) cancella anche il suo account in `auth.users` (ADR 0006): se viene riaggiunto, al prossimo OTP si crea un account nuovo e il punto 3 lo ricollega. Il client, se non trova più la propria riga, esce.
 
 ## Permessi (RLS)
 
@@ -165,13 +166,15 @@ Funzioni helper `security definer stable`:
 | plan_checks | staff; giocatore proprie | solo giocatore proprietario dell'item | — | solo giocatore proprietario |
 
 `ack_privacy()` è l'unica scrittura del giocatore su `members` (RPC, aggiorna solo `privacy_ack_at`).
+Trigger `keep_one_staff` (`before update of role, team_id or delete on members`): una squadra non resta mai senza staff; togliere o declassare l'ultimo alza `last_staff` (SQLSTATE `FO001`). Cancellare l'intera squadra resta possibile.
 Le RLS sono la vera barriera: la UI nasconde, il database impedisce. Coperte da test pgTAP in `supabase/tests/`.
 
 ## Gestione errori e dati
 
 - Nessuna cache: ogni schermata carica all'apertura; pull-to-refresh.
 - Errore di rete in salvataggio → toast "Salvataggio non riuscito. Riprova tra poco.", il foglio resta aperto con i dati.
-- Errore di permesso (RLS) → toast dedicato; non dovrebbe accadere se la UI rispetta i ruoli.
+- Errore di permesso (RLS) → toast dedicato; non dovrebbe accadere se la UI rispetta i ruoli. Update e delete filtrati dalla RLS non danno errore: il client chiede la riga indietro e, se non arriva, lo tratta come permesso negato.
+- Ultimo staff (`FO001`) → toast "Serve almeno un membro dello staff nella squadra."
 
 ## Ambienti
 

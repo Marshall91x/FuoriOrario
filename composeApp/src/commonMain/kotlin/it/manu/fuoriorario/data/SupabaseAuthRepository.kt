@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
 
 class SupabaseAuthRepository(private val client: SupabaseClient = supabase) : AuthRepository {
-    /** Bumped to reload the member after it changes (privacy acknowledgement). */
+    /** Bumped to reload the member after it changes. */
     private val reload = MutableStateFlow(0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -82,8 +82,10 @@ class SupabaseAuthRepository(private val client: SupabaseClient = supabase) : Au
 
     override suspend fun acknowledgePrivacy() {
         client.postgrest.rpc("ack_privacy")
-        reload.update { it + 1 }
+        refresh()
     }
+
+    override fun refresh() = reload.update { it + 1 }
 
     override suspend fun signOut() {
         try {

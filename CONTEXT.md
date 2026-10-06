@@ -8,7 +8,8 @@ Linguaggio comune del progetto. UI e documentazione in italiano, codice in ingle
 | Membro | `Member` | Una persona in una squadra: email, nome visualizzato, ruolo. Esiste prima del suo account (lo crea lo staff). |
 | Staff | `Role.STAFF` | Membro che gestisce rosa, piani, libreria e riferimenti. Vede i dati di tutti. Può essere più di uno. |
 | Giocatore | `Role.PLAYER` | Membro che registra i propri tiri e spunta il proprio piano. Vede solo i propri dati. |
-| Rosa | `Roster` | L'elenco dei giocatori della squadra. |
+| Rosa | `Roster` | L'elenco dei membri della squadra: i giocatori e, a parte, lo staff. Lo staff la gestisce nella scheda Squadra. |
+| Togliere (un membro) | `remove` | Lo elimina dalla squadra con tutti i suoi dati e il suo account. Doppio tocco "Togli" → "Conferma". La squadra deve restare con almeno uno staff. |
 | Nome visualizzato | `displayName` | Testo libero (anche soprannome, es. "Luca B."). Unico dato anagrafico obbligatorio oltre all'email. |
 | Numero | `jerseyNumber` | Numero di maglia, facoltativo. |
 | Ruolo in campo | `position` | Playmaker, Guardia, Ala, Ala grande, Centro. Facoltativo. Da non confondere con *ruolo* staff/giocatore. |

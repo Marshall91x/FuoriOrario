@@ -9,7 +9,7 @@ Utenti reali, inclusi minorenni dai 14 anni (età del consenso digitale in Itali
 - Dati raccolti: email e nome visualizzato (obbligatori, anche soprannome); numero e ruolo in campo facoltativi; sessioni di tiro, piani, spunte. Niente data di nascita, foto o altro.
 - Supabase in regione UE.
 - Informativa di una pagina al primo accesso con accettazione registrata (`privacy_ack_at`): chi tratta, quali dati, perché, dove, come chiedere la cancellazione.
-- Cancellazione su richiesta via email, eseguita a mano; togliere un membro elimina i suoi dati (cascade).
+- Cancellazione su richiesta via email, eseguita a mano; togliere un membro elimina i suoi dati (cascade) **e il suo account** (`auth.users`): non resta nessuna email di chi non è più in squadra. Se lo staff lo riaggiunge, al primo accesso riparte da un account nuovo, informativa compresa.
 
 ## Rimandato a M8
-Privacy policy pubblica, eliminazione account in-app, revisione dei consensi e del target d'età per gli store.
+Privacy policy pubblica, eliminazione account in-app da parte del membro stesso, revisione dei consensi e del target d'età per gli store.

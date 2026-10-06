@@ -44,6 +44,7 @@ import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.LoginScreen
 import it.manu.fuoriorario.ui.auth.PrivacyScreen
 import it.manu.fuoriorario.ui.components.GhostButton
+import it.manu.fuoriorario.ui.components.GhostStyle
 import it.manu.fuoriorario.ui.components.Page
 import it.manu.fuoriorario.ui.home.Home
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
@@ -76,7 +77,7 @@ fun App(
                 Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).widthIn(max = 560.dp)
             )
             if (member?.privacyAckAt != null) {
-                Home(member, roster)
+                Home(member, roster, onSelfChanged = auth::refresh)
             } else {
                 Page(Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))) {
                     when (session) {
@@ -122,7 +123,7 @@ private fun Header(member: Member?, onSignOut: () -> Unit, modifier: Modifier = 
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(member.displayName, Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-                GhostButton(stringResource(Res.string.sign_out), onSignOut, pill = true)
+                GhostButton(stringResource(Res.string.sign_out), onSignOut, style = GhostStyle.PILL)
             }
         }
         HorizontalDivider(Modifier.padding(top = 10.dp), color = c.line)
