@@ -115,10 +115,12 @@ plan_items (
   id uuid pk, team_id uuid fk teams,
   member_id uuid fk members on delete cascade,
   week date not null check (extract(isodow from week) = 1),   -- lunedì
-  title text not null, category text not null, volume text, description text,
+  title text not null check (length(btrim) between 1 and 60),
+  category text not null check (in le 6 aree), volume text check (length <= 40), description text check (length <= 400),
   video_url text check (video_url is null or video_url ~ '^https://'),
-  days smallint[] not null check (cardinality(days) > 0 and days <@ '{0,1,2,3,4,5,6}'),
-  sort int not null default 0
+  days smallint[] not null check (cardinality(days) > 0 and days <@ '{0,1,2,3,4,5,6}'),   -- 0 = lunedì
+  sort int not null default 0,
+  created_at timestamptz default now()
 )
 
 weekly_notes (

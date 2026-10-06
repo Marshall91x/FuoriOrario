@@ -46,23 +46,25 @@ import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.ic_tab_plan
 import fuoriorario.composeapp.generated.resources.ic_tab_shot_log
 import fuoriorario.composeapp.generated.resources.ic_tab_team
-import fuoriorario.composeapp.generated.resources.placeholder_plan
-import fuoriorario.composeapp.generated.resources.placeholder_title
 import fuoriorario.composeapp.generated.resources.roster_empty_hint
 import fuoriorario.composeapp.generated.resources.roster_empty_title
 import fuoriorario.composeapp.generated.resources.tab_plan
 import fuoriorario.composeapp.generated.resources.tab_shot_log
 import fuoriorario.composeapp.generated.resources.tab_team
+import it.manu.fuoriorario.core.today
+import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.Role
+import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.ui.components.LoadFailed
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Page
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.ToastHost
+import it.manu.fuoriorario.ui.plan.PlanScreen
 import it.manu.fuoriorario.ui.roster.RosterScreen
 import it.manu.fuoriorario.ui.shots.ShotLogScreen
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
@@ -71,27 +73,23 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-/** Bottom bar sections; [name] is the route. [placeholder] until the section is built. */
-private enum class Tab(
-    val label: StringResource,
-    val icon: DrawableResource,
-    val placeholder: StringResource?,
-    val staffOnly: Boolean = false
-) {
-    SHOT_LOG(Res.string.tab_shot_log, Res.drawable.ic_tab_shot_log, null),
-    PLAN(Res.string.tab_plan, Res.drawable.ic_tab_plan, Res.string.placeholder_plan),
-    TEAM(Res.string.tab_team, Res.drawable.ic_tab_team, null, staffOnly = true)
+/** Bottom bar sections; [name] is the route. */
+private enum class Tab(val label: StringResource, val icon: DrawableResource, val staffOnly: Boolean = false) {
+    SHOT_LOG(Res.string.tab_shot_log, Res.drawable.ic_tab_shot_log),
+    PLAN(Res.string.tab_plan, Res.drawable.ic_tab_plan),
+    TEAM(Res.string.tab_team, Res.drawable.ic_tab_team, staffOnly = true)
 }
 
 /**
  * Signed-in content under the header: tabs for the member's role, with the toast host. Players have no Squadra route at all.
- * [followed] is whose Diario di tiro to show: the player themselves, or the one staff picked from [players] (null while loading).
+ * [followed] is whose Diario di tiro and Piano to show: the player themselves, or the one staff picked from [players] (null while loading).
  */
 @Composable
 fun Home(
     member: Member,
     roster: RosterRepository,
     shots: ShotRepository,
+    plans: PlanRepository,
     followed: Member?,
     players: Result<List<Member>>?,
     onRetryPlayers: () -> Unit,
@@ -102,6 +100,7 @@ fun Home(
     val entry by nav.currentBackStackEntryAsState()
     val toast = remember { SnackbarHostState() }
     var period by remember { mutableStateOf(Period.DAYS_30) }
+    var week by remember { mutableStateOf(weekOf(today())) }
 
     CompositionLocalProvider(LocalToast provides toast) {
         Column(Modifier.fillMaxSize()) {
@@ -112,12 +111,12 @@ fun Home(
                             Page {
                                 when {
                                     tab == Tab.TEAM -> RosterScreen(roster, onRosterChanged)
-                                    tab != Tab.SHOT_LOG -> Placeholder(tab)
-                                    // A fresh screen per player: no sessions or pending writes carried over.
+                                    // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {
-                                        ShotLogScreen(shots, followed, period) {
-                                            period =
-                                                it
+                                        if (tab == Tab.SHOT_LOG) {
+                                            ShotLogScreen(shots, followed, period) { period = it }
+                                        } else {
+                                            PlanScreen(plans, followed, member.role == Role.STAFF, week) { week = it }
                                         }
                                     }
                                     players?.isFailure == true -> LoadFailed(onRetryPlayers)
@@ -146,14 +145,6 @@ private fun NoPlayers() {
     Panel {
         Text(stringResource(Res.string.roster_empty_title).uppercase(), style = MaterialTheme.typography.titleLarge)
         Text(stringResource(Res.string.roster_empty_hint), color = FuoriOrarioTheme.colors.muted)
-    }
-}
-
-@Composable
-private fun Placeholder(tab: Tab) {
-    Panel(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(stringResource(Res.string.placeholder_title), style = MaterialTheme.typography.titleMedium)
-        Text(stringResource(tab.placeholder!!), color = FuoriOrarioTheme.colors.muted)
     }
 }
 

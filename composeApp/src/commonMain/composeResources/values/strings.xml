@@ -4,8 +4,6 @@
     <string name="subtitle_player">Lavoro individuale</string>
     <string name="subtitle_staff">Vista staff</string>
     <string name="sign_out">Esci</string>
-    <string name="placeholder_title">Lavori in corso</string>
-    <string name="placeholder_plan">Qui arriverà il piano settimanale con gli esercizi.</string>
     <string name="tab_shot_log">Diario di tiro</string>
     <string name="tab_plan">Piano</string>
     <string name="tab_team">Squadra</string>
@@ -100,6 +98,34 @@
     <string name="trend_title">Andamento</string>
     <string name="trend_description">Percentuali per sessione</string>
     <string name="trend_too_few">Servono almeno due sessioni per vedere l'andamento.</string>
+
+    <string name="plan_label">Piano individuale</string>
+    <string name="plan_prev">Settimana precedente</string>
+    <string name="plan_next">Settimana successiva</string>
+    <string name="plan_this_week">Questa settimana</string>
+    <string name="plan_back">Torna a questa settimana</string>
+    <string name="plan_add">+ Aggiungi esercizio</string>
+    <string name="plan_items">Esercizi della settimana</string>
+    <string name="plan_empty_staff">Nessun esercizio assegnato. Aggiungilo con “Aggiungi esercizio”.</string>
+    <string name="plan_empty_player">Lo staff non ha ancora preparato il tuo piano.</string>
+    <string name="plan_video">Guarda il video ↗</string>
+    <string name="plan_day_todo">%1$s: da fare</string>
+    <string name="plan_day_rest">%1$s: riposo</string>
+    <string-array name="days_short">
+        <item>Lun</item><item>Mar</item><item>Mer</item><item>Gio</item><item>Ven</item><item>Sab</item><item>Dom</item>
+    </string-array>
+    <string name="exercise_new">Nuovo esercizio</string>
+    <string name="exercise_title">Esercizio</string>
+    <string name="exercise_category">Area</string>
+    <string name="exercise_volume">Volume</string>
+    <string name="exercise_description">Come si fa</string>
+    <string name="exercise_video">Link al video (facoltativo)</string>
+    <string name="exercise_days">Giorni</string>
+    <string name="exercise_save">Aggiungi al piano</string>
+    <string name="exercise_added">Esercizio aggiunto</string>
+    <string name="exercise_error_title">Scrivi il nome dell'esercizio.</string>
+    <string name="exercise_error_days">Scegli almeno un giorno.</string>
+    <string name="exercise_error_video">Il link deve iniziare con https://</string>
 
     <string name="login_title">Accedi</string>
     <string name="login_email_hint">Inserisci l'email che hai dato allo staff: ti mandiamo un codice di 6 cifre.</string>

@@ -3,6 +3,7 @@ package it.manu.fuoriorario.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,12 +26,18 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -216,6 +223,49 @@ fun Field(
             keyboardOptions = keyboardOptions,
             keyboardActions = KeyboardActions(onDone = { onDone() })
         )
+    }
+}
+
+/** Prototype `.field select`: uppercase label over the current option, opening a menu of [options]. [tag] is the test tag. */
+@Composable
+fun <T> SelectField(
+    label: String,
+    value: T,
+    options: List<T>,
+    text: (T) -> String,
+    tag: String,
+    modifier: Modifier = Modifier,
+    onChange: (T) -> Unit
+) {
+    val c = FuoriOrarioTheme.colors
+    var open by remember { mutableStateOf(false) }
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(5.dp)) {
+        Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = c.muted)
+        Box {
+            Text(
+                text(value),
+                Modifier
+                    .fillMaxWidth()
+                    .testTag(tag)
+                    .background(c.surface2, RoundedCornerShape(9.dp))
+                    .border(1.dp, c.line, RoundedCornerShape(9.dp))
+                    .clickable(role = Role.DropdownList) { open = true }
+                    .padding(horizontal = 11.dp, vertical = 9.dp),
+                style = MaterialTheme.typography.bodyLarge,
+                color = c.ink
+            )
+            DropdownMenu(open, { open = false }, containerColor = c.surface) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(text(option), color = c.ink) },
+                        onClick = {
+                            onChange(option)
+                            open = false
+                        }
+                    )
+                }
+            }
+        }
     }
 }
 
