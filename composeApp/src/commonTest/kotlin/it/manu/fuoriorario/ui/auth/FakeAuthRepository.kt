@@ -9,28 +9,35 @@ import it.manu.fuoriorario.data.NotInTeamException
 import it.manu.fuoriorario.data.Session
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
+import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.fail
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 
-class FakeAuthRepository(signedIn: Member? = null) : AuthRepository {
-    private val roster = mapOf("giocatore@example.com" to Member("Luca B.", Role.PLAYER))
+/** [roster], when given, is where [refresh] reloads the signed-in member from. */
+class FakeAuthRepository(signedIn: Member? = null, private val roster: FakeRosterRepository? = null) : AuthRepository {
+    private val accounts = mapOf("giocatore@example.com" to Member("Luca B.", Role.PLAYER))
     override val session = MutableStateFlow(signedIn?.let { Session.SignedIn(it) } ?: Session.SignedOut)
 
     override suspend fun sendCode(email: String) {
-        if (email !in roster) throw NotInTeamException()
+        if (email !in accounts) throw NotInTeamException()
     }
 
     override suspend fun verifyCode(email: String, code: String) {
         if (code != "123456") throw InvalidCodeException()
-        session.value = Session.SignedIn(roster.getValue(email))
+        session.value = Session.SignedIn(accounts.getValue(email))
     }
 
     override suspend fun acknowledgePrivacy() {
         val s = session.value as Session.SignedIn
         session.value = Session.SignedIn(s.member.copy(privacyAckAt = "2026-10-05T18:00:00Z"))
+    }
+
+    override fun refresh() {
+        val me = (session.value as? Session.SignedIn)?.member ?: return
+        session.value = roster?.members?.find { it.id == me.id }?.let { Session.SignedIn(it) } ?: Session.SignedOut
     }
 
     override suspend fun signOut() {

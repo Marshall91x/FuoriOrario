@@ -90,26 +90,37 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
     ) { Text(text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold) }
 }
 
-/** Prototype `.btn.ghost.small`, `.role-toggle` when [pill], `.btn.danger.small` when [danger]. */
+/** Prototype button variants drawn by [GhostButton]. */
+enum class GhostStyle {
+    /** `.btn.ghost.small` */
+    PLAIN,
+
+    /** `.role-toggle` */
+    PILL,
+
+    /** `.btn.danger.small`: the second tap of a removal. */
+    DANGER
+}
+
 @Composable
 fun GhostButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    pill: Boolean = false,
-    danger: Boolean = false
+    style: GhostStyle = GhostStyle.PLAIN
 ) {
     val c = FuoriOrarioTheme.colors
+    val pill = style == GhostStyle.PILL
     OutlinedButton(
         onClick = onClick,
         modifier = modifier,
         shape = if (pill) RoundedCornerShape(50) else RoundedCornerShape(10.dp),
-        border = BorderStroke(1.dp, if (danger) c.accent else c.line),
+        border = BorderStroke(1.dp, if (style == GhostStyle.DANGER) c.accent else c.line),
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = when {
-                danger -> c.accent
-                pill -> c.muted
-                else -> c.ink
+            contentColor = when (style) {
+                GhostStyle.PLAIN -> c.ink
+                GhostStyle.PILL -> c.muted
+                GhostStyle.DANGER -> c.accent
             }
         ),
         contentPadding = if (pill) PaddingValues(10.dp, 6.dp) else PaddingValues(11.dp, 7.dp)

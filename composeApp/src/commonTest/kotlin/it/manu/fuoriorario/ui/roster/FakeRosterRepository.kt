@@ -2,6 +2,7 @@ package it.manu.fuoriorario.ui.roster
 
 import it.manu.fuoriorario.data.EmailTakenException
 import it.manu.fuoriorario.data.LastStaffException
+import it.manu.fuoriorario.data.PermissionDeniedException
 import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
@@ -23,6 +24,7 @@ class FakeRosterRepository(vararg members: Member) : RosterRepository {
     override suspend fun update(member: Member) {
         failIfAsked()
         val i = members.indexOfFirst { it.id == member.id }
+        if (i < 0) throw PermissionDeniedException() // Like RLS: no row back.
         if (member.role != Role.STAFF) checkStaffLeft(member)
         members[i] = member
     }

@@ -1,6 +1,7 @@
 package it.manu.fuoriorario.ui.roster
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -14,10 +15,12 @@ import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
 class EditMemberTest {
     private val staff = Member("Coach", Role.STAFF, "2026-10-01T10:00:00Z", email = "staff@example.com", id = "s")
+    private val vice = Member("Vice", Role.STAFF, email = "vice@example.com", id = "v")
     private val luca = Member("Luca B.", Role.PLAYER, email = "luca@example.com", jerseyNumber = "7", id = "l")
 
     @Test
@@ -66,5 +69,37 @@ class EditMemberTest {
         onNodeWithTag("remove_s").performClick()
         awaitText("Serve almeno un membro dello staff nella squadra.")
         assertEquals(listOf(staff), roster.members)
+    }
+
+    @Test
+    fun staffDemotingThemselvesBecomesPlayer() = runComposeUiTest {
+        val roster = FakeRosterRepository(staff, vice)
+        setContent { App(FakeAuthRepository(staff, roster), roster) }
+        awaitText("Squadra")
+        onNodeWithText("Squadra").performClick()
+
+        awaitText("Vice")
+        onAllNodes(hasText("Coach"))[1].performClick() // [0] is the header
+        awaitText("Salva modifiche")
+        onNodeWithTag("edit_role_player").performScrollTo().performClick()
+        onNodeWithText("Salva modifiche").performScrollTo().performClick()
+
+        awaitText("LAVORO INDIVIDUALE")
+        awaitText("Qui arriveranno la mappa di tiro, le statistiche e le sessioni.")
+        assertTrue(onAllNodes(hasText("Squadra")).fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun staffRemovingThemselvesIsSignedOut() = runComposeUiTest {
+        val roster = FakeRosterRepository(staff, vice)
+        setContent { App(FakeAuthRepository(staff, roster), roster) }
+        awaitText("Squadra")
+        onNodeWithText("Squadra").performClick()
+
+        awaitText("Vice")
+        onNodeWithTag("remove_s").performClick()
+        onNodeWithTag("remove_s").performClick()
+        awaitText("Invia codice")
+        assertEquals(listOf(vice), roster.members)
     }
 }

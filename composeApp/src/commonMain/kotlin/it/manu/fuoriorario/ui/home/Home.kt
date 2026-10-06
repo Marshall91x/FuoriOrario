@@ -77,7 +77,7 @@ private enum class Tab(
 
 /** Signed-in content under the header: tabs for the member's role, with the toast host. Players have no Squadra route at all. */
 @Composable
-fun Home(member: Member, roster: RosterRepository) {
+fun Home(member: Member, roster: RosterRepository, onSelfChanged: () -> Unit) {
     val tabs = Tab.entries.filter { !it.staffOnly || member.role == Role.STAFF }
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
@@ -91,7 +91,7 @@ fun Home(member: Member, roster: RosterRepository) {
                         composable(tab.name) {
                             Page {
                                 when (tab) {
-                                    Tab.TEAM -> RosterScreen(roster)
+                                    Tab.TEAM -> RosterScreen(roster, member, onSelfChanged)
                                     else -> Placeholder(tab)
                                 }
                             }

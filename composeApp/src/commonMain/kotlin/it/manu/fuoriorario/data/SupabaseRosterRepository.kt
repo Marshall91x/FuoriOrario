@@ -2,8 +2,11 @@ package it.manu.fuoriorario.data
 
 import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.PostgrestRequestBuilder
+import io.github.jan.supabase.postgrest.result.PostgrestResult
 import it.manu.fuoriorario.core.supabase
 import it.manu.fuoriorario.domain.Member
+import kotlinx.serialization.json.JsonObject
 
 class SupabaseRosterRepository : RosterRepository {
     override suspend fun members(): List<Member> = supabase.from("members").select().decodeList()
@@ -13,25 +16,27 @@ class SupabaseRosterRepository : RosterRepository {
     }
 
     override suspend fun update(member: Member) = mapErrors {
-        val saved = supabase.from("members").update({
+        supabase.from("members").update({
             set("display_name", member.displayName)
             set("jersey_number", member.jerseyNumber)
             set("position", member.position)
             set("role", member.role)
-        }) {
-            select()
-            filter { eq("id", member.id!!) }
-        }.decodeList<Member>()
-        // RLS filters update/delete silently: no row back means not allowed.
-        if (saved.isEmpty()) throw PermissionDeniedException()
+        }) { only(member) }.requireRow()
     }
 
     override suspend fun remove(member: Member) = mapErrors {
-        val removed = supabase.from("members").delete {
-            select()
-            filter { eq("id", member.id!!) }
-        }.decodeList<Member>()
-        if (removed.isEmpty()) throw PermissionDeniedException()
+        supabase.from("members").delete { only(member) }.requireRow()
+    }
+
+    /** Targets [member]'s row and returns it, so [requireRow] can tell. */
+    private fun PostgrestRequestBuilder.only(member: Member) {
+        select()
+        filter { eq("id", member.id!!) }
+    }
+
+    /** RLS filters update/delete silently: no row back means not allowed. */
+    private fun PostgrestResult.requireRow() {
+        if (decodeList<JsonObject>().isEmpty()) throw PermissionDeniedException()
     }
 
     private inline fun <T> mapErrors(block: () -> T): T = try {

@@ -1,5 +1,5 @@
 begin;
-select plan(12);
+select plan(13);
 
 insert into public.teams (id, name) values ('00000000-0000-0000-0000-000000000002', 'Altra squadra');
 insert into public.members (team_id, email, display_name, role) values
@@ -20,6 +20,8 @@ select is_empty($$ delete from public.members where email = 'giocatore@example.c
 select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-000000000001"}', true);
 select is_empty($$ update public.members set display_name = 'X' where email = 'altro@example.com' returning id $$,
   'staff cannot edit another team''s members');
+select is_empty($$ delete from public.members where email = 'altro@example.com' returning id $$,
+  'staff cannot remove another team''s members');
 select results_eq($$ update public.members set display_name = 'Luca', jersey_number = '8', position = 'Ala'
   where email = 'giocatore@example.com' returning display_name || jersey_number || position $$,
   array['Luca8Ala'], 'staff edits name, number and position');
