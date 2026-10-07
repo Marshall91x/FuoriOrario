@@ -172,7 +172,7 @@ fun Home(
                                             }
                                         }
                                     }
-                                    tab == Tab.PLAYS -> PlaysScreen(plays)
+                                    tab == Tab.PLAYS -> PlaysScreen(plays, member.role == Role.STAFF)
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {
                                         if (tab == Tab.SHOT_LOG) {

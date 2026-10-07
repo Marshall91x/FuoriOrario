@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -41,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
@@ -141,13 +143,15 @@ fun GhostButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    style: GhostStyle = GhostStyle.PLAIN
+    style: GhostStyle = GhostStyle.PLAIN,
+    enabled: Boolean = true
 ) {
     val c = FuoriOrarioTheme.colors
     val pill = style == GhostStyle.PILL
     OutlinedButton(
         onClick = onClick,
         modifier = modifier,
+        enabled = enabled,
         shape = if (pill) RoundedCornerShape(50) else RoundedCornerShape(10.dp),
         border = BorderStroke(1.dp, if (style == GhostStyle.DANGER) c.accent else c.line),
         colors = ButtonDefaults.outlinedButtonColors(
@@ -155,10 +159,29 @@ fun GhostButton(
                 GhostStyle.PLAIN -> c.ink
                 GhostStyle.PILL -> c.muted
                 GhostStyle.DANGER -> c.accent
-            }
+            },
+            disabledContentColor = c.muted.copy(alpha = 0.4f)
         ),
         contentPadding = if (pill) PaddingValues(10.dp, 6.dp) else PaddingValues(11.dp, 7.dp)
     ) { Text(text, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold) }
+}
+
+/** Prototype `.role-toggle` with `aria-pressed`: accent while [on]. */
+@Composable
+fun TogglePill(text: String, on: Boolean, onToggle: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    val c = FuoriOrarioTheme.colors
+    Text(
+        text,
+        modifier
+            .clip(RoundedCornerShape(50))
+            .border(1.dp, if (on) c.accent else c.line, RoundedCornerShape(50))
+            .toggleable(on, role = Role.Switch, onValueChange = onToggle)
+            .padding(10.dp, 6.dp),
+        color = if (on) c.accent else c.muted,
+        style = MaterialTheme.typography.bodyMedium,
+        fontSize = 12.5.sp,
+        fontWeight = FontWeight.SemiBold
+    )
 }
 
 /** Prototype `.seg`: one pill per option, the selected one inked. [tag] gives each option's test tag. */

@@ -39,7 +39,7 @@ composeApp/src/
     ui/roster/             # rosa (staff)
     ui/team/               # quadro squadra (staff)
     ui/settings/           # libreria + riferimenti (staff)
-    ui/plays/              # schemi: elenco, visualizzatore, campo
+    ui/plays/              # schemi: elenco, visualizzatore, editor (staff), campo
   commonMain/composeResources/   # strings.xml (IT), font
   commonTest/              # unit test domain + UI test (runComposeUiTest) con repository finti
   androidMain/ iosMain/ wasmJsMain/   # entry point + engine Ktor
@@ -62,7 +62,7 @@ Login (email → codice OTP) → Informativa (primo accesso) → Home
 Home = barra in basso:
   Diario di tiro  ─ foglio "Registra sessione"
   Piano           ─ fogli "Esercizio", "Nota"
-  Schemi          ─ elenco per categoria → schema passo per passo (◀ ▶ Riproduci)
+  Schemi          ─ elenco per categoria → schema passo per passo (◀ ▶ Riproduci); staff: Nuovo schema / Modifica → editor
   Squadra (staff) ─ Quadro (tocco → Diario del giocatore), Rosa, Impostazioni (Libreria, Riferimenti)
 Header: menu giocatore (solo staff), logout
 ```

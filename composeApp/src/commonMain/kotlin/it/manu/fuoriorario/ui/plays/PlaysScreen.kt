@@ -46,12 +46,16 @@ import fuoriorario.composeapp.generated.resources.play_all
 import fuoriorario.composeapp.generated.resources.play_attack
 import fuoriorario.composeapp.generated.resources.play_baseline_inbound
 import fuoriorario.composeapp.generated.resources.play_defense
+import fuoriorario.composeapp.generated.resources.play_edit
 import fuoriorario.composeapp.generated.resources.play_end_of_game
 import fuoriorario.composeapp.generated.resources.play_full_court
 import fuoriorario.composeapp.generated.resources.play_half_court
+import fuoriorario.composeapp.generated.resources.play_new
 import fuoriorario.composeapp.generated.resources.play_next
 import fuoriorario.composeapp.generated.resources.play_play
 import fuoriorario.composeapp.generated.resources.play_prev
+import fuoriorario.composeapp.generated.resources.play_removed
+import fuoriorario.composeapp.generated.resources.play_saved
 import fuoriorario.composeapp.generated.resources.play_sideline_inbound
 import fuoriorario.composeapp.generated.resources.play_step
 import fuoriorario.composeapp.generated.resources.play_transition
@@ -66,21 +70,27 @@ import it.manu.fuoriorario.domain.STEP_MILLIS
 import it.manu.fuoriorario.domain.byCategory
 import it.manu.fuoriorario.domain.frame
 import it.manu.fuoriorario.domain.moves
+import it.manu.fuoriorario.domain.startingStep
 import it.manu.fuoriorario.ui.components.Chip
 import it.manu.fuoriorario.ui.components.GhostButton
 import it.manu.fuoriorario.ui.components.LoadFailed
+import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
+import it.manu.fuoriorario.ui.components.launchWrite
+import it.manu.fuoriorario.ui.components.show
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-private val categoryName = mapOf(
+internal val categoryName = mapOf(
     PlayCategory.ATTACK to Res.string.play_attack,
     PlayCategory.ZONE_OFFENSE to Res.string.play_zone_offense,
     PlayCategory.SIDELINE_INBOUND to Res.string.play_sideline_inbound,
@@ -90,13 +100,24 @@ private val categoryName = mapOf(
     PlayCategory.DEFENSE to Res.string.play_defense
 )
 
-/** Schemi: the team's plays by category; tapping one opens it step by step, "Tutti gli schemi" goes back. */
+/**
+ * Schemi: the team's plays by category; tapping one opens it step by step, "Tutti gli schemi" goes back. Staff also
+ * draw new ones and edit or delete any of them.
+ */
 @Composable
-fun PlaysScreen(repository: PlayRepository) {
+fun PlaysScreen(repository: PlayRepository, staff: Boolean) {
+    val toast = LocalToast.current
+    val scope = rememberCoroutineScope()
     var plays by remember { mutableStateOf<List<Play>?>(null) }
     var loadFailed by remember { mutableStateOf(false) }
     var attempt by remember { mutableIntStateOf(0) }
     var openId by remember { mutableStateOf<String?>(null) }
+
+    /** The play in the editor; without id, a new one. */
+    var editing by remember { mutableStateOf<Play?>(null) }
+
+    /** A save or removal is in flight. */
+    var busy by remember { mutableStateOf(false) }
     LaunchedEffect(attempt) {
         loadFailed = false
         try {
@@ -108,20 +129,62 @@ fun PlaysScreen(repository: PlayRepository) {
         }
     }
 
-    val open = plays?.find { it.id == openId }
-    when {
-        open != null -> key(open.id) { PlayViewer(open) { openId = null } }
-        loadFailed -> LoadFailed { attempt++ }
-        plays?.isEmpty() == true -> Panel {
-            Text(stringResource(Res.string.plays_empty), color = FuoriOrarioTheme.colors.muted)
+    fun write(action: suspend CoroutineScope.(List<Play>) -> Unit) {
+        val list = plays ?: return
+        if (busy) return
+        busy = true
+        scope.launchWrite(toast, onDone = { busy = false }) { action(list) }
+    }
+
+    /** Saved, it opens in the viewer. */
+    fun save(play: Play) = write { list ->
+        val saved = if (play.id == null) {
+            repository.add(play).also { plays = list + it }
+        } else {
+            repository.update(play)
+            plays = list.map { if (it.id == play.id) play else it }
+            play
         }
+        editing = null
+        openId = saved.id
+        launch { toast.show(getString(Res.string.play_saved)) }
+    }
+
+    fun remove(play: Play) = write { list ->
+        repository.remove(play)
+        plays = list.filter { it.id != play.id }
+        editing = null
+        openId = null
+        launch { toast.show(getString(Res.string.play_removed)) }
+    }
+
+    val open = plays?.find { it.id == openId }
+    val edited = editing
+    when {
+        edited != null -> key(edited) { PlayEditor(edited, busy, ::save, ::remove) { editing = null } }
+        open != null -> key(open) { PlayViewer(open, onEdit = { editing = open }.takeIf { staff }) { openId = null } }
+        loadFailed -> LoadFailed { attempt++ }
         else -> plays?.let { list ->
-            byCategory(list).forEach { (category, group) ->
-                CategoryPanel(category, group) {
-                    openId =
-                        it.id
-                }
+            if (staff) {
+                PrimaryButton(
+                    stringResource(Res.string.play_new),
+                    {
+                        editing =
+                            Play(
+                                "",
+                                PlayCategory.ATTACK,
+                                court = CourtSize.HALF,
+                                defense = false,
+                                steps = listOf(startingStep(false))
+                            )
+                    },
+                    Modifier.testTag("play_new")
+                )
             }
+            if (list.isEmpty()) {
+                Panel { Text(stringResource(Res.string.plays_empty), color = FuoriOrarioTheme.colors.muted) }
+            }
+            byCategory(list).forEach { (category, group) -> CategoryPanel(category, group) { openId = it.id } }
         }
     }
 }
@@ -172,10 +235,10 @@ private fun Chips(play: Play) {
 
 /**
  * One play: the court at a step with the moves that led there, its note, ◀ / ▶ and "Riproduci". ▶ and "Riproduci"
- * animate into the next step, "Riproduci" on to the last; ◀ jumps back, and ◀ / ▶ stop it.
+ * animate into the next step, "Riproduci" on to the last; ◀ jumps back, and ◀ / ▶ stop it. Staff get [onEdit].
  */
 @Composable
-private fun PlayViewer(play: Play, onBack: () -> Unit) {
+private fun PlayViewer(play: Play, onEdit: (() -> Unit)?, onBack: () -> Unit) {
     val c = FuoriOrarioTheme.colors
     val last = play.steps.lastIndex
     var index by remember { mutableIntStateOf(0) }
@@ -214,7 +277,10 @@ private fun PlayViewer(play: Play, onBack: () -> Unit) {
     val step = play.steps[index]
 
     Panel {
-        GhostButton(stringResource(Res.string.play_all), onBack, Modifier.testTag("plays_back"))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            GhostButton(stringResource(Res.string.play_all), onBack, Modifier.testTag("plays_back"))
+            onEdit?.let { GhostButton(stringResource(Res.string.play_edit), it, Modifier.testTag("play_edit")) }
+        }
         Column {
             Text(
                 stringResource(categoryName.getValue(play.category)).uppercase(),
@@ -262,7 +328,7 @@ private fun PlayViewer(play: Play, onBack: () -> Unit) {
 
 /** Prototype `.btn.ghost` holding a drawn arrow. */
 @Composable
-private fun StepButton(
+internal fun StepButton(
     icon: DrawableResource,
     description: String,
     tag: String,

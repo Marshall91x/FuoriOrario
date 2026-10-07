@@ -1,5 +1,6 @@
 package it.manu.fuoriorario.domain
 
+import kotlin.math.hypot
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
@@ -162,3 +163,82 @@ fun frame(prev: Step?, step: Step, t: Float): Frame {
     }
     return Frame(pos, ball)
 }
+
+/** Limits of the `plays` row, kept by the editor's fields. */
+const val PLAY_TITLE_MAX = 60
+const val PLAY_DESCRIPTION_MAX = 400
+const val STEP_NOTE_MAX = 200
+const val STEPS_MAX = 20
+
+private val ATTACKERS = listOf("1", "2", "3", "4", "5")
+
+/** How far a defender stands from his man, towards the basket. */
+private const val GUARD_DISTANCE = 45f
+
+/** A new play's first step: 1 at the top, 2–3 on the wings, 4–5 on the posts, the ball to 1; with [defense], the Xs too. */
+fun startingStep(defense: Boolean) = Step(
+    mapOf(
+        "1" to Point(250f, 330f),
+        "2" to Point(60f, 230f),
+        "3" to Point(440f, 230f),
+        "4" to Point(150f, 110f),
+        "5" to Point(350f, 110f)
+    ),
+    ball = "1"
+).withDefense(defense)
+
+/** With [on], each missing Xn between n and the attacking basket; without, no defenders nor their curves. */
+fun Step.withDefense(on: Boolean): Step {
+    if (!on) return copy(pos = pos.filterKeys { !isDefender(it) }, curves = curves.filterKeys { !isDefender(it) })
+    val basket = Point(BASKET_X, BASKET_Y)
+    val guards = ATTACKERS.filter { "X$it" !in pos }.mapNotNull { n ->
+        pos[n]?.let { man ->
+            val dx = basket.x - man.x
+            val dy = basket.y - man.y
+            val k = (GUARD_DISTANCE / hypot(dx, dy)).coerceAtMost(1f)
+            "X$n" to Point(man.x + dx * k, man.y + dy * k)
+        }
+    }
+    return copy(pos = pos + guards)
+}
+
+/** The key of [candidates] nearest [at]: the finger takes the nearest piece. */
+fun nearest(candidates: Map<String, Point>, at: Point): String =
+    candidates.minBy { (_, p) -> hypot(p.x - at.x, p.y - at.y) }.key
+
+/** This point kept on the court of [court] or in the margin around it. */
+fun Point.within(court: CourtSize): Point {
+    val length = if (court == CourtSize.HALF) COURT_HEIGHT else 2 * COURT_HEIGHT
+    return Point(
+        x.coerceIn(-COURT_MARGIN, COURT_WIDTH + COURT_MARGIN),
+        y.coerceIn(-COURT_MARGIN, length + COURT_MARGIN)
+    )
+}
+
+/** Close enough to the line's middle to be straight. */
+private const val STRAIGHT = 10f
+
+/**
+ * [piece]'s move from [from] bent to pass through [through] halfway, where the editor draws its handle; near the
+ * middle of the straight line, straight again.
+ */
+fun Step.bent(piece: String, from: Point, through: Point): Step {
+    val to = pos.getValue(piece)
+    val midX = (from.x + to.x) / 2
+    val midY = (from.y + to.y) / 2
+    if (hypot(through.x - midX, through.y - midY) < STRAIGHT) return copy(curves = curves - piece)
+    // A quadratic curve is at (from + 2·control + to) / 4 halfway.
+    return copy(curves = curves + (piece to Point(2 * through.x - midX, 2 * through.y - midY)))
+}
+
+enum class PlayError { TITLE }
+
+/** First problem with the play as drawn, or null; lengths are capped by the fields. */
+fun playError(play: Play): PlayError? = if (play.title.isBlank()) PlayError.TITLE else null
+
+/** The play to save: trimmed, blanks null. */
+fun Play.cleaned() = copy(
+    title = title.trim(),
+    description = description?.trim()?.ifEmpty { null },
+    steps = steps.map { it.copy(note = it.note?.trim()?.ifEmpty { null }) }
+)

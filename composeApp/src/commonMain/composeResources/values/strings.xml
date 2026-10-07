@@ -232,4 +232,24 @@
     <string name="play_next">Passo successivo</string>
     <string name="play_play">Riproduci</string>
     <string name="play_court_description">Campo con le pedine dello schema</string>
+    <string name="play_new">Nuovo schema</string>
+    <string name="play_edit">Modifica</string>
+    <string name="play_edit_title">Modifica schema</string>
+    <string name="play_title">Titolo</string>
+    <string name="play_category">Categoria</string>
+    <string name="play_description">Descrizione</string>
+    <string name="play_court">Campo</string>
+    <string name="play_editor_hint">Trascina le pedine. Tieni premuto un attaccante per dargli la palla. Trascina il pallino a metà di un movimento per curvarlo.</string>
+    <string name="play_screens">Blocco</string>
+    <string name="play_screen">Blocco di %1$s</string>
+    <string name="play_note">Nota del passo</string>
+    <string name="play_add_step">+ Passo</string>
+    <string name="play_remove_step">Elimina passo</string>
+    <string name="play_save">Salva schema</string>
+    <string name="play_saved">Schema salvato</string>
+    <string name="play_remove">Elimina</string>
+    <string name="play_remove_confirm">Conferma eliminazione</string>
+    <string name="play_removed">Schema eliminato</string>
+    <string name="play_discard">Esci senza salvare</string>
+    <string name="play_no_title">Dai un titolo allo schema.</string>
 </resources>
