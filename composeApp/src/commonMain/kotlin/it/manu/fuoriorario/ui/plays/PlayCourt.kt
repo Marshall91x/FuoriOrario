@@ -49,22 +49,33 @@ import org.jetbrains.compose.resources.stringResource
 private const val PIECE_RADIUS = 17f
 private const val BALL_RADIUS = 7f
 private const val LINE_WIDTH = 2.5f
+private const val HANDLE_RADIUS = 8f
+
+/** The court's width in viewBox units, margins included: the canvas is scaled to it. */
+const val PLAY_COURT_WIDTH = COURT_WIDTH + 2 * COURT_MARGIN
 
 /**
  * The court of a play in the shot map's viewBox plus [COURT_MARGIN] all round: [moves] as lines, the pieces where [frame]
- * puts them, the ball beside its holder.
+ * puts them, the ball beside its holder. In the editor, [handles] bend the moves and the [lifted] piece is drawn larger.
  */
 @Composable
-fun PlayCourt(court: CourtSize, moves: List<Move>, frame: Frame) {
+fun PlayCourt(
+    court: CourtSize,
+    moves: List<Move>,
+    frame: Frame,
+    modifier: Modifier = Modifier,
+    handles: List<Point> = emptyList(),
+    lifted: String? = null
+) {
     val c = FuoriOrarioTheme.colors
     val arc = remember { arcPath(closed = false) }
     val measurer = rememberTextMeasurer()
     val description = stringResource(Res.string.play_court_description)
     val length = if (court == CourtSize.HALF) COURT_HEIGHT else 2 * COURT_HEIGHT
-    val width = COURT_WIDTH + 2 * COURT_MARGIN
+    val width = PLAY_COURT_WIDTH
     val height = length + 2 * COURT_MARGIN
     Canvas(
-        Modifier
+        modifier
             .fillMaxWidth()
             .aspectRatio(width / height)
             .clip(RoundedCornerShape(10.dp))
@@ -78,13 +89,19 @@ fun PlayCourt(court: CourtSize, moves: List<Move>, frame: Frame) {
                 // The other half, the defending basket at the bottom.
                 if (court == CourtSize.FULL) scale(1f, -1f, Offset(0f, COURT_HEIGHT)) { drawLines(arc, c.courtLine) }
                 moves.forEach { drawMove(it, if (it.kind == MoveKind.DEFENDER) c.cold else c.ink) }
-                frame.pos.forEach { (piece, at) ->
+                handles.forEach {
+                    drawCircle(c.surface, HANDLE_RADIUS, it.offset)
+                    drawCircle(c.accent, HANDLE_RADIUS, it.offset, style = Stroke(LINE_WIDTH))
+                }
+                // The lifted piece last, over the others.
+                frame.pos.entries.sortedBy { it.key == lifted }.forEach { (piece, at) ->
+                    val radius = if (piece == lifted) PIECE_RADIUS * 1.4f else PIECE_RADIUS
                     if (isDefender(piece)) {
-                        drawCircle(c.surface, PIECE_RADIUS, at.offset)
-                        drawCircle(c.cold, PIECE_RADIUS, at.offset, style = Stroke(LINE_WIDTH))
+                        drawCircle(c.surface, radius, at.offset)
+                        drawCircle(c.cold, radius, at.offset, style = Stroke(LINE_WIDTH))
                         drawLabel(measurer, piece, at, c.cold)
                     } else {
-                        drawCircle(c.ink, PIECE_RADIUS, at.offset)
+                        drawCircle(c.ink, radius, at.offset)
                         drawLabel(measurer, piece, at, c.bg)
                     }
                 }

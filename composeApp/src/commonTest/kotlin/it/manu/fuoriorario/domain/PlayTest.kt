@@ -108,3 +108,147 @@ class PlayTest {
         "$actual"
     )
 }
+
+/** #45: the editor's rules. */
+class PlayEditTest {
+    @Test
+    fun aNewPlayStartsFromTheDefaultLayout() {
+        val step = startingStep(defense = false)
+        assertEquals(setOf("1", "2", "3", "4", "5"), step.pos.keys)
+        assertEquals("1", step.ball)
+        // 1 at the top, 2–3 on the wings, 4–5 on the posts.
+        assertTrue(step.pos.getValue("1").y > step.pos.getValue("2").y)
+        assertTrue(step.pos.getValue("2").x < BASKET_X && step.pos.getValue("3").x > BASKET_X)
+        assertTrue(step.pos.getValue("4").y < KEY_BOTTOM && step.pos.getValue("5").y < KEY_BOTTOM)
+    }
+
+    @Test
+    fun defendersStandBetweenTheirManAndTheBasket() {
+        val step = startingStep(defense = true)
+        (1..5).forEach { n ->
+            val man = step.pos.getValue("$n")
+            val x = step.pos.getValue("X$n")
+            val basket = Point(BASKET_X, BASKET_Y)
+            assertTrue(distance(x, basket) < distance(man, basket), "X$n nearer the basket")
+            assertTrue(distance(man, x) + distance(x, basket) - distance(man, basket) < 0.1f, "X$n on the line")
+        }
+    }
+
+    @Test
+    fun defenseOffTakesTheDefendersAndTheirCurvesAway() {
+        val step = startingStep(defense = true).copy(curves = mapOf("X1" to Point(1f, 1f), "2" to Point(2f, 2f)))
+        val off = step.withDefense(false)
+        assertEquals(startingStep(defense = false).pos, off.pos)
+        assertEquals(mapOf("2" to Point(2f, 2f)), off.curves)
+        // And back on, each one with its man again.
+        assertEquals(startingStep(defense = true).pos, off.withDefense(true).pos)
+        // Already on: defenders where staff put them.
+        val moved = step.copy(pos = step.pos + ("X1" to Point(10f, 10f)))
+        assertEquals(moved, moved.withDefense(true))
+    }
+
+    @Test
+    fun theFingerTakesTheNearest() {
+        val pieces = mapOf("1" to Point(250f, 330f), "2" to Point(60f, 230f))
+        assertEquals("2", nearest(pieces, Point(150f, 250f)))
+        assertEquals("1", nearest(pieces, Point(240f, 500f)))
+    }
+
+    @Test
+    fun aHoldFarFromEveryAttackerTakesNone() {
+        val pieces = mapOf("1" to Point(250f, 330f))
+        assertEquals("1", nearest(pieces, Point(270f, 340f), reach = 40f))
+        assertEquals(null, nearest(pieces, Point(250f, 200f), reach = 40f))
+    }
+
+    @Test
+    fun piecesStayWithinTheMargin() {
+        assertEquals(Point(-COURT_MARGIN, 0f), Point(-80f, 0f).within(CourtSize.HALF))
+        assertEquals(Point(550f, 520f), Point(600f, 700f).within(CourtSize.HALF))
+        assertEquals(Point(550f, 700f), Point(600f, 700f).within(CourtSize.FULL))
+        assertEquals(Point(0f, 990f), Point(0f, 1200f).within(CourtSize.FULL))
+    }
+
+    @Test
+    fun theHandleBendsTheMoveThroughIt() {
+        val from = Point(60f, 230f)
+        val to = Point(60f, 30f)
+        val bent = Step(mapOf("2" to to), "2").bent("2", from, Point(160f, 130f))
+        val move = Move(MoveKind.CUT, "2", from, to, bent.curves["2"])
+        assertEquals(Point(160f, 130f), move.at(0.5f))
+        // Back near the middle of the line: straight again.
+        assertEquals(emptyMap(), bent.bent("2", from, Point(64f, 128f)).curves)
+    }
+
+    @Test
+    fun aPlayNeedsATitle() {
+        val play =
+            Play(" ", PlayCategory.ATTACK, court = CourtSize.HALF, defense = false, steps = listOf(startingStep(false)))
+        assertEquals(PlayError.TITLE, playError(play))
+        assertEquals(null, playError(play.copy(title = "Box")))
+    }
+
+    @Test
+    fun savedTrimmedWithoutBlanks() {
+        val step = startingStep(false)
+        val play = Play(" Box ", PlayCategory.ATTACK, " ", CourtSize.HALF, false, listOf(step.copy(note = " ")))
+        assertEquals(
+            Play("Box", PlayCategory.ATTACK, null, CourtSize.HALF, false, listOf(step.copy(note = null))),
+            play.cleaned()
+        )
+    }
+
+    @Test
+    fun savedWithoutCurvesThatNoMoveUses() {
+        val first = startingStep(false)
+        val bend = mapOf("2" to Point(160f, 130f))
+        val moved = Step(first.pos + ("2" to Point(60f, 30f)), "1", curves = bend + ("1" to Point(1f, 1f)))
+        val play =
+            Play("Box", PlayCategory.ATTACK, null, CourtSize.HALF, false, listOf(first.copy(curves = bend), moved))
+        // Nothing moves into the first step; 1 stands still in the second.
+        assertEquals(listOf(first, moved.copy(curves = bend)), play.cleaned().steps)
+    }
+
+    private val first = startingStep(false)
+
+    /** 2 cuts from the wing to the corner, bent through (160, 130). */
+    private val cut = Step(first.pos + ("2" to Point(60f, 30f)), "1").bent("2", Point(60f, 230f), Point(160f, 130f))
+
+    private fun halfway(from: Step?, to: Step, piece: String = "2") = Move(
+        MoveKind.CUT,
+        piece,
+        from!!.pos.getValue(piece),
+        to.pos.getValue(piece),
+        to.curves.getValue(piece)
+    ).at(0.5f)
+
+    @Test
+    fun movingWhereABentMoveEndsKeepsItsHandle() {
+        val steps = listOf(first, cut).with(1, cut.copy(pos = cut.pos + ("2" to Point(30f, 10f))))
+        assertNear(Point(160f, 130f), halfway(steps[0], steps[1]))
+    }
+
+    @Test
+    fun movingWhereABentMoveStartsKeepsItsHandle() {
+        val steps = listOf(first, cut).with(0, first.copy(pos = first.pos + ("2" to Point(40f, 300f))))
+        assertNear(Point(160f, 130f), halfway(steps[0], steps[1]))
+    }
+
+    @Test
+    fun aRemovedStepLeavesTheNextOneBentThroughTheSameHandle() {
+        val middle = first.copy(pos = first.pos + ("2" to Point(100f, 300f)))
+        val next = cut.copy(curves = emptyMap()).bent("2", Point(100f, 300f), Point(160f, 130f))
+        val steps = listOf(first, middle, next).without(1)
+        assertEquals(2, steps.size)
+        assertNear(Point(160f, 130f), halfway(steps[0], steps[1]))
+        // Without a step before, nothing moves in: no bends.
+        assertEquals(emptyMap(), listOf(first, cut).without(0).single().curves)
+    }
+
+    private fun assertNear(expected: Point, actual: Point) = assertTrue(
+        abs(actual.x - expected.x) < 0.01f && abs(actual.y - expected.y) < 0.01f,
+        "$actual"
+    )
+
+    private fun distance(a: Point, b: Point) = kotlin.math.hypot(a.x - b.x, a.y - b.y)
+}
