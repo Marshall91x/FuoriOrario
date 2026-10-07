@@ -24,7 +24,7 @@ private const val ACK = "2026-10-01T10:00:00Z"
 @OptIn(ExperimentalTestApi::class)
 class NavigationTest {
     @Test
-    fun player_seesShotLogAndPlanOnly() = runAppTest {
+    fun player_hasNoTeamTab() = runAppTest {
         setContent {
             App(
                 FakeAuthRepository(Member("Luca B.", Role.PLAYER, ACK)),

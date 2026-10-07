@@ -53,11 +53,13 @@ import fuoriorario.composeapp.generated.resources.subtitle_player
 import fuoriorario.composeapp.generated.resources.subtitle_staff
 import it.manu.fuoriorario.data.AuthRepository
 import it.manu.fuoriorario.data.PlanRepository
+import it.manu.fuoriorario.data.PlayRepository
 import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.data.Session
 import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.data.SupabaseAuthRepository
 import it.manu.fuoriorario.data.SupabasePlanRepository
+import it.manu.fuoriorario.data.SupabasePlayRepository
 import it.manu.fuoriorario.data.SupabaseRosterRepository
 import it.manu.fuoriorario.data.SupabaseShotRepository
 import it.manu.fuoriorario.domain.Member
@@ -82,7 +84,8 @@ fun App(
     shots: ShotRepository = remember { SupabaseShotRepository() },
     /** The device's own storage: only the staff's picked player. */
     prefs: Settings = remember { Settings() },
-    plans: PlanRepository = remember { SupabasePlanRepository() }
+    plans: PlanRepository = remember { SupabasePlanRepository() },
+    playbook: PlayRepository = remember { SupabasePlayRepository() }
 ) {
     FuoriOrarioTheme {
         val c = FuoriOrarioTheme.colors
@@ -140,6 +143,7 @@ fun App(
                     roster,
                     shots,
                     plans,
+                    playbook,
                     followed,
                     players,
                     onPick = ::pick,

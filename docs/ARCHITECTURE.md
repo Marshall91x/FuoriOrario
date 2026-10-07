@@ -39,13 +39,14 @@ composeApp/src/
     ui/roster/             # rosa (staff)
     ui/team/               # quadro squadra (staff)
     ui/settings/           # libreria + riferimenti (staff)
+    ui/plays/              # schemi: elenco, visualizzatore, campo
   commonMain/composeResources/   # strings.xml (IT), font
   commonTest/              # unit test domain + UI test (runComposeUiTest) con repository finti
   androidMain/ iosMain/ wasmJsMain/   # entry point + engine Ktor
 iosApp/                    # progetto Xcode del wizard
 supabase/
   migrations/              # schema + RLS versionati
-  seed.sql                 # squadra e primo staff (libreria e riferimenti di default arrivano dallo schema)
+  seed.sql                 # squadra, primo staff, un giocatore, uno schema (libreria e riferimenti di default arrivano dallo schema)
   tests/                   # test pgTAP delle RLS
 ```
 
@@ -61,6 +62,7 @@ Login (email → codice OTP) → Informativa (primo accesso) → Home
 Home = barra in basso:
   Diario di tiro  ─ foglio "Registra sessione"
   Piano           ─ fogli "Esercizio", "Nota"
+  Schemi          ─ elenco per categoria → schema passo per passo (◀ ▶ Riproduci)
   Squadra (staff) ─ Quadro (tocco → Diario del giocatore), Rosa, Impostazioni (Libreria, Riferimenti)
 Header: menu giocatore (solo staff), logout
 ```
@@ -129,6 +131,15 @@ weekly_notes (
   primary key (member_id, week)
 )
 
+plays (
+  id uuid pk, team_id uuid fk teams,
+  title text not null check (length(btrim) between 1 and 60),
+  category text not null check (in le 7 categorie), description text check (length <= 400),
+  court text not null check (court in ('HALF','FULL')), defense boolean not null default false,
+  steps jsonb not null check (valid_play_steps(steps)),   -- 1–20 passi, note ≤ 200; formato in adr/0008
+  created_at timestamptz default now()
+)
+
 plan_checks (
   plan_item_id uuid fk plan_items on delete cascade,
   day smallint check (day between 0 and 6),        -- solo un giorno assegnato all'esercizio (RLS)
@@ -162,7 +173,7 @@ Funzioni helper `security definer stable`:
 | teams | membri della squadra | — (seed) | staff | — |
 | members | staff della squadra; il giocatore solo la propria riga | staff | staff | staff |
 | shot_sessions | staff; giocatore proprie | staff; giocatore con `member_id` proprio | — | staff; giocatore proprie |
-| exercise_library | membri della squadra | staff | staff | staff |
+| exercise_library, plays | membri della squadra | staff | staff | staff |
 | plan_items, weekly_notes | staff; giocatore proprie | staff | staff | staff |
 | plan_checks | staff; giocatore proprie | solo giocatore proprietario dell'item | — | solo giocatore proprietario |
 
@@ -193,8 +204,8 @@ Le migrazioni si applicano in produzione con `supabase db push` dal job di rilas
 
 | Livello | Dove | Cosa | In CI |
 |---|---|---|---|
-| Unit | `commonTest` | `domain/`: percentuali, somma zone, periodi/stagione, classe zona, completamento, settimane | ✓ |
-| UI | `commonTest` con `runAppTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) · staff modifica e ripristina i riferimenti, la mappa si ricolora · staff vede il quadro squadra e apre il diario di un giocatore | iOS Simulator + Wasm (browser headless). Android in locale |
+| Unit | `commonTest` | `domain/`: percentuali, somma zone, periodi/stagione, classe zona, completamento, settimane, movimenti e interpolazione degli schemi | ✓ |
+| UI | `commonTest` con `runAppTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) · staff modifica e ripristina i riferimenti, la mappa si ricolora · staff vede il quadro squadra e apre il diario di un giocatore · giocatore apre uno schema e va al passo successivo | iOS Simulator + Wasm (browser headless). Android in locale |
 | DB | `supabase/tests` (pgTAP) | RLS: giocatore non legge/scrive dati altrui, solo staff gestisce rosa/piani/riferimenti, solo giocatore spunta | ✓ (Supabase locale in CI) |
 
 I test UI partono con `runAppTest` (non `runComposeUiTest`): carica prima tutte le stringhe, perché su Wasm ogni stringa letta la prima volta arriva in modo asincrono e per qualche frame l'etichetta è vuota.
