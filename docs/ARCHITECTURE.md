@@ -61,7 +61,7 @@ Login (email → codice OTP) → Informativa (primo accesso) → Home
 Home = barra in basso:
   Diario di tiro  ─ foglio "Registra sessione"
   Piano           ─ fogli "Esercizio", "Nota"
-  Squadra (staff) ─ Rosa, Impostazioni (Libreria, Riferimenti)
+  Squadra (staff) ─ Quadro (tocco → Diario del giocatore), Rosa, Impostazioni (Libreria, Riferimenti)
 Header: menu giocatore (solo staff), logout
 ```
 
@@ -194,7 +194,7 @@ Le migrazioni si applicano in produzione con `supabase db push` dal job di rilas
 | Livello | Dove | Cosa | In CI |
 |---|---|---|---|
 | Unit | `commonTest` | `domain/`: percentuali, somma zone, periodi/stagione, classe zona, completamento, settimane | ✓ |
-| UI | `commonTest` con `runAppTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) · staff modifica e ripristina i riferimenti, la mappa si ricolora | iOS Simulator + Wasm (browser headless). Android in locale |
+| UI | `commonTest` con `runAppTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) · staff modifica e ripristina i riferimenti, la mappa si ricolora · staff vede il quadro squadra e apre il diario di un giocatore | iOS Simulator + Wasm (browser headless). Android in locale |
 | DB | `supabase/tests` (pgTAP) | RLS: giocatore non legge/scrive dati altrui, solo staff gestisce rosa/piani/riferimenti, solo giocatore spunta | ✓ (Supabase locale in CI) |
 
 I test UI partono con `runAppTest` (non `runComposeUiTest`): carica prima tutte le stringhe, perché su Wasm ogni stringa letta la prima volta arriva in modo asincrono e per qualche frame l'etichetta è vuota.

@@ -30,6 +30,7 @@ class EditMemberTest {
         setContent { App(FakeAuthRepository(staff), roster) }
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
+        onNodeWithTag("team_roster").performClick()
 
         awaitText("Luca B.")
         onNodeWithText("Luca B.").performClick()
@@ -56,6 +57,7 @@ class EditMemberTest {
         setContent { App(FakeAuthRepository(staff), roster) }
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
+        onNodeWithTag("team_roster").performClick()
 
         awaitText("Luca B.")
         onNodeWithTag("remove_l").performClick()
@@ -78,6 +80,7 @@ class EditMemberTest {
         setContent { App(FakeAuthRepository(staff, roster), roster, FakeShotRepository()) }
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
+        onNodeWithTag("team_roster").performClick()
 
         awaitText("Vice")
         onAllNodes(hasText("Coach"))[1].performClick() // [0] is the header
@@ -96,6 +99,7 @@ class EditMemberTest {
         setContent { App(FakeAuthRepository(staff, roster), roster) }
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
+        onNodeWithTag("team_roster").performClick()
 
         awaitText("Vice")
         onNodeWithTag("remove_s").performClick()

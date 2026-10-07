@@ -54,6 +54,7 @@ import fuoriorario.composeapp.generated.resources.roster_title
 import fuoriorario.composeapp.generated.resources.tab_plan
 import fuoriorario.composeapp.generated.resources.tab_shot_log
 import fuoriorario.composeapp.generated.resources.tab_team
+import fuoriorario.composeapp.generated.resources.team_overview
 import fuoriorario.composeapp.generated.resources.team_settings
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.data.PlanRepository
@@ -74,6 +75,7 @@ import it.manu.fuoriorario.ui.roster.RosterScreen
 import it.manu.fuoriorario.ui.settings.LibraryScreen
 import it.manu.fuoriorario.ui.settings.ZoneRefsScreen
 import it.manu.fuoriorario.ui.shots.ShotLogScreen
+import it.manu.fuoriorario.ui.team.TeamOverviewScreen
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
@@ -89,6 +91,7 @@ private enum class Tab(val label: StringResource, val icon: DrawableResource, va
 
 /** What the Squadra tab shows; [tag] is the test tag of its switch. */
 private enum class TeamSection(val label: StringResource, val tag: String) {
+    OVERVIEW(Res.string.team_overview, "team_overview"),
     ROSTER(Res.string.roster_title, "team_roster"),
     SETTINGS(Res.string.team_settings, "team_settings")
 }
@@ -96,6 +99,7 @@ private enum class TeamSection(val label: StringResource, val tag: String) {
 /**
  * Signed-in content under the header: tabs for the member's role, with the toast host. Players have no Squadra route at all.
  * [followed] is whose Diario di tiro and Piano to show: the player themselves, or the one staff picked from [players] (null while loading).
+ * [onPick] makes staff follow a player, as their header menu does.
  */
 @Composable
 fun Home(
@@ -105,6 +109,7 @@ fun Home(
     plans: PlanRepository,
     followed: Member?,
     players: Result<List<Member>>?,
+    onPick: (Member) -> Unit,
     onRetryPlayers: () -> Unit,
     onRosterChanged: (Member) -> Unit
 ) {
@@ -114,7 +119,13 @@ fun Home(
     val toast = remember { SnackbarHostState() }
     var period by remember { mutableStateOf(Period.DAYS_30) }
     var week by remember { mutableStateOf(weekOf(today())) }
-    var section by remember { mutableStateOf(TeamSection.ROSTER) }
+    var section by remember { mutableStateOf(TeamSection.OVERVIEW) }
+
+    fun open(tab: Tab) = nav.navigate(tab.name) {
+        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
 
     CompositionLocalProvider(LocalToast provides toast) {
         Column(Modifier.fillMaxSize()) {
@@ -138,6 +149,16 @@ fun Home(
                                             tag = { it.tag }
                                         )
                                         when (section) {
+                                            TeamSection.OVERVIEW -> when {
+                                                players?.isFailure == true -> LoadFailed(onRetryPlayers)
+                                                players?.getOrNull()?.isEmpty() == true -> NoPlayers()
+                                                else -> players?.getOrNull()?.let { list ->
+                                                    TeamOverviewScreen(list, shots, plans) {
+                                                        onPick(it)
+                                                        open(Tab.SHOT_LOG)
+                                                    }
+                                                }
+                                            }
                                             TeamSection.ROSTER -> RosterScreen(roster, onRosterChanged)
                                             TeamSection.SETTINGS -> {
                                                 LibraryScreen(plans)
@@ -162,13 +183,7 @@ fun Home(
                 }
                 ToastHost(toast, Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp))
             }
-            TabBar(tabs, entry?.destination?.route) { tab ->
-                nav.navigate(tab.name) {
-                    popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            }
+            TabBar(tabs, entry?.destination?.route, ::open)
         }
     }
 }

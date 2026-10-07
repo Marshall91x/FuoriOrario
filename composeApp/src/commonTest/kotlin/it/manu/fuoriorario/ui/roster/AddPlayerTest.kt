@@ -29,6 +29,7 @@ class AddPlayerTest {
 
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
+        onNodeWithTag("team_roster").performClick()
         // Not by its title: the Diario without players shows it too.
         awaitNode(hasTestTag("add_email"))
 

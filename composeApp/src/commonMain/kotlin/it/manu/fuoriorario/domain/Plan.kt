@@ -1,5 +1,6 @@
 package it.manu.fuoriorario.domain
 
+import kotlin.math.roundToInt
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
@@ -125,7 +126,10 @@ data class PlanCheck(@SerialName("plan_item_id") val planItemId: String, val day
 fun PlanItem.checkOn(day: Int) = PlanCheck(id!!, day)
 
 /** Completamento: [done] checks out of [total] assigned days. */
-data class Progress(val done: Int, val total: Int)
+data class Progress(val done: Int, val total: Int) {
+    /** Rounded half up like the prototype, null without a plan. */
+    val percent: Int? get() = if (total == 0) null else (done * 100.0 / total).roundToInt()
+}
 
 /** The week's [Progress] over [items]; checks on days no longer assigned don't count. */
 fun progress(items: List<PlanItem>, checks: Set<PlanCheck>) = Progress(

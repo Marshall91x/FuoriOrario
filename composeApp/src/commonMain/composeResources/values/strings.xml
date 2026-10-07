@@ -155,6 +155,16 @@
     <string name="exercise_error_days">Scegli almeno un giorno.</string>
     <string name="exercise_error_video">Il link deve iniziare con https://</string>
 
+    <string name="team_overview">Quadro</string>
+    <string name="overview_week">Questa settimana</string>
+    <string name="overview_title">Quadro della squadra</string>
+    <string name="overview_hint">Tocca un giocatore per aprire il suo diario. Il piano è la quota di esercizi spuntati sul totale assegnato.</string>
+    <string name="overview_player">Giocatore</string>
+    <string name="overview_plan">Piano</string>
+    <string name="overview_shots_7">Tiri 7g</string>
+    <string name="overview_free_30">TL 30g</string>
+    <string name="overview_three_30">3P 30g</string>
+
     <string name="team_settings">Impostazioni</string>
     <string name="library_title">Libreria esercizi</string>
     <string name="library_hint">Gli esercizi da cui partire per riempire un piano. Cambiarli non tocca i piani già assegnati.</string>
