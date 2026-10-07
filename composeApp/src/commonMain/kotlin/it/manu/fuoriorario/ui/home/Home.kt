@@ -1,5 +1,4 @@
 package it.manu.fuoriorario.ui.home
-
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
@@ -32,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +49,7 @@ import fuoriorario.composeapp.generated.resources.ic_tab_plan
 import fuoriorario.composeapp.generated.resources.ic_tab_plays
 import fuoriorario.composeapp.generated.resources.ic_tab_shot_log
 import fuoriorario.composeapp.generated.resources.ic_tab_team
+import fuoriorario.composeapp.generated.resources.play_unsaved
 import fuoriorario.composeapp.generated.resources.roster_empty_hint
 import fuoriorario.composeapp.generated.resources.roster_empty_title
 import fuoriorario.composeapp.generated.resources.roster_title
@@ -73,6 +74,7 @@ import it.manu.fuoriorario.ui.components.Page
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.SegmentedControl
 import it.manu.fuoriorario.ui.components.ToastHost
+import it.manu.fuoriorario.ui.components.show
 import it.manu.fuoriorario.ui.plan.PlanScreen
 import it.manu.fuoriorario.ui.plays.PlaysScreen
 import it.manu.fuoriorario.ui.roster.RosterScreen
@@ -81,8 +83,10 @@ import it.manu.fuoriorario.ui.settings.ZoneRefsScreen
 import it.manu.fuoriorario.ui.shots.ShotLogScreen
 import it.manu.fuoriorario.ui.team.TeamOverviewScreen
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -133,6 +137,21 @@ fun Home(
         restoreState = true
     }
 
+    // The plays editor holds unsaved changes: another tab takes a second tap on it, as leaving the editor does.
+    val scope = rememberCoroutineScope()
+    var unsavedPlay by remember { mutableStateOf(false) }
+    var leavingTo by remember { mutableStateOf<Tab?>(null) }
+
+    fun select(tab: Tab) {
+        if (unsavedPlay && tab != Tab.PLAYS && leavingTo != tab) {
+            leavingTo = tab
+            scope.launch { toast.show(getString(Res.string.play_unsaved)) }
+            return
+        }
+        leavingTo = null
+        open(tab)
+    }
+
     CompositionLocalProvider(LocalToast provides toast) {
         Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {
@@ -172,7 +191,10 @@ fun Home(
                                             }
                                         }
                                     }
-                                    tab == Tab.PLAYS -> PlaysScreen(plays, member.role == Role.STAFF)
+                                    tab == Tab.PLAYS -> PlaysScreen(plays, member.role == Role.STAFF) {
+                                        unsavedPlay = it
+                                        leavingTo = null
+                                    }
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {
                                         if (tab == Tab.SHOT_LOG) {
@@ -190,7 +212,7 @@ fun Home(
                 }
                 ToastHost(toast, Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp))
             }
-            TabBar(tabs, entry?.destination?.route, ::open)
+            TabBar(tabs, entry?.destination?.route, ::select)
         }
     }
 }

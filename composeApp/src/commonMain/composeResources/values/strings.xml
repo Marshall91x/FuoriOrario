@@ -251,5 +251,6 @@
     <string name="play_remove_confirm">Conferma eliminazione</string>
     <string name="play_removed">Schema eliminato</string>
     <string name="play_discard">Esci senza salvare</string>
+    <string name="play_unsaved">Modifiche non salvate: ripeti per uscire senza salvarle.</string>
     <string name="play_no_title">Dai un titolo allo schema.</string>
 </resources>

@@ -102,10 +102,10 @@ internal val categoryName = mapOf(
 
 /**
  * Schemi: the team's plays by category; tapping one opens it step by step, "Tutti gli schemi" goes back. Staff also
- * draw new ones and edit or delete any of them.
+ * draw new ones and edit or delete any of them; [onUnsaved] tells whether the editor holds changes to lose.
  */
 @Composable
-fun PlaysScreen(repository: PlayRepository, staff: Boolean) {
+fun PlaysScreen(repository: PlayRepository, staff: Boolean, onUnsaved: (Boolean) -> Unit = {}) {
     val toast = LocalToast.current
     val scope = rememberCoroutineScope()
     var plays by remember { mutableStateOf<List<Play>?>(null) }
@@ -161,7 +161,7 @@ fun PlaysScreen(repository: PlayRepository, staff: Boolean) {
     val open = plays?.find { it.id == openId }
     val edited = editing
     when {
-        edited != null -> key(edited) { PlayEditor(edited, busy, ::save, ::remove) { editing = null } }
+        edited != null -> key(edited) { PlayEditor(edited, busy, ::save, ::remove, onUnsaved) { editing = null } }
         open != null -> key(open) { PlayViewer(open, onEdit = { editing = open }.takeIf { staff }) { openId = null } }
         loadFailed -> LoadFailed { attempt++ }
         else -> plays?.let { list ->

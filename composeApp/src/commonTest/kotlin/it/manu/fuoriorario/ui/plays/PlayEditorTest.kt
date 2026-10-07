@@ -205,6 +205,43 @@ class PlayEditorTest {
     }
 
     @Test
+    fun anotherTabWithUnsavedChangesTakesASecondTap() = runAppTest {
+        val plays = FakePlayRepository(box)
+        open(FakeAuthRepository(coach), plays)
+
+        awaitText("Schemi")
+        onNodeWithText("Schemi").performClick()
+        onNodeWithText("Box").performClick()
+        onNodeWithTag("play_edit").performScrollTo().performClick()
+        onNodeWithTag("play_title").performTextInput(" 2")
+        onNodeWithText("Piano").performClick()
+        awaitText("Modifiche non salvate: ripeti per uscire senza salvarle.")
+        awaitNode(hasTestTag("play_title"))
+        onNodeWithText("Piano").performClick()
+        awaitNode(hasTestTag("play_title"), count = 0)
+
+        onNodeWithText("Schemi").performClick()
+        awaitText("Box")
+        assertEquals("Box", plays.plays.single().title)
+    }
+
+    @Test
+    fun aFingerFarFromEveryPieceMovesNothing() = runAppTest {
+        val plays = FakePlayRepository(box)
+        open(FakeAuthRepository(coach), plays)
+
+        awaitText("Schemi")
+        onNodeWithText("Schemi").performClick()
+        onNodeWithText("Box").performClick()
+        onNodeWithTag("play_edit").performScrollTo().performClick()
+        // The middle of the court, away from the default layout.
+        onCourt(Point(250f, 210f)) { swipe(it, it + Offset(0f, -100f)) }
+        onNodeWithTag("play_save").performScrollTo().performClick()
+        awaitText("Passo 1 di 1")
+        assertEquals(startingStep(defense = false), plays.plays.single().steps.single())
+    }
+
+    @Test
     fun staffDeleteAPlayWithASecondTap() = runAppTest {
         val plays = FakePlayRepository(box)
         open(FakeAuthRepository(coach), plays)

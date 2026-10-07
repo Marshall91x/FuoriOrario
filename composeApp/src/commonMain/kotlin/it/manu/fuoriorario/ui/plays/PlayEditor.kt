@@ -1,7 +1,10 @@
 package it.manu.fuoriorario.ui.plays
 
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -9,13 +12,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
@@ -49,6 +57,7 @@ import fuoriorario.composeapp.generated.resources.play_screen
 import fuoriorario.composeapp.generated.resources.play_screens
 import fuoriorario.composeapp.generated.resources.play_step
 import fuoriorario.composeapp.generated.resources.play_title
+import fuoriorario.composeapp.generated.resources.play_unsaved
 import fuoriorario.composeapp.generated.resources.play_with_defense
 import it.manu.fuoriorario.domain.ATTACKERS
 import it.manu.fuoriorario.domain.COURT_MARGIN
@@ -70,21 +79,30 @@ import it.manu.fuoriorario.domain.isDefender
 import it.manu.fuoriorario.domain.moves
 import it.manu.fuoriorario.domain.nearest
 import it.manu.fuoriorario.domain.playError
+import it.manu.fuoriorario.domain.with
 import it.manu.fuoriorario.domain.withDefense
 import it.manu.fuoriorario.domain.within
+import it.manu.fuoriorario.domain.without
 import it.manu.fuoriorario.ui.components.Field
 import it.manu.fuoriorario.ui.components.GhostButton
 import it.manu.fuoriorario.ui.components.GhostStyle
+import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
 import it.manu.fuoriorario.ui.components.SegmentedControl
 import it.manu.fuoriorario.ui.components.SelectField
 import it.manu.fuoriorario.ui.components.TogglePill
+import it.manu.fuoriorario.ui.components.show
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
 /** A handle's key among the drag targets: the piece whose move it bends, marked. */
 private const val HANDLE = "~"
+
+/** How near a piece or handle a finger must land to drag it, in viewBox units. */
+private const val GRAB_REACH = 60f
 
 /** How near an attacker a hold must be to give him the ball, in viewBox units: about two pieces. */
 private const val HOLD_REACH = 40f
@@ -97,12 +115,22 @@ private fun Offset.court(width: Int): Point {
 
 /**
  * Staff's editor (ADR 0008): the play's fields, then one step at a time on the court. Drag a piece, or a move's handle to
- * bend it; hold an attacker to give him the ball. The court is chosen only for a new play. Leaving with changes and
- * deleting take a second tap.
+ * bend it; hold an attacker to give him the ball. The court is chosen only for a new play. Leaving with changes, here
+ * or with the system back, and deleting take a second tap. [onUnsaved] tells whether there are changes to lose.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun PlayEditor(play: Play, busy: Boolean, onSave: (Play) -> Unit, onRemove: (Play) -> Unit, onBack: () -> Unit) {
+fun PlayEditor(
+    play: Play,
+    busy: Boolean,
+    onSave: (Play) -> Unit,
+    onRemove: (Play) -> Unit,
+    onUnsaved: (Boolean) -> Unit,
+    onBack: () -> Unit
+) {
     val c = FuoriOrarioTheme.colors
+    val toast = LocalToast.current
+    val scope = rememberCoroutineScope()
     var draft by remember { mutableStateOf(play) }
     var index by remember { mutableIntStateOf(0) }
     var error by remember { mutableStateOf<PlayError?>(null) }
@@ -125,15 +153,14 @@ fun PlayEditor(play: Play, busy: Boolean, onSave: (Play) -> Unit, onRemove: (Pla
     // The gestures below live across recompositions: they read the step on screen through these, never through [step].
     fun current() = draft.steps[index]
 
-    fun edit(to: (Step) -> Step) =
-        change(draft.copy(steps = draft.steps.toMutableList().also { it[index] = to(it[index]) }))
+    fun edit(to: (Step) -> Step) = change(draft.copy(steps = draft.steps.with(index, to(current()))))
 
     /** The pieces, and a handle halfway along each move to bend it. */
     fun targets(): Map<String, Point> = current().pos + moves(draft.steps.getOrNull(index - 1), current())
         .filter { it.kind != MoveKind.PASS && it.from != it.to }
         .associate { "$HANDLE${it.piece}" to it.at(0.5f) }
 
-    fun drag(target: String, at: Point) {
+    fun moveTo(target: String, at: Point) {
         val spot = at.within(draft.court)
         val piece = target.removePrefix(HANDLE)
         val from = draft.steps.getOrNull(index - 1)?.pos?.get(piece)
@@ -143,10 +170,24 @@ fun PlayEditor(play: Play, busy: Boolean, onSave: (Play) -> Unit, onRemove: (Pla
         }
     }
 
+    val unsaved = draft != play
+    LaunchedEffect(unsaved) { onUnsaved(unsaved) }
+    DisposableEffect(Unit) { onDispose { onUnsaved(false) } }
+
+    fun leave() {
+        if (!unsaved || confirmingExit) return onBack()
+        confirmingExit = true
+        scope.launch { toast.show(getString(Res.string.play_unsaved)) }
+    }
+    // ponytail: deprecated in Compose 1.10 for NavigationEventHandler, whose compose artifact isn't among our
+    // dependencies yet; switch when it is.
+    @Suppress("DEPRECATION")
+    BackHandler(onBack = ::leave)
+
     Panel {
         GhostButton(
             stringResource(if (confirmingExit) Res.string.play_discard else Res.string.cancel),
-            { if (draft == play || confirmingExit) onBack() else confirmingExit = true },
+            ::leave,
             Modifier.testTag("editor_back"),
             style = if (confirmingExit) GhostStyle.DANGER else GhostStyle.PLAIN
         )
@@ -223,13 +264,24 @@ fun PlayEditor(play: Play, busy: Boolean, onSave: (Play) -> Unit, onRemove: (Pla
             Modifier
                 .testTag("play_court")
                 .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragStart = { lifted = nearest(targets(), it.court(size.width)) },
-                        onDragEnd = { lifted = null },
-                        onDragCancel = { lifted = null }
-                    ) { change, _ ->
-                        change.consume()
-                        lifted?.let { drag(it, change.position.court(size.width)) }
+                    // Only a finger near a piece or handle drags; elsewhere the page scrolls.
+                    awaitEachGesture {
+                        // The hold detector below has already consumed the down.
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        val target = nearest(targets(), down.position.court(size.width), GRAB_REACH)
+                            ?: return@awaitEachGesture
+                        val start = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                            ?: return@awaitEachGesture
+                        lifted = target
+                        try {
+                            moveTo(target, start.position.court(size.width))
+                            drag(start.id) { change ->
+                                change.consume()
+                                moveTo(target, change.position.court(size.width))
+                            }
+                        } finally {
+                            lifted = null
+                        }
                     }
                 }
                 .pointerInput(Unit) {
@@ -290,7 +342,7 @@ fun PlayEditor(play: Play, busy: Boolean, onSave: (Play) -> Unit, onRemove: (Pla
             GhostButton(
                 stringResource(Res.string.play_remove_step),
                 {
-                    change(draft.copy(steps = draft.steps.filterIndexed { i, _ -> i != index }))
+                    change(draft.copy(steps = draft.steps.without(index)))
                     index = index.coerceAtMost(draft.steps.lastIndex)
                 },
                 Modifier.testTag("step_remove"),

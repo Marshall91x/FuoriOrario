@@ -235,6 +235,37 @@ fun Step.bent(piece: String, from: Point, through: Point): Step {
     return copy(curves = curves + (piece to Point(2 * through.x - midX, 2 * through.y - midY)))
 }
 
+/**
+ * This step's bends once its moves start from [prev] instead of [oldPrev], and end where they do instead of in [old]:
+ * each still through the halfway point where the editor drew its handle. Nothing moving in, no bends.
+ */
+private fun Step.keepingBends(oldPrev: Step?, old: Step, prev: Step?): Step = curves.keys.fold(this) { step, piece ->
+    val oldFrom = oldPrev?.pos?.get(piece)
+    val oldTo = old.pos[piece]
+    val from = prev?.pos?.get(piece)
+    when {
+        from == null || oldFrom == null || oldTo == null -> step.copy(curves = step.curves - piece)
+        from == oldFrom && oldTo == step.pos[piece] -> step
+        else -> step.bent(piece, from, Move(MoveKind.CUT, piece, oldFrom, oldTo, curves.getValue(piece)).at(0.5f))
+    }
+}
+
+/** The steps with [step] at [index]: the bent moves into and out of it keep their handles where they were. */
+fun List<Step>.with(index: Int, step: Step): List<Step> {
+    val prev = getOrNull(index - 1)
+    val old = get(index)
+    return toMutableList().also { steps ->
+        steps[index] = step.keepingBends(prev, old, prev)
+        getOrNull(index + 1)?.let { steps[index + 1] = it.keepingBends(old, it, step) }
+    }
+}
+
+/** The steps without the one at [index]: the next one's bent moves now start a step earlier, through the same handles. */
+fun List<Step>.without(index: Int): List<Step> = toMutableList().also { steps ->
+    getOrNull(index + 1)?.let { steps[index + 1] = it.keepingBends(get(index), it, getOrNull(index - 1)) }
+    steps.removeAt(index)
+}
+
 enum class PlayError { TITLE }
 
 /** First problem with the play as drawn, or null; lengths are capped by the fields. */

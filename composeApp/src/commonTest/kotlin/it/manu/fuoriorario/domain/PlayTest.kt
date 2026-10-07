@@ -209,5 +209,46 @@ class PlayEditTest {
         assertEquals(listOf(first, moved.copy(curves = bend)), play.cleaned().steps)
     }
 
+    private val first = startingStep(false)
+
+    /** 2 cuts from the wing to the corner, bent through (160, 130). */
+    private val cut = Step(first.pos + ("2" to Point(60f, 30f)), "1").bent("2", Point(60f, 230f), Point(160f, 130f))
+
+    private fun halfway(from: Step?, to: Step, piece: String = "2") = Move(
+        MoveKind.CUT,
+        piece,
+        from!!.pos.getValue(piece),
+        to.pos.getValue(piece),
+        to.curves.getValue(piece)
+    ).at(0.5f)
+
+    @Test
+    fun movingWhereABentMoveEndsKeepsItsHandle() {
+        val steps = listOf(first, cut).with(1, cut.copy(pos = cut.pos + ("2" to Point(30f, 10f))))
+        assertNear(Point(160f, 130f), halfway(steps[0], steps[1]))
+    }
+
+    @Test
+    fun movingWhereABentMoveStartsKeepsItsHandle() {
+        val steps = listOf(first, cut).with(0, first.copy(pos = first.pos + ("2" to Point(40f, 300f))))
+        assertNear(Point(160f, 130f), halfway(steps[0], steps[1]))
+    }
+
+    @Test
+    fun aRemovedStepLeavesTheNextOneBentThroughTheSameHandle() {
+        val middle = first.copy(pos = first.pos + ("2" to Point(100f, 300f)))
+        val next = cut.copy(curves = emptyMap()).bent("2", Point(100f, 300f), Point(160f, 130f))
+        val steps = listOf(first, middle, next).without(1)
+        assertEquals(2, steps.size)
+        assertNear(Point(160f, 130f), halfway(steps[0], steps[1]))
+        // Without a step before, nothing moves in: no bends.
+        assertEquals(emptyMap(), listOf(first, cut).without(0).single().curves)
+    }
+
+    private fun assertNear(expected: Point, actual: Point) = assertTrue(
+        abs(actual.x - expected.x) < 0.01f && abs(actual.y - expected.y) < 0.01f,
+        "$actual"
+    )
+
     private fun distance(a: Point, b: Point) = kotlin.math.hypot(a.x - b.x, a.y - b.y)
 }
