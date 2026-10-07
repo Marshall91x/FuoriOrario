@@ -31,6 +31,8 @@ class FakePlanRepository(
     override suspend fun items(member: Member, week: LocalDate) =
         items.filter { it.memberId == member.id && it.week == week }
 
+    override suspend fun teamWeek(week: LocalDate) = items.filter { it.week == week }.let { it to checks(it) }
+
     override suspend fun add(item: PlanItem): PlanItem {
         failIfAsked()
         return item.copy(id = "p${items.size + 1}").also { items += it }

@@ -82,6 +82,7 @@ class StaffShotLogTest {
         // The choice survives a trip to another tab.
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
+        onNodeWithTag("team_roster").performClick()
         awaitText("ROSA")
         onNodeWithText("Diario di tiro").performClick()
         awaitText("1/4 · 25%")

@@ -32,6 +32,13 @@ private data class WeeklyNote(
     @EncodeDefault(EncodeDefault.Mode.NEVER) val week: LocalDate? = null
 )
 
+/** A `plan_items` row's id with its embedded `plan_checks`. */
+@Serializable
+private data class ItemChecks(val id: String, @SerialName("plan_checks") val checks: List<Day>) {
+    @Serializable
+    data class Day(val day: Int)
+}
+
 class SupabasePlanRepository : PlanRepository {
     override suspend fun items(member: Member, week: LocalDate): List<PlanItem> = supabase.from("plan_items").select {
         filter {
@@ -41,6 +48,15 @@ class SupabasePlanRepository : PlanRepository {
         order("sort", Order.ASCENDING)
         order("created_at", Order.ASCENDING)
     }.decodeList()
+
+    // RLS limits staff to their own team; the checks come embedded in each item.
+    override suspend fun teamWeek(week: LocalDate): Pair<List<PlanItem>, Set<PlanCheck>> {
+        val result = supabase.from("plan_items").select(Columns.raw("*, plan_checks(day)")) {
+            filter { eq("week", week.toString()) }
+        }
+        val checks = result.decodeList<ItemChecks>().flatMap { item -> item.checks.map { PlanCheck(item.id, it.day) } }
+        return result.decodeList<PlanItem>() to checks.toSet()
+    }
 
     override suspend fun add(item: PlanItem): PlanItem = mapErrors {
         supabase.from("plan_items").insert(item) { select() }.decodeSingle()

@@ -49,8 +49,8 @@ enum class Zone {
 /** Made / attempted in one zone; stored as `[made, attempted]`. */
 @Serializable(ShotsSerializer::class)
 data class Shots(val made: Int = 0, val attempted: Int = 0) {
-    /** Rounded half up like the prototype, null without attempts. */
-    val percent: Int? get() = if (attempted == 0) null else (made * 100.0 / attempted).roundToInt()
+    /** Null without attempts. */
+    val percent: Int? get() = percentOf(made, attempted)
 
     operator fun plus(other: Shots) = Shots(made + other.made, attempted + other.attempted)
 
@@ -64,6 +64,9 @@ data class Shots(val made: Int = 0, val attempted: Int = 0) {
     fun stepAttempted(up: Boolean) =
         copy(attempted = (attempted + if (up) ATTEMPTS_STEP else -ATTEMPTS_STEP).coerceAtLeast(0))
 }
+
+/** [part] of [whole] in whole percent, rounded half up like the prototype; null when [whole] is 0. */
+fun percentOf(part: Int, whole: Int): Int? = if (whole == 0) null else (part * 100.0 / whole).roundToInt()
 
 const val ATTEMPTS_STEP = 5
 const val NOTE_MAX = 300

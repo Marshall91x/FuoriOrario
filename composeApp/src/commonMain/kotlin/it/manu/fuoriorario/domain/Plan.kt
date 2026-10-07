@@ -125,7 +125,10 @@ data class PlanCheck(@SerialName("plan_item_id") val planItemId: String, val day
 fun PlanItem.checkOn(day: Int) = PlanCheck(id!!, day)
 
 /** Completamento: [done] checks out of [total] assigned days. */
-data class Progress(val done: Int, val total: Int)
+data class Progress(val done: Int, val total: Int) {
+    /** Null without a plan. */
+    val percent: Int? get() = percentOf(done, total)
+}
 
 /** The week's [Progress] over [items]; checks on days no longer assigned don't count. */
 fun progress(items: List<PlanItem>, checks: Set<PlanCheck>) = Progress(

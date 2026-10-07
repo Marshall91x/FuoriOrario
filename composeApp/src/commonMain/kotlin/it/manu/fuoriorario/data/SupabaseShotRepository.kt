@@ -9,6 +9,7 @@ import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.ShotSession
 import it.manu.fuoriorario.domain.Zone
 import kotlin.math.roundToInt
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -20,6 +21,11 @@ class SupabaseShotRepository : ShotRepository {
         filter { eq("member_id", member.id!!) }
         order("date", Order.DESCENDING)
         order("created_at", Order.DESCENDING)
+    }.decodeList()
+
+    // RLS limits staff to their own team.
+    override suspend fun teamSessions(since: LocalDate): List<ShotSession> = supabase.from("shot_sessions").select {
+        filter { gte("date", since.toString()) }
     }.decodeList()
 
     // RLS shows only the signed-in member's team; stored as fractions (0.40).

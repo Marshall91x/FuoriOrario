@@ -106,6 +106,10 @@ fun App(
                 Result.failure(e)
             }
         }
+        fun pick(player: Member) {
+            pickedId = player.id
+            prefs.putString(PICKED_PLAYER, player.id!!)
+        }
         val followed = if (staff) {
             players?.getOrNull()?.let { list -> list.find { it.id == pickedId } ?: list.firstOrNull() }
         } else {
@@ -126,10 +130,7 @@ fun App(
                 member,
                 players?.getOrNull().takeIf { staff }.orEmpty(),
                 followed,
-                onPick = {
-                    pickedId = it.id
-                    prefs.putString(PICKED_PLAYER, it.id!!)
-                },
+                onPick = ::pick,
                 onSignOut = { scope.launch { auth.signOut() } },
                 Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).widthIn(max = 560.dp)
             )
@@ -141,6 +142,7 @@ fun App(
                     plans,
                     followed,
                     players,
+                    onPick = ::pick,
                     onRetryPlayers = { playersLoad++ },
                     onRosterChanged = {
                         if (it.id == member.id) auth.refresh()
