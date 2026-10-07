@@ -151,7 +151,7 @@ import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 
 /** Italian name of each area. On web the names load asynchronously: empty until then. */
-private val categoryNames
+internal val categoryNames
     @Composable get() = mapOf(
         Category.BALL_HANDLING to stringResource(Res.string.category_ball_handling),
         Category.SHOOTING to stringResource(Res.string.category_shooting),
@@ -478,16 +478,7 @@ private fun ItemRow(
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    categoryNames.getValue(item.category).uppercase(),
-                    Modifier
-                        .background(c.surface2, RoundedCornerShape(50))
-                        .border(1.dp, c.line, RoundedCornerShape(50))
-                        .padding(horizontal = 8.dp, vertical = 3.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontSize = 11.sp,
-                    color = c.muted
-                )
+                CategoryChip(item.category)
                 Text(item.title, style = MaterialTheme.typography.titleMedium)
             }
             onEdit?.let {
@@ -518,6 +509,22 @@ private fun ItemRow(
         }
         Days(item, checks, today, onToggle)
     }
+}
+
+/** Prototype `.chip`: the area in a pill. */
+@Composable
+internal fun CategoryChip(category: Category) {
+    val c = FuoriOrarioTheme.colors
+    Text(
+        categoryNames.getValue(category).uppercase(),
+        Modifier
+            .background(c.surface2, RoundedCornerShape(50))
+            .border(1.dp, c.line, RoundedCornerShape(50))
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        style = MaterialTheme.typography.labelSmall,
+        fontSize = 11.sp,
+        color = c.muted
+    )
 }
 
 /** Prototype `.bar` under "Completati x/y". */
@@ -635,7 +642,7 @@ private fun Days(item: PlanItem, checks: Set<PlanCheck>, today: Int?, onToggle: 
 /** Prototype bottom sheet: [label] and [name] over [content], with "Chiudi". */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Sheet(label: String, name: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+internal fun Sheet(label: String, name: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     val c = FuoriOrarioTheme.colors
     ModalBottomSheet(
         onDismiss,
@@ -677,74 +684,30 @@ private fun ExerciseSheet(
     onSave: (PlanItem) -> Unit,
     onRemove: (PlanItem) -> Unit
 ) {
-    val c = FuoriOrarioTheme.colors
-    var title by remember { mutableStateOf(item?.title.orEmpty()) }
-    var category by remember { mutableStateOf(item?.category ?: Category.entries.first()) }
-    var volume by remember { mutableStateOf(item?.volume.orEmpty()) }
-    var description by remember { mutableStateOf(item?.description.orEmpty()) }
-    var video by remember { mutableStateOf(item?.videoUrl.orEmpty()) }
+    var draft by remember {
+        mutableStateOf(
+            item?.run { LibraryExercise(title, category, volume, description, videoUrl) }
+                ?: LibraryExercise("", Category.entries.first())
+        )
+    }
     var days by remember { mutableStateOf(item?.days?.toSet() ?: setOf(0, 2, 4)) }
     var error by remember { mutableStateOf<PlanItemError?>(null) }
     var confirmingRemoval by remember { mutableStateOf(false) }
 
     fun save() {
-        error = planItemError(title, days, video)
+        error = planItemError(draft.title, days, draft.videoUrl.orEmpty())
         if (error != null) return
-        val new = newPlanItem(week, title, category, volume, description, video, days)
+        val new = draft.run {
+            newPlanItem(week, title, category, volume.orEmpty(), description.orEmpty(), videoUrl.orEmpty(), days)
+        }
         onSave(item?.let { new.copy(id = it.id, memberId = it.memberId) } ?: new)
     }
 
     Sheet(stringResource(if (item == null) Res.string.exercise_new else Res.string.exercise_edit), name, onDismiss) {
-        if (item == null && library.isNotEmpty()) {
-            LibraryPicker(library) {
-                title = it.title
-                category = it.category
-                volume = it.volume.orEmpty()
-                description = it.description.orEmpty()
-            }
-        }
-        Field(stringResource(Res.string.exercise_title), title, { title = it.take(TITLE_MAX) }, "exercise_title")
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            val names = categoryNames
-            SelectField(
-                stringResource(Res.string.exercise_category),
-                category,
-                Category.entries,
-                { names.getValue(it) },
-                "exercise_category",
-                Modifier.weight(1f)
-            ) { category = it }
-            Field(
-                stringResource(Res.string.exercise_volume),
-                volume,
-                { volume = it.take(VOLUME_MAX) },
-                "exercise_volume",
-                Modifier.weight(1f)
-            )
-        }
-        Field(
-            stringResource(Res.string.exercise_description),
-            description,
-            { description = it.take(DESCRIPTION_MAX) },
-            "exercise_description",
-            singleLine = false
-        )
-        Field(
-            stringResource(Res.string.exercise_video),
-            video,
-            { video = it },
-            "exercise_video",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
-        )
+        if (item == null && library.isNotEmpty()) LibraryPicker(library) { draft = it }
+        ExerciseFields(draft) { draft = it }
         DayPicker(days) { days = it }
-        error?.let {
-            val text = when (it) {
-                PlanItemError.TITLE -> Res.string.exercise_error_title
-                PlanItemError.NO_DAYS -> Res.string.exercise_error_days
-                PlanItemError.VIDEO -> Res.string.exercise_error_video
-            }
-            Text(stringResource(text), color = c.accent, style = MaterialTheme.typography.bodyMedium)
-        }
+        ExerciseErrorText(error)
         if (item == null) {
             PrimaryButton(stringResource(Res.string.exercise_save), ::save, Modifier.fillMaxWidth(), enabled = !busy)
         } else {
@@ -759,6 +722,61 @@ private fun ExerciseSheet(
                 )
             }
         }
+    }
+}
+
+/** Title, area, volume, description and video of [draft] as typed, shared with the library's sheet. */
+@Composable
+internal fun ExerciseFields(draft: LibraryExercise, onChange: (LibraryExercise) -> Unit) {
+    Field(
+        stringResource(Res.string.exercise_title),
+        draft.title,
+        { onChange(draft.copy(title = it.take(TITLE_MAX))) },
+        "exercise_title"
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        val names = categoryNames
+        SelectField(
+            stringResource(Res.string.exercise_category),
+            draft.category,
+            Category.entries,
+            { names.getValue(it) },
+            "exercise_category",
+            Modifier.weight(1f)
+        ) { onChange(draft.copy(category = it)) }
+        Field(
+            stringResource(Res.string.exercise_volume),
+            draft.volume.orEmpty(),
+            { onChange(draft.copy(volume = it.take(VOLUME_MAX))) },
+            "exercise_volume",
+            Modifier.weight(1f)
+        )
+    }
+    Field(
+        stringResource(Res.string.exercise_description),
+        draft.description.orEmpty(),
+        { onChange(draft.copy(description = it.take(DESCRIPTION_MAX))) },
+        "exercise_description",
+        singleLine = false
+    )
+    Field(
+        stringResource(Res.string.exercise_video),
+        draft.videoUrl.orEmpty(),
+        { onChange(draft.copy(videoUrl = it)) },
+        "exercise_video",
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
+    )
+}
+
+@Composable
+internal fun ExerciseErrorText(error: PlanItemError?) {
+    error?.let {
+        val text = when (it) {
+            PlanItemError.TITLE -> Res.string.exercise_error_title
+            PlanItemError.NO_DAYS -> Res.string.exercise_error_days
+            PlanItemError.VIDEO -> Res.string.exercise_error_video
+        }
+        Text(stringResource(text), color = FuoriOrarioTheme.colors.accent, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

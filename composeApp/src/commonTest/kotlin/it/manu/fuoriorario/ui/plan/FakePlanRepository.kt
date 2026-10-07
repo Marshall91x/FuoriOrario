@@ -13,9 +13,10 @@ import kotlinx.datetime.minus
 class FakePlanRepository(
     vararg items: PlanItem,
     checks: Set<PlanCheck> = emptySet(),
-    private val library: List<LibraryExercise> = emptyList()
+    library: List<LibraryExercise> = emptyList()
 ) : PlanRepository {
     val items = items.toMutableList()
+    val library = library.toMutableList()
     val checks = checks.toMutableSet()
 
     /** Notes by (member id, week). */
@@ -59,7 +60,29 @@ class FakePlanRepository(
             failLibrary = false
             error("offline")
         }
-        return library
+        return library.toList()
+    }
+
+    override suspend fun addToLibrary(exercise: LibraryExercise): LibraryExercise {
+        failIfAsked()
+        return exercise.copy(id = "l${library.size + 1}").also { library += it }
+    }
+
+    override suspend fun updateInLibrary(exercise: LibraryExercise) {
+        failIfAsked()
+        library[library.indexOfFirst { it.id == exercise.id }] = exercise
+    }
+
+    override suspend fun removeFromLibrary(exercise: LibraryExercise) {
+        failIfAsked()
+        library.removeAll { it.id == exercise.id }
+    }
+
+    override suspend fun reorderLibrary(library: List<LibraryExercise>) {
+        failIfAsked()
+        val reordered = library.mapIndexed { i, e -> this.library.first { it.id == e.id }.copy(sort = i) }
+        this.library.clear()
+        this.library += reordered
     }
 
     override suspend fun note(member: Member, week: LocalDate) = notes[member.id!! to week]

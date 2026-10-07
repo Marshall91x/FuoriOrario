@@ -50,9 +50,11 @@ import fuoriorario.composeapp.generated.resources.ic_tab_shot_log
 import fuoriorario.composeapp.generated.resources.ic_tab_team
 import fuoriorario.composeapp.generated.resources.roster_empty_hint
 import fuoriorario.composeapp.generated.resources.roster_empty_title
+import fuoriorario.composeapp.generated.resources.roster_title
 import fuoriorario.composeapp.generated.resources.tab_plan
 import fuoriorario.composeapp.generated.resources.tab_shot_log
 import fuoriorario.composeapp.generated.resources.tab_team
+import fuoriorario.composeapp.generated.resources.team_settings
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.data.RosterRepository
@@ -65,9 +67,11 @@ import it.manu.fuoriorario.ui.components.LoadFailed
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Page
 import it.manu.fuoriorario.ui.components.Panel
+import it.manu.fuoriorario.ui.components.SegmentedControl
 import it.manu.fuoriorario.ui.components.ToastHost
 import it.manu.fuoriorario.ui.plan.PlanScreen
 import it.manu.fuoriorario.ui.roster.RosterScreen
+import it.manu.fuoriorario.ui.settings.LibraryScreen
 import it.manu.fuoriorario.ui.shots.ShotLogScreen
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import org.jetbrains.compose.resources.DrawableResource
@@ -104,6 +108,9 @@ fun Home(
     var period by remember { mutableStateOf(Period.DAYS_30) }
     var week by remember { mutableStateOf(weekOf(today())) }
 
+    /** Squadra shows Impostazioni instead of the Rosa. */
+    var settings by remember { mutableStateOf(false) }
+
     CompositionLocalProvider(LocalToast provides toast) {
         Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {
@@ -118,7 +125,15 @@ fun Home(
                         composable(tab.name) {
                             Page {
                                 when {
-                                    tab == Tab.TEAM -> RosterScreen(roster, onRosterChanged)
+                                    tab == Tab.TEAM -> {
+                                        SegmentedControl(
+                                            mapOf(false to Res.string.roster_title, true to Res.string.team_settings),
+                                            settings,
+                                            { settings = it },
+                                            tag = { if (it) "team_settings" else "team_roster" }
+                                        )
+                                        if (settings) LibraryScreen(plans) else RosterScreen(roster, onRosterChanged)
+                                    }
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {
                                         if (tab == Tab.SHOT_LOG) {

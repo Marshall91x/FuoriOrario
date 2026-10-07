@@ -1,10 +1,15 @@
 begin;
-select plan(13);
+select plan(14);
 
 insert into public.teams (id, name) values ('00000000-0000-0000-0000-000000000002', 'Altra squadra');
 insert into auth.users (id, email) values
   ('10000000-0000-0000-0000-000000000001', 'staff@example.com'),
   ('10000000-0000-0000-0000-000000000002', 'giocatore@example.com');
+-- Copies in a plan of the exercises staff edit and delete below.
+insert into public.plan_items (member_id, team_id, week, title, category, volume, description, days)
+select (select id from public.members where email = 'giocatore@example.com'), team_id, '2026-09-28', title, category,
+  volume, description, '{0}'
+from public.exercise_library where team_id = '00000000-0000-0000-0000-000000000001' and sort in (0, 9);
 select is((select count(*) from public.exercise_library where team_id = '00000000-0000-0000-0000-000000000002')::int,
   10, 'a new team starts with the default library');
 select throws_ok($$ insert into public.exercise_library (team_id, title, category)
@@ -44,6 +49,9 @@ select is_empty('select * from public.exercise_library', 'anon reads no library'
 reset role;
 select is((select count(*) from public.exercise_library where team_id = '00000000-0000-0000-0000-000000000002')::int,
   10, 'the other team''s library is untouched');
+select results_eq($$ select title, volume from public.plan_items order by title $$,
+  $$ values ('Mobilità e allungamento', '15 minuti'), ('Palleggio a due palloni', '3 × 60"') $$,
+  'plans keep their copies of edited and deleted exercises');
 
 select * from finish();
 rollback;
