@@ -1,6 +1,7 @@
 package it.manu.fuoriorario.ui.shots
 
 import it.manu.fuoriorario.data.ShotRepository
+import it.manu.fuoriorario.domain.DEFAULT_ZONE_REFS
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.ShotSession
 import it.manu.fuoriorario.domain.Zone
@@ -11,16 +12,17 @@ class FakeShotRepository(vararg sessions: ShotSession) : ShotRepository {
     /** Next write fails like a network error. */
     var failNext = false
 
-    /** The seed's defaults. */
-    var refs = mapOf(
-        Zone.PIT to 55, Zone.MLS to 40, Zone.MLC to 40, Zone.MLD to 40, Zone.ACS to 36,
-        Zone.ALS to 33, Zone.CEN to 33, Zone.ALD to 33, Zone.ACD to 36, Zone.TL to 70
-    )
+    var refs = DEFAULT_ZONE_REFS
 
     override suspend fun sessions(member: Member) =
         sessions.filter { it.memberId == member.id }.sortedByDescending { it.date }
 
     override suspend fun zoneRefs() = refs
+
+    override suspend fun setZoneRefs(refs: Map<Zone, Int>) {
+        failIfAsked()
+        this.refs = refs
+    }
 
     override suspend fun add(session: ShotSession): ShotSession {
         failIfAsked()

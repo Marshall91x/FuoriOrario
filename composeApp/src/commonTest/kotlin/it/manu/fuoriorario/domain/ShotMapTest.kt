@@ -78,4 +78,16 @@ class ShotMapTest {
         assertEquals(Shots(7, 10), totals[Zone.TL])
         assertEquals(Shots(), totals[Zone.CEN])
     }
+
+    @Test
+    fun parseZoneRef_wholePercentFrom0To100() {
+        assertEquals(0, parseZoneRef("0"))
+        assertEquals(55, parseZoneRef(" 55 "))
+        assertEquals(100, parseZoneRef("100"))
+        assertNull(parseZoneRef(""))
+        assertNull(parseZoneRef("101"))
+        assertNull(parseZoneRef("-1"))
+        assertNull(parseZoneRef("5,5"))
+        assertNull(parseZoneRef("abc"))
+    }
 }
