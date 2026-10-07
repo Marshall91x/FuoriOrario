@@ -5,6 +5,7 @@ import it.manu.fuoriorario.domain.DEFAULT_ZONE_REFS
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.ShotSession
 import it.manu.fuoriorario.domain.Zone
+import kotlinx.datetime.LocalDate
 
 class FakeShotRepository(vararg sessions: ShotSession) : ShotRepository {
     val sessions = sessions.toMutableList()
@@ -14,8 +15,19 @@ class FakeShotRepository(vararg sessions: ShotSession) : ShotRepository {
 
     var refs = DEFAULT_ZONE_REFS
 
+    /** Next team load fails like a network error. */
+    var failTeam = false
+
     override suspend fun sessions(member: Member) =
         sessions.filter { it.memberId == member.id }.sortedByDescending { it.date }
+
+    override suspend fun teamSessions(since: LocalDate): List<ShotSession> {
+        if (failTeam) {
+            failTeam = false
+            error("offline")
+        }
+        return sessions.filter { it.date >= since }
+    }
 
     override suspend fun zoneRefs() = refs
 

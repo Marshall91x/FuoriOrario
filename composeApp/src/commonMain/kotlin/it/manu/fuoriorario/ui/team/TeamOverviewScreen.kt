@@ -47,6 +47,7 @@ import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.OverviewRow
+import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.PlanLevel
 import it.manu.fuoriorario.domain.overviewRow
 import it.manu.fuoriorario.domain.planLevel
@@ -57,7 +58,6 @@ import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -81,18 +81,30 @@ fun TeamOverviewScreen(players: List<Member>, shots: ShotRepository, plans: Plan
         loadFailed = false
         try {
             val today = today()
-            // ponytail: 3 requests per player, in parallel; a team-wide query if the roster grows past a couple dozen.
+            // Two requests for the whole team, however many players.
             rows = coroutineScope {
+                val week = async { plans.teamWeek(weekOf(today)) }
+                val sessions = async { shots.teamSessions(Period.DAYS_30.start(today)) }
+                val (items, checks) = week.await()
+                val byPlayer = sessions.await().groupBy { it.memberId }
                 players.map { player ->
-                    async {
-                        val items = plans.items(player, weekOf(today))
-                        overviewRow(progress(items, plans.checks(items)), shots.sessions(player), today)
-                    }
-                }.awaitAll()
+                    overviewRow(
+                        progress(
+                            items.filter {
+                                it.memberId == player.id
+                            },
+                            checks
+                        ),
+                        byPlayer[player.id].orEmpty(),
+                        today
+                    )
+                }
             }
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
+            // No numbers from before next to the error.
+            rows = null
             loadFailed = true
         }
     }

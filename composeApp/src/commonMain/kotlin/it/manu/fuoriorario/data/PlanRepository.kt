@@ -17,6 +17,9 @@ interface PlanRepository {
     /** [member]'s exercises for [week] (its Monday), in the order they were added. */
     suspend fun items(member: Member, week: LocalDate): List<PlanItem>
 
+    /** Every exercise of the staff's team for [week] with its checks, in one request; each has its [PlanItem.memberId]. */
+    suspend fun teamWeek(week: LocalDate): Pair<List<PlanItem>, Set<PlanCheck>>
+
     /** Saves [item] under its [PlanItem.memberId], returning it with its id. Throws [PermissionDeniedException]. */
     suspend fun add(item: PlanItem): PlanItem
 

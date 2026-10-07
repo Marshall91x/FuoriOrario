@@ -2,6 +2,8 @@ package it.manu.fuoriorario.ui.team
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -19,6 +21,7 @@ import it.manu.fuoriorario.domain.Shots
 import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
+import it.manu.fuoriorario.ui.auth.awaitNode
 import it.manu.fuoriorario.ui.auth.awaitText
 import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.plan.FakePlanRepository
@@ -60,5 +63,30 @@ class TeamOverviewTest {
         awaitText("ANNA")
         onNodeWithTag("player_picker").assertTextEquals("Anna")
         awaitText("Nessuna sessione nel periodo. Registra la prima dopo il prossimo allenamento.")
+    }
+
+    @Test
+    fun failedLoadShowsNoTableUntilRetried() = runAppTest {
+        val shots = FakeShotRepository(
+            ShotSession(today(), mapOf(Zone.TL to Shots(1, 2)), id = "l1", memberId = "luca")
+        ).apply { failTeam = true }
+        setContent {
+            App(
+                FakeAuthRepository(coach),
+                FakeRosterRepository(coach, luca),
+                shots,
+                MapSettings(),
+                FakePlanRepository()
+            )
+        }
+
+        awaitText("Squadra")
+        onNodeWithText("Squadra").performClick()
+        awaitText("Caricamento non riuscito.")
+        awaitNode(hasTestTag("overview_luca"), count = 0)
+
+        onNodeWithText("Riprova").performClick()
+        awaitText("50%")
+        awaitNode(hasText("Caricamento non riuscito."), count = 0)
     }
 }
