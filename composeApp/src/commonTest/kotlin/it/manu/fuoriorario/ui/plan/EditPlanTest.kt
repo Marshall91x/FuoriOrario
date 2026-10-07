@@ -12,7 +12,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.runComposeUiTest
 import com.russhwolf.settings.MapSettings
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
@@ -24,6 +23,7 @@ import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
 import kotlin.test.Test
@@ -48,7 +48,7 @@ class EditPlanTest {
     )
 
     @Test
-    fun staffEditsAndRemovesExercise() = runComposeUiTest {
+    fun staffEditsAndRemovesExercise() = runAppTest {
         val plans = plans()
         setContent {
             App(
@@ -106,7 +106,7 @@ class EditPlanTest {
     }
 
     @Test
-    fun staffWriteNotePlayerReadsIt() = runComposeUiTest {
+    fun staffWriteNotePlayerReadsIt() = runAppTest {
         val plans = plans()
         setContent {
             App(
@@ -146,7 +146,7 @@ class EditPlanTest {
     }
 
     @Test
-    fun playerReadsNote() = runComposeUiTest {
+    fun playerReadsNote() = runAppTest {
         val plans = plans()
         plans.notes["luca" to week] = "Obiettivo: 75% ai liberi"
         plans.notes["luca" to week.plus(DatePeriod(days = 7))] = "Prossima"

@@ -9,7 +9,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.runComposeUiTest
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.domain.Member
@@ -19,6 +18,7 @@ import it.manu.fuoriorario.domain.Shots
 import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.Test
 
@@ -30,7 +30,7 @@ class ShotMapTest {
     private fun heat(label: String) = SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, label)
 
     @Test
-    fun tapShowsAndHidesTheZoneDetail() = runComposeUiTest {
+    fun tapShowsAndHidesTheZoneDetail() = runAppTest {
         val shots = FakeShotRepository(
             ShotSession(today(), mapOf(Zone.PIT to Shots(4, 10), Zone.MLS to Shots(5, 10), Zone.TL to Shots(8, 10)))
         )

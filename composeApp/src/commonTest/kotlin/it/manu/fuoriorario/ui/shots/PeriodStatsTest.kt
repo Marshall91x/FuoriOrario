@@ -5,7 +5,6 @@ import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.runComposeUiTest
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.domain.Member
@@ -15,6 +14,7 @@ import it.manu.fuoriorario.domain.Shots
 import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.Test
 import kotlinx.datetime.DatePeriod
@@ -28,7 +28,7 @@ class PeriodStatsTest {
     private fun daysAgo(days: Int) = today().minus(DatePeriod(days = days))
 
     @Test
-    fun periodFiltersStatsAndSessions() = runComposeUiTest {
+    fun periodFiltersStatsAndSessions() = runAppTest {
         val shots = FakeShotRepository(
             ShotSession(daysAgo(0), mapOf(Zone.PIT to Shots(3, 5)), "Oggi", id = "a"),
             ShotSession(daysAgo(20), mapOf(Zone.CEN to Shots(2, 4), Zone.TL to Shots(8, 10)), "Venti", id = "b"),

@@ -8,7 +8,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.runComposeUiTest
 import com.russhwolf.settings.MapSettings
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
@@ -20,6 +19,7 @@ import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
 import kotlin.test.Test
@@ -43,7 +43,7 @@ class LibraryExerciseTest {
     private val liberi = LibraryExercise("Tiri liberi sotto fatica", Category.SHOOTING, id = "l2")
 
     @Test
-    fun staffAssignsFromLibrary() = runComposeUiTest {
+    fun staffAssignsFromLibrary() = runAppTest {
         val plans = FakePlanRepository(library = listOf(mikan, liberi))
         setContent {
             App(
@@ -92,7 +92,7 @@ class LibraryExerciseTest {
     }
 
     @Test
-    fun libraryFailsThenLoads() = runComposeUiTest {
+    fun libraryFailsThenLoads() = runAppTest {
         val plans = FakePlanRepository(library = listOf(mikan)).apply { failLibrary = true }
         setContent {
             App(

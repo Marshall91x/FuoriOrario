@@ -9,20 +9,20 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.runComposeUiTest
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitNode
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @OptIn(ExperimentalTestApi::class)
 class AddPlayerTest {
     @Test
-    fun staffAddsPlayer() = runComposeUiTest {
+    fun staffAddsPlayer() = runAppTest {
         val staff = Member("Coach", Role.STAFF, "2026-10-01T10:00:00Z", email = "staff@example.com")
         val roster = FakeRosterRepository(staff)
         setContent { App(FakeAuthRepository(staff), roster) }

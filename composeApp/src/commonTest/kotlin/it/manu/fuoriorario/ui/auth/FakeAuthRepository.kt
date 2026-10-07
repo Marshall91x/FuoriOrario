@@ -4,6 +4,10 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.runComposeUiTest
+import fuoriorario.composeapp.generated.resources.Res
+import fuoriorario.composeapp.generated.resources.allStringArrayResources
+import fuoriorario.composeapp.generated.resources.allStringResources
 import it.manu.fuoriorario.data.AuthRepository
 import it.manu.fuoriorario.data.InvalidCodeException
 import it.manu.fuoriorario.data.NotInTeamException
@@ -16,6 +20,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.getStringArray
 
 /** [roster], when given, is where [refresh] reloads the signed-in member from. */
 class FakeAuthRepository(signedIn: Member? = null, private val roster: FakeRosterRepository? = null) : AuthRepository {
@@ -60,4 +66,18 @@ suspend fun ComposeUiTest.awaitNode(matcher: SemanticsMatcher, count: Int = 1) {
         withContext(Dispatchers.Default) { delay(25) }
     }
     fail("${matcher.description}: $found nodes, expected $count")
+}
+
+/**
+ * runComposeUiTest with every string already loaded. On web each string is read asynchronously the first time it shows:
+ * until then stringResource gives "", so an assert or click right after a screen appears fails depending on which
+ * tests ran before. Once loaded they stay in memory and appear from the first frame, as on iOS and Android.
+ */
+@OptIn(ExperimentalTestApi::class)
+fun runAppTest(block: suspend ComposeUiTest.() -> Unit) = runComposeUiTest {
+    withContext(Dispatchers.Default) {
+        Res.allStringResources.values.forEach { getString(it) }
+        Res.allStringArrayResources.values.forEach { getStringArray(it) }
+    }
+    block()
 }

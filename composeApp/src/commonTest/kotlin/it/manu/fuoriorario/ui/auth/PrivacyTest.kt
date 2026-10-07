@@ -5,7 +5,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.runComposeUiTest
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
@@ -17,7 +16,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalTestApi::class)
 class PrivacyTest {
     @Test
-    fun notAcknowledged_blocksUntilAccepted() = runComposeUiTest {
+    fun notAcknowledged_blocksUntilAccepted() = runAppTest {
         setContent {
             App(FakeAuthRepository(Member("Luca B.", Role.PLAYER)), FakeRosterRepository(), FakeShotRepository())
         }
@@ -33,7 +32,7 @@ class PrivacyTest {
     }
 
     @Test
-    fun acknowledged_skipsNotice() = runComposeUiTest {
+    fun acknowledged_skipsNotice() = runAppTest {
         setContent {
             App(
                 FakeAuthRepository(Member("Luca B.", Role.PLAYER, "2026-10-01T10:00:00Z")),

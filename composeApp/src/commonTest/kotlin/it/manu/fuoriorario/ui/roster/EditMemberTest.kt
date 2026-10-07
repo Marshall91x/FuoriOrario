@@ -7,12 +7,12 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.runComposeUiTest
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -25,7 +25,7 @@ class EditMemberTest {
     private val luca = Member("Luca B.", Role.PLAYER, email = "luca@example.com", jerseyNumber = "7", id = "l")
 
     @Test
-    fun staffEditsMember() = runComposeUiTest {
+    fun staffEditsMember() = runAppTest {
         val roster = FakeRosterRepository(staff, luca)
         setContent { App(FakeAuthRepository(staff), roster) }
         awaitText("Squadra")
@@ -51,7 +51,7 @@ class EditMemberTest {
     }
 
     @Test
-    fun staffRemovesMemberWithConfirmation() = runComposeUiTest {
+    fun staffRemovesMemberWithConfirmation() = runAppTest {
         val roster = FakeRosterRepository(staff, luca)
         setContent { App(FakeAuthRepository(staff), roster) }
         awaitText("Squadra")
@@ -73,7 +73,7 @@ class EditMemberTest {
     }
 
     @Test
-    fun staffDemotingThemselvesBecomesPlayer() = runComposeUiTest {
+    fun staffDemotingThemselvesBecomesPlayer() = runAppTest {
         val roster = FakeRosterRepository(staff, vice)
         setContent { App(FakeAuthRepository(staff, roster), roster, FakeShotRepository()) }
         awaitText("Squadra")
@@ -91,7 +91,7 @@ class EditMemberTest {
     }
 
     @Test
-    fun staffRemovingThemselvesIsSignedOut() = runComposeUiTest {
+    fun staffRemovingThemselvesIsSignedOut() = runAppTest {
         val roster = FakeRosterRepository(staff, vice)
         setContent { App(FakeAuthRepository(staff, roster), roster) }
         awaitText("Squadra")

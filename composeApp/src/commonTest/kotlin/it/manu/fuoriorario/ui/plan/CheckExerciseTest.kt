@@ -9,7 +9,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.runComposeUiTest
 import com.russhwolf.settings.MapSettings
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
@@ -22,6 +21,7 @@ import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitNode
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
 import kotlin.test.Test
@@ -43,7 +43,7 @@ class CheckExerciseTest {
     )
 
     @Test
-    fun playerChecksAssignedDays() = runComposeUiTest {
+    fun playerChecksAssignedDays() = runAppTest {
         val plans = plans()
         setContent { App(FakeAuthRepository(luca), FakeRosterRepository(), FakeShotRepository(), MapSettings(), plans) }
         awaitText("Piano")
@@ -80,7 +80,7 @@ class CheckExerciseTest {
     }
 
     @Test
-    fun staffSeeChecksButCannotChange() = runComposeUiTest {
+    fun staffSeeChecksButCannotChange() = runAppTest {
         val plans = plans()
         setContent {
             App(

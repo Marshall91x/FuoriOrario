@@ -11,7 +11,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.runComposeUiTest
 import com.russhwolf.settings.MapSettings
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
@@ -23,6 +22,7 @@ import it.manu.fuoriorario.domain.Shots
 import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.plan.FakePlanRepository
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
@@ -38,7 +38,7 @@ class ZoneRefsSettingsTest {
     private fun heat(label: String) = SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, label)
 
     @Test
-    fun staffChangeAndRestoreRefs() = runComposeUiTest {
+    fun staffChangeAndRestoreRefs() = runAppTest {
         // 40% in the paint: under the default 55%, over 30%.
         val shots = FakeShotRepository(ShotSession(today(), mapOf(Zone.PIT to Shots(4, 10)), memberId = "luca"))
         setContent {

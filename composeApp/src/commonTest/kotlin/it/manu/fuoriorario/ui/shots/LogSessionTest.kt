@@ -8,7 +8,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.runComposeUiTest
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.domain.Member
@@ -18,6 +17,7 @@ import it.manu.fuoriorario.domain.Shots
 import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -34,7 +34,7 @@ class LogSessionTest {
         ShotSession(today().minus(DatePeriod(days = 3)), mapOf(Zone.PIT to Shots(3, 5)), "Prima", id = "old")
 
     @Test
-    fun playerLogsSessionWithValidation() = runComposeUiTest {
+    fun playerLogsSessionWithValidation() = runAppTest {
         val shots = FakeShotRepository(older)
         setContent { App(FakeAuthRepository(luca), FakeRosterRepository(), shots) }
         awaitText("3/5 · 60%")
@@ -83,7 +83,7 @@ class LogSessionTest {
     }
 
     @Test
-    fun playerDeletesSessionWithConfirmation() = runComposeUiTest {
+    fun playerDeletesSessionWithConfirmation() = runAppTest {
         val shots = FakeShotRepository(older)
         setContent { App(FakeAuthRepository(luca), FakeRosterRepository(), shots) }
         awaitText("Prima")
