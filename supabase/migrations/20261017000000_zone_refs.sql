@@ -1,4 +1,4 @@
--- Riferimenti (PRD F5): staff change their team's expected percentage per zone, stored as fractions (0.55).
+-- Riferimenti (PRD F5): staff change their team's expected percentage per zone, stored as fractions (0.55), above 0: at 0 every zone with shots would be hot.
 
 create function public.valid_zone_refs(refs jsonb) returns boolean
 language sql immutable set search_path = '' as $$
@@ -9,7 +9,7 @@ language sql immutable set search_path = '' as $$
       <> array['acd', 'acs', 'ald', 'als', 'cen', 'mlc', 'mld', 'mls', 'pit', 'tl'] then false
     else not exists (
       select 1 from jsonb_each(refs) as r(zone, ref)
-      where case when jsonb_typeof(ref) <> 'number' then true else ref::numeric not between 0 and 1 end
+      where case when jsonb_typeof(ref) <> 'number' then true else ref::numeric <= 0 or ref::numeric > 1 end
     )
   end
 $$;

@@ -80,12 +80,13 @@ class ShotMapTest {
     }
 
     @Test
-    fun parseZoneRef_wholePercentFrom0To100() {
-        assertEquals(0, parseZoneRef("0"))
+    fun parseZoneRef_wholePercentFrom1To100() {
+        assertEquals(1, parseZoneRef("1"))
         assertEquals(55, parseZoneRef(" 55 "))
         assertEquals(100, parseZoneRef("100"))
         assertNull(parseZoneRef(""))
         assertNull(parseZoneRef("101"))
+        assertNull(parseZoneRef("0"))
         assertNull(parseZoneRef("-1"))
         assertNull(parseZoneRef("5,5"))
         assertNull(parseZoneRef("abc"))

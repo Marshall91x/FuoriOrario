@@ -61,7 +61,7 @@ class ZoneRefsSettingsTest {
 
         onNodeWithTag("ref_pit").performTextReplacement("120")
         onNodeWithText("Salva riferimenti").performScrollTo().performClick()
-        awaitText("Ogni riferimento è un numero intero da 0 a 100.")
+        awaitText("Ogni riferimento è un numero intero da 1 a 100.")
         assertEquals(DEFAULT_ZONE_REFS, shots.refs)
 
         onNodeWithTag("ref_pit").performScrollTo().performTextReplacement("30")

@@ -1,5 +1,5 @@
 begin;
-select plan(11);
+select plan(12);
 
 insert into public.teams (id, name) values ('00000000-0000-0000-0000-000000000002', 'Altra squadra');
 insert into auth.users (id, email) values
@@ -25,7 +25,9 @@ select is_empty($$ update public.teams set zone_refs = '{}' where id = '00000000
 select throws_ok($$ select public.set_zone_refs(zone_refs - 'tl') from public.teams $$, '23514', null,
   'every zone needs a riferimento');
 select throws_ok($$ select public.set_zone_refs(jsonb_set(zone_refs, '{tl}', '1.5')) from public.teams $$, '23514', null,
-  'a riferimento is between 0 and 1');
+  'a riferimento is at most 1');
+select throws_ok($$ select public.set_zone_refs(jsonb_set(zone_refs, '{tl}', '0')) from public.teams $$, '23514', null,
+  'and above 0');
 
 select throws_ok($$ select public.set_zone_refs(jsonb_set(zone_refs, '{tl}', '"0.7"')) from public.teams $$, '23514', null,
   'a riferimento is a number');

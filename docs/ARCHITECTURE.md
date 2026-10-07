@@ -76,7 +76,7 @@ teams (
   id uuid pk,
   name text not null,
   zone_refs jsonb not null check (valid_zone_refs(zone_refs)) default '{"pit":0.55,"mls":0.40,"mlc":0.40,"mld":0.40,
-     "acs":0.36,"als":0.33,"cen":0.33,"ald":0.33,"acd":0.36,"tl":0.70}',   -- tutte le 10 zone, frazioni 0–1
+     "acs":0.36,"als":0.33,"cen":0.33,"ald":0.33,"acd":0.36,"tl":0.70}',   -- tutte le 10 zone, frazioni in (0, 1]
   created_at timestamptz default now()
 )
 

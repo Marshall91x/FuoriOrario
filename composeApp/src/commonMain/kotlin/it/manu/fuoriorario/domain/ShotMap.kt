@@ -20,8 +20,8 @@ val DEFAULT_ZONE_REFS = mapOf(
     Zone.ALS to 33, Zone.CEN to 33, Zone.ALD to 33, Zone.ACD to 36, Zone.TL to 70
 )
 
-/** A riferimento as typed: a whole percentage 0–100, else null. */
-fun parseZoneRef(text: String): Int? = text.trim().toIntOrNull()?.takeIf { it in 0..100 }
+/** A riferimento as typed: a whole percentage 1–100, else null. At 0 every zone with shots would be HOT, even 0 made. */
+fun parseZoneRef(text: String): Int? = text.trim().toIntOrNull()?.takeIf { it in 1..100 }
 
 /** Made / attempted per zone over [sessions]; every zone present. */
 fun zoneTotals(sessions: List<ShotSession>): Map<Zone, Shots> =

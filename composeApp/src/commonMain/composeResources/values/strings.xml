@@ -171,7 +171,7 @@
     <string name="refs_title">Riferimenti</string>
     <string name="refs_hint">La percentuale attesa in ogni zona: colora la mappa di tiro di tutti i giocatori.</string>
     <string name="refs_default">Default %1$s</string>
-    <string name="refs_error">Ogni riferimento è un numero intero da 0 a 100.</string>
+    <string name="refs_error">Ogni riferimento è un numero intero da 1 a 100.</string>
     <string name="refs_save">Salva riferimenti</string>
     <string name="refs_saved">Riferimenti salvati</string>
     <string name="refs_restore">Ripristina default</string>
