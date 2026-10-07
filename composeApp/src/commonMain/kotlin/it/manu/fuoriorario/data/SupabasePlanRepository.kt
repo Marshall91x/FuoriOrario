@@ -14,9 +14,13 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 
 /** A `weekly_notes` row; team is filled by the database from the staff. */
@@ -71,6 +75,8 @@ class SupabasePlanRepository : PlanRepository {
 
     override suspend fun library(): List<LibraryExercise> = supabase.from("exercise_library").select {
         order("sort", Order.ASCENDING)
+        // Two staff adding at once can share a place: always the same order anyway.
+        order("id", Order.ASCENDING)
     }.decodeList()
 
     override suspend fun addToLibrary(exercise: LibraryExercise): LibraryExercise = mapErrors {
@@ -78,7 +84,9 @@ class SupabasePlanRepository : PlanRepository {
     }
 
     override suspend fun updateInLibrary(exercise: LibraryExercise) = mapErrors {
-        supabase.from("exercise_library").update(exercise) {
+        // Without sort: an edit never moves the exercise back from where another staff put it.
+        val fields = JsonObject(Json.encodeToJsonElement(exercise).jsonObject - "sort")
+        supabase.from("exercise_library").update(fields) {
             select()
             filter { eq("id", exercise.id!!) }
         }.requireRow()
