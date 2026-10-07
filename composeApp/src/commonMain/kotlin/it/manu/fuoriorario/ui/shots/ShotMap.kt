@@ -150,7 +150,7 @@ fun ShotMap(totals: Map<Zone, Shots>, refs: Map<Zone, Int>) {
 }
 
 /** The three-point line, open at the baseline; [closed] runs back along the baseline to bound the inside. */
-private fun arcPath(closed: Boolean) = Path().apply {
+internal fun arcPath(closed: Boolean) = Path().apply {
     val corner = atan2(ARC_CORNER_Y - BASKET_Y, BASKET_X - ARC_SIDE) * 180f / PI.toFloat()
     moveTo(ARC_SIDE, 0f)
     lineTo(ARC_SIDE, ARC_CORNER_Y)
@@ -226,8 +226,11 @@ private fun Court(totals: Map<Zone, Shots>, heats: Map<Zone, ZoneHeat>, selected
     }
 }
 
-/** Prototype `.lines`: frame, arc, key, free throw circle, restricted area, backboard, rim, centre circle. */
-private fun DrawScope.drawLines(arc: Path, color: Color) {
+/**
+ * Prototype `.lines`: frame, arc, key, free throw circle, restricted area, backboard, rim, centre circle. In viewBox
+ * units, [arc] from [arcPath]; the plays draw them too.
+ */
+internal fun DrawScope.drawLines(arc: Path, color: Color) {
     val line = Stroke(2.5f)
     fun half(cx: Float, cy: Float, r: Float, lower: Boolean, style: Stroke = line) =
         drawArc(color, if (lower) 0f else 180f, 180f, false, Offset(cx - r, cy - r), Size(2 * r, 2 * r), style = style)

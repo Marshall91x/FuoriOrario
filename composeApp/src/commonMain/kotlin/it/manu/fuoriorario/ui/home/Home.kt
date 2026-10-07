@@ -46,18 +46,21 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.ic_tab_plan
+import fuoriorario.composeapp.generated.resources.ic_tab_plays
 import fuoriorario.composeapp.generated.resources.ic_tab_shot_log
 import fuoriorario.composeapp.generated.resources.ic_tab_team
 import fuoriorario.composeapp.generated.resources.roster_empty_hint
 import fuoriorario.composeapp.generated.resources.roster_empty_title
 import fuoriorario.composeapp.generated.resources.roster_title
 import fuoriorario.composeapp.generated.resources.tab_plan
+import fuoriorario.composeapp.generated.resources.tab_plays
 import fuoriorario.composeapp.generated.resources.tab_shot_log
 import fuoriorario.composeapp.generated.resources.tab_team
 import fuoriorario.composeapp.generated.resources.team_overview
 import fuoriorario.composeapp.generated.resources.team_settings
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.data.PlanRepository
+import it.manu.fuoriorario.data.PlayRepository
 import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.domain.Member
@@ -71,6 +74,7 @@ import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.SegmentedControl
 import it.manu.fuoriorario.ui.components.ToastHost
 import it.manu.fuoriorario.ui.plan.PlanScreen
+import it.manu.fuoriorario.ui.plays.PlaysScreen
 import it.manu.fuoriorario.ui.roster.RosterScreen
 import it.manu.fuoriorario.ui.settings.LibraryScreen
 import it.manu.fuoriorario.ui.settings.ZoneRefsScreen
@@ -86,6 +90,7 @@ import org.jetbrains.compose.resources.stringResource
 private enum class Tab(val label: StringResource, val icon: DrawableResource, val staffOnly: Boolean = false) {
     SHOT_LOG(Res.string.tab_shot_log, Res.drawable.ic_tab_shot_log),
     PLAN(Res.string.tab_plan, Res.drawable.ic_tab_plan),
+    PLAYS(Res.string.tab_plays, Res.drawable.ic_tab_plays),
     TEAM(Res.string.tab_team, Res.drawable.ic_tab_team, staffOnly = true)
 }
 
@@ -107,6 +112,7 @@ fun Home(
     roster: RosterRepository,
     shots: ShotRepository,
     plans: PlanRepository,
+    plays: PlayRepository,
     followed: Member?,
     players: Result<List<Member>>?,
     onPick: (Member) -> Unit,
@@ -166,6 +172,7 @@ fun Home(
                                             }
                                         }
                                     }
+                                    tab == Tab.PLAYS -> PlaysScreen(plays)
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {
                                         if (tab == Tab.SHOT_LOG) {

@@ -6,6 +6,7 @@
     <string name="sign_out">Esci</string>
     <string name="tab_shot_log">Diario di tiro</string>
     <string name="tab_plan">Piano</string>
+    <string name="tab_plays">Schemi</string>
     <string name="tab_team">Squadra</string>
 
     <string name="save_failed">Salvataggio non riuscito. Riprova tra poco.</string>
@@ -213,4 +214,22 @@
     <string name="privacy_delete_title">Cancellazione</string>
     <string name="privacy_delete_body">Chiedila allo staff o al titolare e i tuoi dati vengono eliminati. Quando un membro viene tolto dalla squadra, tutti i suoi dati vengono eliminati.</string>
     <string name="privacy_accept">Ho letto</string>
+
+    <string name="plays_empty">Ancora nessuno schema.</string>
+    <string name="play_attack">Attacco</string>
+    <string name="play_zone_offense">Contro zona</string>
+    <string name="play_sideline_inbound">Rimessa laterale</string>
+    <string name="play_baseline_inbound">Rimessa dal fondo</string>
+    <string name="play_end_of_game">Fine partita</string>
+    <string name="play_transition">Transizione</string>
+    <string name="play_defense">Difesa</string>
+    <string name="play_half_court">Metà campo</string>
+    <string name="play_full_court">Campo intero</string>
+    <string name="play_with_defense">Con difesa</string>
+    <string name="play_all">Tutti gli schemi</string>
+    <string name="play_step">Passo %1$d di %2$d</string>
+    <string name="play_prev">Passo precedente</string>
+    <string name="play_next">Passo successivo</string>
+    <string name="play_play">Riproduci</string>
+    <string name="play_court_description">Campo con le pedine dello schema</string>
 </resources>

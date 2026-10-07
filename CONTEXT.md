@@ -40,3 +40,9 @@ Linguaggio comune del progetto. UI e documentazione in italiano, codice in ingle
 | Nota dello staff | `WeeklyNote` | Obiettivo o indicazione per il giocatore in quella settimana. |
 | Copia settimana | `copyPreviousWeek` | Duplica esercizi (non spunte) della settimana precedente in quella mostrata. |
 | Quadro squadra | `TeamOverviewScreen`, `OverviewRow` | Prima vista della scheda Squadra (staff): per giocatore completamento del piano della settimana corrente (verde ≥75%, arancio ≥40%, grigio sotto), tiri 7g, liberi 30g, triple 30g. Tocco su una riga → suo Diario di tiro. |
+| Schema | `Play` | Un gioco della squadra disegnato dallo staff: titolo, categoria, descrizione, metà campo o campo intero, con o senza difesa, passi. Lo vede tutta la squadra nella scheda Schemi. |
+| Categoria (dello schema) | `PlayCategory` | Attacco, Contro zona, Rimessa laterale, Rimessa dal fondo, Fine partita, Transizione, Difesa. Fisse. Da non confondere con *Area* degli esercizi. |
+| Pedina | `piece` | Attaccanti `1`–`5`, difensori `X1`–`X5` (solo schemi con difesa), palla in mano a un attaccante. |
+| Passo | `Step` | Le posizioni di tutte le pedine in un momento dello schema, chi ha la palla, chi blocca, le curve, una nota facoltativa (≤ 200). Massimo 20 per schema. |
+| Movimento | `Move` | Ricavato confrontando un passo col precedente: taglio (continua), palleggio (ondulata), passaggio (tratteggiata, dritta), blocco (finisce con ⊥), difensore (altro colore). |
+| Blocco | `screen` | Attaccante che in quel passo porta un blocco: il suo movimento finisce con ⊥; se è fermo, ha solo la ⊥ girata verso la palla. |

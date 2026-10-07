@@ -60,10 +60,14 @@ val categoryNames
 
 /** Prototype `.chip`: the area in a pill. */
 @Composable
-fun CategoryChip(category: Category) {
+fun CategoryChip(category: Category) = Chip(categoryNames.getValue(category))
+
+/** Prototype `.chip`: [text] in a pill. */
+@Composable
+fun Chip(text: String) {
     val c = FuoriOrarioTheme.colors
     Text(
-        categoryNames.getValue(category).uppercase(),
+        text.uppercase(),
         Modifier
             .background(c.surface2, RoundedCornerShape(50))
             .border(1.dp, c.line, RoundedCornerShape(50))
