@@ -112,7 +112,7 @@ fun Home(
     roster: RosterRepository,
     shots: ShotRepository,
     plans: PlanRepository,
-    playbook: PlayRepository,
+    plays: PlayRepository,
     followed: Member?,
     players: Result<List<Member>>?,
     onPick: (Member) -> Unit,
@@ -172,7 +172,7 @@ fun Home(
                                             }
                                         }
                                     }
-                                    tab == Tab.PLAYS -> PlaysScreen(playbook)
+                                    tab == Tab.PLAYS -> PlaysScreen(plays)
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {
                                         if (tab == Tab.SHOT_LOG) {

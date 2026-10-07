@@ -85,7 +85,7 @@ fun App(
     /** The device's own storage: only the staff's picked player. */
     prefs: Settings = remember { Settings() },
     plans: PlanRepository = remember { SupabasePlanRepository() },
-    playbook: PlayRepository = remember { SupabasePlayRepository() }
+    plays: PlayRepository = remember { SupabasePlayRepository() }
 ) {
     FuoriOrarioTheme {
         val c = FuoriOrarioTheme.colors
@@ -143,7 +143,7 @@ fun App(
                     roster,
                     shots,
                     plans,
-                    playbook,
+                    plays,
                     followed,
                     players,
                     onPick = ::pick,

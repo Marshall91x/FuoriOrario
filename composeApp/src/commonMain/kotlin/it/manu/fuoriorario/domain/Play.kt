@@ -1,5 +1,7 @@
 package it.manu.fuoriorario.domain
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -55,6 +57,7 @@ data class Step(
 )
 
 /** Schema: a `plays` row; team is filled by the database from the staff. */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class Play(
     val title: String,
@@ -64,7 +67,8 @@ data class Play(
     /** Defenders X1–X5 are on the court. */
     val defense: Boolean,
     val steps: List<Step>,
-    val id: String? = null
+    /** Null until saved; never sent, the database generates it. */
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val id: String? = null
 )
 
 /** The list: categories in their order, then titles alphabetically. */

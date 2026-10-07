@@ -58,7 +58,7 @@ private const val LINE_WIDTH = 2.5f
 fun PlayCourt(court: CourtSize, moves: List<Move>, frame: Frame) {
     val c = FuoriOrarioTheme.colors
     val arc = remember { arcPath(closed = false) }
-    val text = rememberTextMeasurer()
+    val measurer = rememberTextMeasurer()
     val description = stringResource(Res.string.play_court_description)
     val length = if (court == CourtSize.HALF) COURT_HEIGHT else 2 * COURT_HEIGHT
     val width = COURT_WIDTH + 2 * COURT_MARGIN
@@ -82,10 +82,10 @@ fun PlayCourt(court: CourtSize, moves: List<Move>, frame: Frame) {
                     if (isDefender(piece)) {
                         drawCircle(c.surface, PIECE_RADIUS, at.offset)
                         drawCircle(c.cold, PIECE_RADIUS, at.offset, style = Stroke(LINE_WIDTH))
-                        drawLabel(text, piece, at, c.cold)
+                        drawLabel(measurer, piece, at, c.cold)
                     } else {
                         drawCircle(c.ink, PIECE_RADIUS, at.offset)
-                        drawLabel(text, piece, at, c.bg)
+                        drawLabel(measurer, piece, at, c.bg)
                     }
                 }
                 val ball = frame.ball.offset + Offset(PIECE_RADIUS * 0.8f, -PIECE_RADIUS * 0.8f)
@@ -99,8 +99,8 @@ fun PlayCourt(court: CourtSize, moves: List<Move>, frame: Frame) {
 private val Point.offset get() = Offset(x, y)
 
 /** [label] centred on [at], sized in viewBox units like the court, not with the font size setting. */
-private fun DrawScope.drawLabel(text: TextMeasurer, label: String, at: Point, color: Color) {
-    val layout = text.measure(
+private fun DrawScope.drawLabel(measurer: TextMeasurer, label: String, at: Point, color: Color) {
+    val layout = measurer.measure(
         label,
         TextStyle(color = color, fontSize = (if (label.length > 1) 14f else 18f).toSp(), fontWeight = FontWeight.Bold)
     )
