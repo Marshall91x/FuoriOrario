@@ -47,18 +47,18 @@ import it.manu.fuoriorario.domain.LibraryExercise
 import it.manu.fuoriorario.domain.PlanItemError
 import it.manu.fuoriorario.domain.cleaned
 import it.manu.fuoriorario.domain.planItemError
+import it.manu.fuoriorario.ui.components.CategoryChip
+import it.manu.fuoriorario.ui.components.ExerciseErrorText
+import it.manu.fuoriorario.ui.components.ExerciseFields
 import it.manu.fuoriorario.ui.components.GhostButton
 import it.manu.fuoriorario.ui.components.GhostStyle
 import it.manu.fuoriorario.ui.components.LoadFailed
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
+import it.manu.fuoriorario.ui.components.Sheet
 import it.manu.fuoriorario.ui.components.launchWrite
 import it.manu.fuoriorario.ui.components.show
-import it.manu.fuoriorario.ui.plan.CategoryChip
-import it.manu.fuoriorario.ui.plan.ExerciseErrorText
-import it.manu.fuoriorario.ui.plan.ExerciseFields
-import it.manu.fuoriorario.ui.plan.Sheet
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -80,7 +80,7 @@ fun LibraryScreen(plans: PlanRepository) {
     var attempt by remember { mutableIntStateOf(0) }
 
     /** The exercise in the sheet; without id, a new one. */
-    var open by remember { mutableStateOf<LibraryExercise?>(null) }
+    var editing by remember { mutableStateOf<LibraryExercise?>(null) }
 
     /** A save, removal or move is in flight. */
     var busy by remember { mutableStateOf(false) }
@@ -113,13 +113,13 @@ fun LibraryScreen(plans: PlanRepository) {
             library = list.map { if (it.id == exercise.id) exercise else it }
             launch { toast.show(getString(Res.string.exercise_updated)) }
         }
-        open = null
+        editing = null
     }
 
     fun remove(exercise: LibraryExercise) = write {
         plans.removeFromLibrary(exercise)
         library = list.filter { it.id != exercise.id }
-        open = null
+        editing = null
         launch { toast.show(getString(Res.string.library_removed)) }
     }
 
@@ -139,7 +139,7 @@ fun LibraryScreen(plans: PlanRepository) {
             Text(stringResource(Res.string.library_hint), color = c.muted, style = MaterialTheme.typography.bodyMedium)
         }
         PrimaryButton(stringResource(Res.string.library_add), {
-            open = LibraryExercise("", Category.entries.first(), sort = (list.maxOfOrNull { it.sort } ?: -1) + 1)
+            editing = LibraryExercise("", Category.entries.first(), sort = (list.maxOfOrNull { it.sort } ?: -1) + 1)
         })
         if (list.isEmpty()) {
             Text(stringResource(Res.string.library_empty), color = c.muted)
@@ -149,7 +149,7 @@ fun LibraryScreen(plans: PlanRepository) {
                     if (i > 0) HorizontalDivider(color = c.line)
                     LibraryRow(
                         exercise,
-                        onEdit = { open = exercise },
+                        onEdit = { editing = exercise },
                         onUp = if (i > 0) ({ move(exercise, -1) }) else null,
                         onDown = if (i < list.lastIndex) ({ move(exercise, 1) }) else null
                     )
@@ -158,7 +158,7 @@ fun LibraryScreen(plans: PlanRepository) {
         }
     }
 
-    open?.let { LibrarySheet(it, busy, onDismiss = { open = null }, onSave = ::save, onRemove = ::remove) }
+    editing?.let { LibrarySheet(it, busy, onDismiss = { editing = null }, onSave = ::save, onRemove = ::remove) }
 }
 
 /** Prototype `.item`: area chip, title and volume, then ↑ ↓ where there is room to move. */
@@ -180,6 +180,7 @@ private fun LibraryRow(exercise: LibraryExercise, onEdit: () -> Unit, onUp: (() 
     }
 }
 
+/** ↑ or ↓, read out as [label]. */
 @Composable
 private fun MoveButton(arrow: String, label: String, tag: String, onClick: () -> Unit) {
     GhostButton(arrow, onClick, Modifier.testTag(tag).semantics { contentDescription = label })

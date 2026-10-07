@@ -86,6 +86,12 @@ private enum class Tab(val label: StringResource, val icon: DrawableResource, va
     TEAM(Res.string.tab_team, Res.drawable.ic_tab_team, staffOnly = true)
 }
 
+/** What the Squadra tab shows; [tag] is the test tag of its switch. */
+private enum class TeamSection(val label: StringResource, val tag: String) {
+    ROSTER(Res.string.roster_title, "team_roster"),
+    SETTINGS(Res.string.team_settings, "team_settings")
+}
+
 /**
  * Signed-in content under the header: tabs for the member's role, with the toast host. Players have no Squadra route at all.
  * [followed] is whose Diario di tiro and Piano to show: the player themselves, or the one staff picked from [players] (null while loading).
@@ -107,9 +113,7 @@ fun Home(
     val toast = remember { SnackbarHostState() }
     var period by remember { mutableStateOf(Period.DAYS_30) }
     var week by remember { mutableStateOf(weekOf(today())) }
-
-    /** Squadra shows Impostazioni instead of the Rosa. */
-    var settings by remember { mutableStateOf(false) }
+    var section by remember { mutableStateOf(TeamSection.ROSTER) }
 
     CompositionLocalProvider(LocalToast provides toast) {
         Column(Modifier.fillMaxSize()) {
@@ -127,12 +131,15 @@ fun Home(
                                 when {
                                     tab == Tab.TEAM -> {
                                         SegmentedControl(
-                                            mapOf(false to Res.string.roster_title, true to Res.string.team_settings),
-                                            settings,
-                                            { settings = it },
-                                            tag = { if (it) "team_settings" else "team_roster" }
+                                            TeamSection.entries.associateWith { it.label },
+                                            section,
+                                            { section = it },
+                                            tag = { it.tag }
                                         )
-                                        if (settings) LibraryScreen(plans) else RosterScreen(roster, onRosterChanged)
+                                        when (section) {
+                                            TeamSection.ROSTER -> RosterScreen(roster, onRosterChanged)
+                                            TeamSection.SETTINGS -> LibraryScreen(plans)
+                                        }
                                     }
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {
