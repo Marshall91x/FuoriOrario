@@ -50,6 +50,7 @@ import fuoriorario.composeapp.generated.resources.play_screens
 import fuoriorario.composeapp.generated.resources.play_step
 import fuoriorario.composeapp.generated.resources.play_title
 import fuoriorario.composeapp.generated.resources.play_with_defense
+import it.manu.fuoriorario.domain.ATTACKERS
 import it.manu.fuoriorario.domain.COURT_MARGIN
 import it.manu.fuoriorario.domain.CourtSize
 import it.manu.fuoriorario.domain.MoveKind
@@ -85,6 +86,9 @@ import org.jetbrains.compose.resources.stringResource
 /** A handle's key among the drag targets: the piece whose move it bends, marked. */
 private const val HANDLE = "~"
 
+/** How near an attacker a hold must be to give him the ball, in viewBox units: about two pieces. */
+private const val HOLD_REACH = 40f
+
 /** A spot on a canvas [width] pixels wide, in the court's viewBox. */
 private fun Offset.court(width: Int): Point {
     val scale = width / PLAY_COURT_WIDTH
@@ -115,6 +119,7 @@ fun PlayEditor(play: Play, busy: Boolean, onSave: (Play) -> Unit, onRemove: (Pla
     fun change(to: Play) {
         draft = to
         confirmingExit = false
+        confirmingRemoval = false
     }
 
     // The gestures below live across recompositions: they read the step on screen through these, never through [step].
@@ -229,9 +234,9 @@ fun PlayEditor(play: Play, busy: Boolean, onSave: (Play) -> Unit, onRemove: (Pla
                 }
                 .pointerInput(Unit) {
                     detectTapGestures(onLongPress = { at ->
-                        edit {
-                            it.copy(ball = nearest(it.pos.filterKeys { p -> !isDefender(p) }, at.court(size.width)))
-                        }
+                        val attacker =
+                            nearest(current().pos.filterKeys { !isDefender(it) }, at.court(size.width), HOLD_REACH)
+                        if (attacker != null) edit { it.copy(ball = attacker) }
                     })
                 },
             targets().filterKeys { it.startsWith(HANDLE) }.values.toList(),
@@ -248,7 +253,7 @@ fun PlayEditor(play: Play, busy: Boolean, onSave: (Play) -> Unit, onRemove: (Pla
                 style = MaterialTheme.typography.labelSmall,
                 color = c.muted
             )
-            listOf("1", "2", "3", "4", "5").forEach { piece ->
+            ATTACKERS.forEach { piece ->
                 val label = stringResource(Res.string.play_screen, piece)
                 TogglePill(
                     piece,

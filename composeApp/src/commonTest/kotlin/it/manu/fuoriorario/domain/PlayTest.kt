@@ -155,6 +155,13 @@ class PlayEditTest {
     }
 
     @Test
+    fun aHoldFarFromEveryAttackerTakesNone() {
+        val pieces = mapOf("1" to Point(250f, 330f))
+        assertEquals("1", nearest(pieces, Point(270f, 340f), reach = 40f))
+        assertEquals(null, nearest(pieces, Point(250f, 200f), reach = 40f))
+    }
+
+    @Test
     fun piecesStayWithinTheMargin() {
         assertEquals(Point(-COURT_MARGIN, 0f), Point(-80f, 0f).within(CourtSize.HALF))
         assertEquals(Point(550f, 520f), Point(600f, 700f).within(CourtSize.HALF))
@@ -189,6 +196,17 @@ class PlayEditTest {
             Play("Box", PlayCategory.ATTACK, null, CourtSize.HALF, false, listOf(step.copy(note = null))),
             play.cleaned()
         )
+    }
+
+    @Test
+    fun savedWithoutCurvesThatNoMoveUses() {
+        val first = startingStep(false)
+        val bend = mapOf("2" to Point(160f, 130f))
+        val moved = Step(first.pos + ("2" to Point(60f, 30f)), "1", curves = bend + ("1" to Point(1f, 1f)))
+        val play =
+            Play("Box", PlayCategory.ATTACK, null, CourtSize.HALF, false, listOf(first.copy(curves = bend), moved))
+        // Nothing moves into the first step; 1 stands still in the second.
+        assertEquals(listOf(first, moved.copy(curves = bend)), play.cleaned().steps)
     }
 
     private fun distance(a: Point, b: Point) = kotlin.math.hypot(a.x - b.x, a.y - b.y)

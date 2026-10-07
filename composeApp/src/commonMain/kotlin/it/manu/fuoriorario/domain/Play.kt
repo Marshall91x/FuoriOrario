@@ -170,7 +170,8 @@ const val PLAY_DESCRIPTION_MAX = 400
 const val STEP_NOTE_MAX = 200
 const val STEPS_MAX = 20
 
-private val ATTACKERS = listOf("1", "2", "3", "4", "5")
+/** The attackers' pieces, 1 to 5. */
+val ATTACKERS = listOf("1", "2", "3", "4", "5")
 
 /** How far a defender stands from his man, towards the basket. */
 private const val GUARD_DISTANCE = 45f
@@ -202,9 +203,12 @@ fun Step.withDefense(on: Boolean): Step {
     return copy(pos = pos + guards)
 }
 
-/** The key of [candidates] nearest [at]: the finger takes the nearest piece. */
-fun nearest(candidates: Map<String, Point>, at: Point): String =
-    candidates.minBy { (_, p) -> hypot(p.x - at.x, p.y - at.y) }.key
+/** The key of [candidates] nearest [at], if within [reach]: the finger takes the nearest piece. */
+fun nearest(candidates: Map<String, Point>, at: Point, reach: Float = Float.POSITIVE_INFINITY): String? = candidates
+    .mapValues { (_, p) -> hypot(p.x - at.x, p.y - at.y) }
+    .filterValues { it <= reach }
+    .minByOrNull { it.value }
+    ?.key
 
 /** This point kept on the court of [court] or in the margin around it. */
 fun Point.within(court: CourtSize): Point {
@@ -236,9 +240,17 @@ enum class PlayError { TITLE }
 /** First problem with the play as drawn, or null; lengths are capped by the fields. */
 fun playError(play: Play): PlayError? = if (play.title.isBlank()) PlayError.TITLE else null
 
-/** The play to save: trimmed, blanks null. */
+/** The play to save: trimmed, blanks null, no curves left on a piece that doesn't move into its step. */
 fun Play.cleaned() = copy(
     title = title.trim(),
     description = description?.trim()?.ifEmpty { null },
-    steps = steps.map { it.copy(note = it.note?.trim()?.ifEmpty { null }) }
+    steps = steps.mapIndexed { i, step ->
+        val prev = steps.getOrNull(i - 1)
+        step.copy(
+            curves = step.curves.filterKeys { piece ->
+                prev?.pos?.get(piece).let { it != null && it != step.pos[piece] }
+            },
+            note = step.note?.trim()?.ifEmpty { null }
+        )
+    }
 )

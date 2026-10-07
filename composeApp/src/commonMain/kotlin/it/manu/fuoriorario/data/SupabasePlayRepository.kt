@@ -8,6 +8,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 
+private val withDefaults = Json { encodeDefaults = true }
+
 class SupabasePlayRepository : PlayRepository {
     // RLS shows only the signed-in member's team.
     override suspend fun plays(): List<Play> = supabase.from("plays").select().decodeList()
@@ -17,7 +19,8 @@ class SupabasePlayRepository : PlayRepository {
     }
 
     override suspend fun update(play: Play) = mapErrors {
-        val fields = JsonObject(Json.encodeToJsonElement(play).jsonObject - "id")
+        // With defaults: a description cleared to null must reach the row too.
+        val fields = JsonObject(withDefaults.encodeToJsonElement(play).jsonObject - "id")
         supabase.from("plays").update(fields) {
             select()
             filter { eq("id", play.id!!) }
