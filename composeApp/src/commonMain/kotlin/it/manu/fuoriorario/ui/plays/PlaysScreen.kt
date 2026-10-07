@@ -50,7 +50,6 @@ import fuoriorario.composeapp.generated.resources.play_end_of_game
 import fuoriorario.composeapp.generated.resources.play_full_court
 import fuoriorario.composeapp.generated.resources.play_half_court
 import fuoriorario.composeapp.generated.resources.play_next
-import fuoriorario.composeapp.generated.resources.play_pause
 import fuoriorario.composeapp.generated.resources.play_play
 import fuoriorario.composeapp.generated.resources.play_prev
 import fuoriorario.composeapp.generated.resources.play_sideline_inbound
@@ -173,7 +172,7 @@ private fun Chips(play: Play) {
 
 /**
  * One play: the court at a step with the moves that led there, its note, ◀ / ▶ and "Riproduci". ▶ and "Riproduci"
- * animate into the next step; ◀ jumps back.
+ * animate into the next step, "Riproduci" on to the last; ◀ jumps back, and ◀ / ▶ stop it.
  */
 @Composable
 private fun PlayViewer(play: Play, onBack: () -> Unit) {
@@ -200,11 +199,10 @@ private fun PlayViewer(play: Play, onBack: () -> Unit) {
         }
     }
 
-    /** Plays to the last step, from the first when already there. */
+    /** Plays to the last step. */
     fun play() {
         go {}
         val job = scope.launch(start = CoroutineStart.LAZY) {
-            if (index == last) index = 0
             while (index < last) forward()
         }
         playing = job
@@ -254,15 +252,10 @@ private fun PlayViewer(play: Play, onBack: () -> Unit) {
             )
         }
         PrimaryButton(
-            stringResource(if (playing == null) Res.string.play_play else Res.string.play_pause),
-            {
-                if (playing != null) {
-                    go {}
-                } else if (last > 0) {
-                    play()
-                }
-            },
-            Modifier.fillMaxWidth().testTag("play_toggle")
+            stringResource(Res.string.play_play),
+            ::play,
+            Modifier.fillMaxWidth().testTag("play_toggle"),
+            enabled = playing == null && index < last
         )
     }
 }

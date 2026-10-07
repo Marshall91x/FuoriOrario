@@ -9,6 +9,14 @@ language sql immutable set search_path = '' as $$
     )
 $$;
 
+-- Defenders X1–X5 in any step.
+create function public.play_has_defenders(steps jsonb) returns boolean
+language sql immutable set search_path = '' as $$
+  select exists (
+    select 1 from jsonb_array_elements(steps) s, jsonb_object_keys(s -> 'pos') k where k like 'X%'
+  )
+$$;
+
 create table public.plays (
   id uuid primary key default gen_random_uuid(),
   team_id uuid not null default (public.my_member()).team_id references public.teams on delete cascade,
@@ -19,7 +27,8 @@ create table public.plays (
   court text not null check (court in ('HALF', 'FULL')),
   defense boolean not null default false,
   steps jsonb not null check (public.valid_play_steps(steps)),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  check (defense or not public.play_has_defenders(steps))
 );
 
 create index on public.plays (team_id);

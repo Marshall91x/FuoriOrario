@@ -80,8 +80,18 @@ fun byCategory(plays: List<Play>): List<Pair<PlayCategory, List<Play>>> = plays
 
 enum class MoveKind { CUT, DRIBBLE, PASS, SCREEN, DEFENDER }
 
-/** A line on the court. [piece] is who moves, or who passes; [control] bends it. */
-data class Move(val kind: MoveKind, val piece: String, val from: Point, val to: Point, val control: Point? = null) {
+/**
+ * A line on the court. [piece] is who moves, or who passes; [control] bends it. A screen set standing still has [from]
+ * equal to [to] and [facing], the ball, to turn its ⊥ to.
+ */
+data class Move(
+    val kind: MoveKind,
+    val piece: String,
+    val from: Point,
+    val to: Point,
+    val control: Point? = null,
+    val facing: Point? = null
+) {
     /** Where the line is at [t] in 0..1: a quadratic curve through [control], else straight. */
     fun at(t: Float): Point {
         val u = 1 - t
@@ -98,22 +108,26 @@ data class Move(val kind: MoveKind, val piece: String, val from: Point, val to: 
 
 /**
  * The lines from [prev] to [step]: whoever changed spot moves (defenders, screeners, the ball handler dribbling, the
- * others cutting), then the ball goes to its new holder. None on the first step.
+ * others cutting), then the ball goes to its new holder. A screener standing still gets just the ⊥, on the first step
+ * too; nothing else moves there.
  */
 fun moves(prev: Step?, step: Step): List<Move> {
-    if (prev == null) return emptyList()
     val players = step.pos.mapNotNull { (piece, to) ->
-        val from = prev.pos[piece] ?: return@mapNotNull null
-        if (from == to) return@mapNotNull null
+        val from = prev?.pos?.get(piece) ?: to
         val kind = when {
+            from == to -> null
             isDefender(piece) -> MoveKind.DEFENDER
             piece in step.screens -> MoveKind.SCREEN
-            piece == prev.ball -> MoveKind.DRIBBLE
+            piece == prev?.ball -> MoveKind.DRIBBLE
             else -> MoveKind.CUT
         }
-        Move(kind, piece, from, to, step.curves[piece])
+        when {
+            kind != null -> Move(kind, piece, from, to, step.curves[piece])
+            piece in step.screens -> Move(MoveKind.SCREEN, piece, to, to, facing = step.pos[step.ball])
+            else -> null
+        }
     }
-    val pass = if (prev.ball != step.ball) {
+    val pass = if (prev != null && prev.ball != step.ball) {
         listOfNotNull(
             step.pos[prev.ball]?.let { from ->
                 step.pos[step.ball]?.let { to -> Move(MoveKind.PASS, prev.ball, from, to) }

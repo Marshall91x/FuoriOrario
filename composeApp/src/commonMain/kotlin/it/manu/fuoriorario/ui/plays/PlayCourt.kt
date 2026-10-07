@@ -112,6 +112,7 @@ private fun DrawScope.drawLabel(measurer: TextMeasurer, label: String, at: Point
  * a screen ends with ⊥. It stops short of the pieces at its ends.
  */
 private fun DrawScope.drawMove(move: Move, color: Color) {
+    if (move.from == move.to) return drawStandingScreen(move, color)
     val samples = 40
     val all = (0..samples).map { move.at(it / samples.toFloat()).offset }
     val start = all.first()
@@ -147,11 +148,28 @@ private fun DrawScope.drawMove(move: Move, color: Color) {
     val angle = atan2(tip.y - before.y, tip.x - before.x)
     fun at(a: Float, r: Float) = tip + Offset(cos(a) * r, sin(a) * r)
     if (move.kind == MoveKind.SCREEN) {
-        val half = PI.toFloat() / 2
-        drawLine(color, at(angle + half, 10f), at(angle - half, 10f), LINE_WIDTH, StrokeCap.Round)
+        drawScreenBar(color, tip, angle)
     } else {
         val spread = PI.toFloat() * 0.85f
         drawLine(color, tip, at(angle + spread, 12f), LINE_WIDTH, StrokeCap.Round)
         drawLine(color, tip, at(angle - spread, 12f), LINE_WIDTH, StrokeCap.Round)
     }
+}
+
+/** The ⊥ of a screen: a bar across [angle] at [tip]. */
+private fun DrawScope.drawScreenBar(color: Color, tip: Offset, angle: Float) {
+    val half = PI.toFloat() / 2
+    fun at(a: Float) = tip + Offset(cos(a) * 10f, sin(a) * 10f)
+    drawLine(color, at(angle + half), at(angle - half), LINE_WIDTH, StrokeCap.Round)
+}
+
+/** A screen set without moving: a short stem out of the piece towards [Move.facing], then the ⊥; up without it. */
+private fun DrawScope.drawStandingScreen(move: Move, color: Color) {
+    val from = move.from.offset
+    val facing = move.facing?.offset?.takeIf { it != from }
+    val angle = if (facing == null) -PI.toFloat() / 2 else atan2(facing.y - from.y, facing.x - from.x)
+    fun at(r: Float) = from + Offset(cos(angle) * r, sin(angle) * r)
+    val tip = at(PIECE_RADIUS + 10f)
+    drawLine(color, at(PIECE_RADIUS + 2f), tip, LINE_WIDTH, StrokeCap.Round)
+    drawScreenBar(color, tip, angle)
 }

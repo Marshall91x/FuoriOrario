@@ -1,6 +1,7 @@
 package it.manu.fuoriorario.ui.plays
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -110,6 +111,8 @@ class PlaysTest {
         onNodeWithTag("play_toggle").performScrollTo().performClick()
         awaitText("Passo 4 di 4")
         awaitText("Passaggio a 5 sul taglio.")
+        // Nothing left to play.
+        onNodeWithTag("play_toggle").assertIsNotEnabled()
 
         onNodeWithTag("plays_back").performScrollTo().performClick()
         awaitText("Box")

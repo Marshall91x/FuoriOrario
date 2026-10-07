@@ -30,6 +30,7 @@ class PlayTest {
     @Test
     fun firstStepHasNoMoves() {
         assertEquals(emptyList(), moves(null, start))
+        assertEquals(emptyList(), moves(start, start))
     }
 
     @Test
@@ -55,6 +56,20 @@ class PlayTest {
                 Move(MoveKind.PASS, "1", Point(360f, 220f), Point(60f, 100f))
             ),
             moves(start, next)
+        )
+    }
+
+    @Test
+    fun aScreenSetStandingStillFacesTheBall() {
+        val next = start.copy(screens = listOf("5"))
+        assertEquals(
+            listOf(Move(MoveKind.SCREEN, "5", Point(330f, 150f), Point(330f, 150f), facing = Point(250f, 330f))),
+            moves(start, next)
+        )
+        // Also on the first step.
+        assertEquals(
+            listOf(Move(MoveKind.SCREEN, "5", Point(330f, 150f), Point(330f, 150f), facing = Point(250f, 330f))),
+            moves(null, next)
         )
     }
 

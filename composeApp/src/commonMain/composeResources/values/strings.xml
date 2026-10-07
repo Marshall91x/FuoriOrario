@@ -231,6 +231,5 @@
     <string name="play_prev">Passo precedente</string>
     <string name="play_next">Passo successivo</string>
     <string name="play_play">Riproduci</string>
-    <string name="play_pause">Pausa</string>
     <string name="play_court_description">Campo con le pedine dello schema</string>
 </resources>

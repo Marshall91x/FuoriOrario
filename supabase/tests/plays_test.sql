@@ -1,5 +1,5 @@
 begin;
-select plan(12);
+select plan(13);
 
 insert into public.teams (id, name) values ('00000000-0000-0000-0000-000000000002', 'Altra squadra');
 insert into public.plays (team_id, title, category, court, steps) values
@@ -24,6 +24,10 @@ select throws_ok($$ insert into public.plays (team_id, title, category, court, s
 select throws_ok($$ insert into public.plays (team_id, title, category, court, steps)
   values ('00000000-0000-0000-0000-000000000002', 'Zona', 'Zona 2-3', 'HALF', '[{"pos":{},"ball":"1"}]') $$,
   '23514', null, 'only the seven categories');
+select throws_ok($$ insert into public.plays (team_id, title, category, court, defense, steps)
+  values ('00000000-0000-0000-0000-000000000002', 'Senza', 'Attacco', 'HALF', false,
+    '[{"pos":{"1":{"x":250,"y":330}},"ball":"1"},{"pos":{"1":{"x":250,"y":330},"X1":{"x":250,"y":290}},"ball":"1"}]') $$,
+  '23514', null, 'defenders only in plays with defense');
 
 -- Player
 set local role authenticated;
@@ -40,7 +44,8 @@ select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-0000000
 select results_eq('select title from public.plays', $$ values ('Pick and roll centrale') $$,
   'players changed nothing');
 select lives_ok($$ insert into public.plays (title, category, court, defense, steps)
-  values ('Box', 'Rimessa dal fondo', 'FULL', true, '[{"pos":{},"ball":"1","note":"Rimessa"}]') $$,
+  values ('Box', 'Rimessa dal fondo', 'FULL', true,
+    '[{"pos":{"1":{"x":250,"y":-30},"X1":{"x":250,"y":20}},"ball":"1","note":"Rimessa"}]') $$,
   'staff add plays to their team');
 select results_eq($$ update public.plays set title = 'Box 2' where title = 'Box' returning team_id $$,
   $$ values ('00000000-0000-0000-0000-000000000001'::uuid) $$, 'staff edit their team''s plays');

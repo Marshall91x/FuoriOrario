@@ -137,7 +137,8 @@ plays (
   category text not null check (in le 7 categorie), description text check (length <= 400),
   court text not null check (court in ('HALF','FULL')), defense boolean not null default false,
   steps jsonb not null check (valid_play_steps(steps)),   -- 1–20 passi, note ≤ 200; formato in adr/0008
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  check (defense or not play_has_defenders(steps))          -- X1–X5 solo con difesa
 )
 
 plan_checks (

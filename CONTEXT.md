@@ -45,4 +45,4 @@ Linguaggio comune del progetto. UI e documentazione in italiano, codice in ingle
 | Pedina | `piece` | Attaccanti `1`–`5`, difensori `X1`–`X5` (solo schemi con difesa), palla in mano a un attaccante. |
 | Passo | `Step` | Le posizioni di tutte le pedine in un momento dello schema, chi ha la palla, chi blocca, le curve, una nota facoltativa (≤ 200). Massimo 20 per schema. |
 | Movimento | `Move` | Ricavato confrontando un passo col precedente: taglio (continua), palleggio (ondulata), passaggio (tratteggiata, dritta), blocco (finisce con ⊥), difensore (altro colore). |
-| Blocco | `screen` | Attaccante che in quel passo porta un blocco: il suo movimento finisce con ⊥. |
+| Blocco | `screen` | Attaccante che in quel passo porta un blocco: il suo movimento finisce con ⊥; se è fermo, ha solo la ⊥ girata verso la palla. |
