@@ -6,14 +6,13 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.runComposeUiTest
 import it.manu.fuoriorario.App
 import kotlin.test.Test
 
 @OptIn(ExperimentalTestApi::class)
 class LoginTest {
     @Test
-    fun otpLogin() = runComposeUiTest {
+    fun otpLogin() = runAppTest {
         setContent { App(FakeAuthRepository()) }
 
         awaitText("Invia codice")

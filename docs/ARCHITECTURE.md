@@ -75,8 +75,8 @@ Ogni tabella con dati di squadra ha `team_id`. Chiavi `uuid` (`gen_random_uuid()
 teams (
   id uuid pk,
   name text not null,
-  zone_refs jsonb not null default '{"pit":0.55,"mls":0.40,"mlc":0.40,"mld":0.40,
-     "acs":0.36,"als":0.33,"cen":0.33,"ald":0.33,"acd":0.36,"tl":0.70}',
+  zone_refs jsonb not null check (valid_zone_refs(zone_refs)) default '{"pit":0.55,"mls":0.40,"mlc":0.40,"mld":0.40,
+     "acs":0.36,"als":0.33,"cen":0.33,"ald":0.33,"acd":0.36,"tl":0.70}',   -- tutte le 10 zone, frazioni in (0, 1]
   created_at timestamptz default now()
 )
 
@@ -168,6 +168,7 @@ Funzioni helper `security definer stable`:
 
 `ack_privacy()` è l'unica scrittura del giocatore su `members` (RPC, aggiorna solo `privacy_ack_at`).
 `copy_previous_week(player, target, seen)` copia in un colpo gli esercizi della settimana prima (RPC `security invoker`: valgono le RLS di `plan_items`). Se la settimana non ha più `seen` esercizi (un altro staff l'ha cambiata) non copia nulla e alza `plan_changed` (SQLSTATE `FO002`): due copie insieme non creano doppioni.
+`set_zone_refs(refs)` sostituisce i riferimenti della squadra dell'utente (RPC `security invoker`: valgono le RLS di `teams`, solo lo staff scrive). Il client non conosce l'id della squadra; i default stanno anche in `domain/` (`DEFAULT_ZONE_REFS`) per il "Ripristina".
 `reorder_library(ids)` mette la libreria nell'ordine dato con un solo `update` (RPC `security invoker`: valgono le RLS di `exercise_library`), così un errore non lascia due esercizi allo stesso posto.
 Trigger `keep_one_staff` (`before update of role, team_id or delete on members`): una squadra non resta mai senza staff; togliere o declassare l'ultimo alza `last_staff` (SQLSTATE `FO001`). Cancellare l'intera squadra resta possibile.
 Le RLS sono la vera barriera: la UI nasconde, il database impedisce. Coperte da test pgTAP in `supabase/tests/`.
@@ -193,8 +194,10 @@ Le migrazioni si applicano in produzione con `supabase db push` dal job di rilas
 | Livello | Dove | Cosa | In CI |
 |---|---|---|---|
 | Unit | `commonTest` | `domain/`: percentuali, somma zone, periodi/stagione, classe zona, completamento, settimane | ✓ |
-| UI | `commonTest` con `runComposeUiTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) | iOS Simulator + Wasm (browser headless). Android in locale |
-| DB | `supabase/tests` (pgTAP) | RLS: giocatore non legge/scrive dati altrui, solo staff gestisce rosa/piani, solo giocatore spunta | ✓ (Supabase locale in CI) |
+| UI | `commonTest` con `runAppTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) · staff modifica e ripristina i riferimenti, la mappa si ricolora | iOS Simulator + Wasm (browser headless). Android in locale |
+| DB | `supabase/tests` (pgTAP) | RLS: giocatore non legge/scrive dati altrui, solo staff gestisce rosa/piani/riferimenti, solo giocatore spunta | ✓ (Supabase locale in CI) |
+
+I test UI partono con `runAppTest` (non `runComposeUiTest`): carica prima tutte le stringhe, perché su Wasm ogni stringa letta la prima volta arriva in modo asincrono e per qualche frame l'etichetta è vuota.
 
 ## CI/CD (GitHub Actions)
 

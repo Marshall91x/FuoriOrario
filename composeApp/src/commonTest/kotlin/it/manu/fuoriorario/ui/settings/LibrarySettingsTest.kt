@@ -7,7 +7,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.runComposeUiTest
 import com.russhwolf.settings.MapSettings
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.domain.Category
@@ -16,6 +15,7 @@ import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.plan.FakePlanRepository
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
@@ -31,7 +31,7 @@ class LibrarySettingsTest {
     private val liberi = LibraryExercise("Tiri liberi sotto fatica", Category.SHOOTING, sort = 1, id = "l2")
 
     @Test
-    fun staffManageLibrary() = runComposeUiTest {
+    fun staffManageLibrary() = runAppTest {
         val plans = FakePlanRepository(library = listOf(mikan, liberi))
         setContent {
             App(FakeAuthRepository(coach), FakeRosterRepository(coach), FakeShotRepository(), MapSettings(), plans)

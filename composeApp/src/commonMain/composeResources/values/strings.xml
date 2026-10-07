@@ -168,6 +168,13 @@
     <string name="library_removed">Eliminato dalla libreria</string>
     <string name="library_up">Sposta su</string>
     <string name="library_down">Sposta giù</string>
+    <string name="refs_title">Riferimenti</string>
+    <string name="refs_hint">La percentuale attesa in ogni zona: colora la mappa di tiro di tutti i giocatori.</string>
+    <string name="refs_default">Default %1$s</string>
+    <string name="refs_error">Ogni riferimento è un numero intero da 1 a 100.</string>
+    <string name="refs_save">Salva riferimenti</string>
+    <string name="refs_saved">Riferimenti salvati</string>
+    <string name="refs_restore">Ripristina default</string>
 
     <string name="login_title">Accedi</string>
     <string name="login_email_hint">Inserisci l'email che hai dato allo staff: ti mandiamo un codice di 6 cifre.</string>

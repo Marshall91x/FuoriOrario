@@ -72,6 +72,7 @@ import it.manu.fuoriorario.ui.components.ToastHost
 import it.manu.fuoriorario.ui.plan.PlanScreen
 import it.manu.fuoriorario.ui.roster.RosterScreen
 import it.manu.fuoriorario.ui.settings.LibraryScreen
+import it.manu.fuoriorario.ui.settings.ZoneRefsScreen
 import it.manu.fuoriorario.ui.shots.ShotLogScreen
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import org.jetbrains.compose.resources.DrawableResource
@@ -138,7 +139,10 @@ fun Home(
                                         )
                                         when (section) {
                                             TeamSection.ROSTER -> RosterScreen(roster, onRosterChanged)
-                                            TeamSection.SETTINGS -> LibraryScreen(plans)
+                                            TeamSection.SETTINGS -> {
+                                                LibraryScreen(plans)
+                                                ZoneRefsScreen(shots)
+                                            }
                                         }
                                     }
                                     // A fresh screen per player: no data or pending writes carried over.

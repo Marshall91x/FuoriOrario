@@ -5,13 +5,13 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.runComposeUiTest
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitNode
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.plan.FakePlanRepository
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
@@ -23,7 +23,7 @@ private const val ACK = "2026-10-01T10:00:00Z"
 @OptIn(ExperimentalTestApi::class)
 class NavigationTest {
     @Test
-    fun player_seesShotLogAndPlanOnly() = runComposeUiTest {
+    fun player_seesShotLogAndPlanOnly() = runAppTest {
         setContent {
             App(
                 FakeAuthRepository(Member("Luca B.", Role.PLAYER, ACK)),
@@ -42,7 +42,7 @@ class NavigationTest {
     }
 
     @Test
-    fun staff_reachesTeam() = runComposeUiTest {
+    fun staff_reachesTeam() = runAppTest {
         setContent { App(FakeAuthRepository(Member("Coach", Role.STAFF, ACK)), FakeRosterRepository()) }
 
         awaitText("VISTA STAFF")

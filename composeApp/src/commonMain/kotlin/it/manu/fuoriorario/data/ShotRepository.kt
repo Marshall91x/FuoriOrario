@@ -12,6 +12,9 @@ interface ShotRepository {
     /** The team's reference percentage per zone. */
     suspend fun zoneRefs(): Map<Zone, Int>
 
+    /** Replaces the team's riferimenti, every zone. Staff only: throws [PermissionDeniedException]. */
+    suspend fun setZoneRefs(refs: Map<Zone, Int>)
+
     /** Saves [session] under its [ShotSession.memberId], returning it with its id. Throws [PermissionDeniedException]. */
     suspend fun add(session: ShotSession): ShotSession
 

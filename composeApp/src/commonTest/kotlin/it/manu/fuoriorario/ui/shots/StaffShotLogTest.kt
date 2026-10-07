@@ -15,7 +15,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.runComposeUiTest
 import com.russhwolf.settings.MapSettings
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
@@ -26,6 +25,7 @@ import it.manu.fuoriorario.domain.Shots
 import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -42,7 +42,7 @@ class StaffShotLogTest {
     private val anna = Member("Anna", Role.PLAYER, ACK, id = "anna")
 
     @Test
-    fun staffFollowsAnyPlayer() = runComposeUiTest {
+    fun staffFollowsAnyPlayer() = runAppTest {
         val shots = FakeShotRepository(
             ShotSession(today(), mapOf(Zone.PIT to Shots(3, 5)), id = "l1", memberId = "luca"),
             ShotSession(today(), mapOf(Zone.PIT to Shots(1, 4)), id = "m1", memberId = "marco")
@@ -105,7 +105,7 @@ class StaffShotLogTest {
     }
 
     @Test
-    fun playerHasNoPicker() = runComposeUiTest {
+    fun playerHasNoPicker() = runAppTest {
         setContent {
             App(FakeAuthRepository(luca), FakeRosterRepository(coach, luca, marco), FakeShotRepository(), MapSettings())
         }

@@ -6,7 +6,6 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.runComposeUiTest
 import com.russhwolf.settings.MapSettings
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
@@ -18,6 +17,7 @@ import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
 import kotlin.test.Test
@@ -67,7 +67,7 @@ class CopyWeekTest {
     }
 
     @Test
-    fun copiesExercisesOnly() = runComposeUiTest {
+    fun copiesExercisesOnly() = runAppTest {
         val plans = plans()
         open(plans)
         awaitText("Nessun esercizio assegnato. Aggiungilo con “Aggiungi esercizio”.")
@@ -109,7 +109,7 @@ class CopyWeekTest {
     }
 
     @Test
-    fun emptyPreviousWeekChangesNothing() = runComposeUiTest {
+    fun emptyPreviousWeekChangesNothing() = runAppTest {
         val plans = plans()
         open(plans)
         onNodeWithContentDescription("Settimana successiva").performClick()
@@ -121,7 +121,7 @@ class CopyWeekTest {
     }
 
     @Test
-    fun emptyPreviousWeekDoesNotAskToConfirm() = runComposeUiTest {
+    fun emptyPreviousWeekDoesNotAskToConfirm() = runAppTest {
         val plans = plans()
         open(plans)
         // Last week has exercises, the one before has none.
@@ -134,7 +134,7 @@ class CopyWeekTest {
     }
 
     @Test
-    fun weekChangedMeanwhileCopiesNothing() = runComposeUiTest {
+    fun weekChangedMeanwhileCopiesNothing() = runAppTest {
         val plans = plans()
         open(plans)
         awaitText("Nessun esercizio assegnato. Aggiungilo con “Aggiungi esercizio”.")

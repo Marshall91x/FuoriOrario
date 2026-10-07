@@ -1,6 +1,7 @@
 package it.manu.fuoriorario.data
 
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import it.manu.fuoriorario.core.supabase
@@ -10,6 +11,9 @@ import it.manu.fuoriorario.domain.Zone
 import kotlin.math.roundToInt
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.encodeToJsonElement
 
 class SupabaseShotRepository : ShotRepository {
     override suspend fun sessions(member: Member): List<ShotSession> = supabase.from("shot_sessions").select {
@@ -23,6 +27,13 @@ class SupabaseShotRepository : ShotRepository {
         .select(Columns.list("zone_refs"))
         .decodeSingle<TeamRefs>()
         .zoneRefs.mapValues { (it.value * 100).roundToInt() }
+
+    override suspend fun setZoneRefs(refs: Map<Zone, Int>) = mapErrors {
+        supabase.postgrest.rpc(
+            "set_zone_refs",
+            buildJsonObject { put("refs", Json.encodeToJsonElement(refs.mapValues { it.value / 100.0 })) }
+        ).requireRow()
+    }
 
     override suspend fun add(session: ShotSession): ShotSession = mapErrors {
         supabase.from("shot_sessions").insert(session) { select() }.decodeSingle()

@@ -14,7 +14,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.runComposeUiTest
 import com.russhwolf.settings.MapSettings
 import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
@@ -25,6 +24,7 @@ import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
 import it.manu.fuoriorario.ui.auth.awaitText
+import it.manu.fuoriorario.ui.auth.runAppTest
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
 import kotlin.test.Test
@@ -45,7 +45,7 @@ class FreeExerciseTest {
     private val nextWeek = week.plus(DatePeriod(days = 7))
 
     @Test
-    fun staffAddsFreeExercise() = runComposeUiTest {
+    fun staffAddsFreeExercise() = runAppTest {
         val plans = FakePlanRepository()
         setContent {
             App(
@@ -112,7 +112,7 @@ class FreeExerciseTest {
     }
 
     @Test
-    fun playerSeesOwnWeek() = runComposeUiTest {
+    fun playerSeesOwnWeek() = runAppTest {
         val plans = FakePlanRepository(
             PlanItem(
                 week, "Mikan drill", Category.FOOTWORK, "3 × 20", "Piedi rapidi", "https://youtu.be/x", listOf(0, 2),
