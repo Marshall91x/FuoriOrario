@@ -43,6 +43,11 @@ Ogni milestone diventa una GitHub Milestone; ogni punto una issue. Branch `featu
 ## M6 — Quadro squadra
 - Tabella staff con completamento, tiri 7g, liberi 30g, triple 30g; tocco → diario.
 
+## M6.5 — Playbook
+- Tab Schemi per tutti: elenco per categoria, visualizzatore passo per passo con movimenti animati (taglio, palleggio, passaggio, blocco).
+- Editor per lo staff sul telefono: metà campo o campo intero, difesa facoltativa, pedine trascinabili, curve, note per passo.
+- **Fatto quando**: lo staff disegna uno schema dal telefono e un giocatore lo rivede animato.
+
 ## M7 — Prova con la squadra
 - Progetto Supabase cloud (UE), migrazioni + seed di produzione (squadra reale, staff).
 - Testo informativa definitivo.
