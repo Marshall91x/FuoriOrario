@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,6 +61,7 @@ import fuoriorario.composeapp.generated.resources.exercise_removed
 import fuoriorario.composeapp.generated.resources.exercise_save
 import fuoriorario.composeapp.generated.resources.exercise_update
 import fuoriorario.composeapp.generated.resources.exercise_updated
+import fuoriorario.composeapp.generated.resources.ic_check
 import fuoriorario.composeapp.generated.resources.note_edit
 import fuoriorario.composeapp.generated.resources.note_label
 import fuoriorario.composeapp.generated.resources.note_save
@@ -124,6 +126,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -582,7 +585,14 @@ private fun Days(item: PlanItem, checks: Set<PlanCheck>, today: Int?, onToggle: 
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    if (done) Text("✓", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = c.accentInk)
+                    if (done) {
+                        Icon(
+                            painterResource(Res.drawable.ic_check),
+                            null,
+                            Modifier.size(16.dp),
+                            tint = c.accentInk
+                        )
+                    }
                 }
             }
         }
