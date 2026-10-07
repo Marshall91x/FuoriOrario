@@ -39,4 +39,4 @@ Linguaggio comune del progetto. UI e documentazione in italiano, codice in ingle
 | Completamento | `Progress` | Spunte / giorni assegnati nella settimana. |
 | Nota dello staff | `WeeklyNote` | Obiettivo o indicazione per il giocatore in quella settimana. |
 | Copia settimana | `copyPreviousWeek` | Duplica esercizi (non spunte) della settimana precedente in quella mostrata. |
-| Quadro squadra | `TeamOverview` | Prima vista della scheda Squadra (staff): per giocatore completamento del piano della settimana corrente (verde ≥75%, arancio ≥40%, grigio sotto), tiri 7g, liberi 30g, triple 30g. Tocco su una riga → suo Diario di tiro. |
+| Quadro squadra | `TeamOverviewScreen`, `OverviewRow` | Prima vista della scheda Squadra (staff): per giocatore completamento del piano della settimana corrente (verde ≥75%, arancio ≥40%, grigio sotto), tiri 7g, liberi 30g, triple 30g. Tocco su una riga → suo Diario di tiro. |
