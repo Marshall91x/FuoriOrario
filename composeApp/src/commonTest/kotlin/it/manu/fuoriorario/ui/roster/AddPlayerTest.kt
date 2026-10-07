@@ -2,6 +2,7 @@ package it.manu.fuoriorario.ui.roster
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -13,6 +14,7 @@ import it.manu.fuoriorario.App
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.ui.auth.FakeAuthRepository
+import it.manu.fuoriorario.ui.auth.awaitNode
 import it.manu.fuoriorario.ui.auth.awaitText
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,7 +29,8 @@ class AddPlayerTest {
 
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
-        awaitText("INSERISCI LA ROSA")
+        // Not by its title: the Diario without players shows it too.
+        awaitNode(hasTestTag("add_email"))
 
         onNodeWithTag("add_email").performTextInput("marco")
         onNodeWithTag("add_name").performTextInput("Marco R.")
