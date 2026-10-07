@@ -30,7 +30,9 @@ Linguaggio comune del progetto. UI e documentazione in italiano, codice in ingle
 | Settimana | `Week` | Lunedì–domenica, identificata dalla data del lunedì. Fuso Europe/Rome. |
 | Piano settimanale | `WeeklyPlan` | Esercizi e nota assegnati a un giocatore per **una** settimana specifica. |
 | Esercizio (del piano) | `PlanItem` | Copia di un esercizio con titolo, area, volume, descrizione, video, giorni. Modificarlo non tocca la libreria. |
-| Libreria | `LibraryExercise` | Esercizi modello della squadra, gestiti dallo staff; scorciatoia per riempire un piano. |
+| Libreria | `LibraryExercise` | Esercizi modello della squadra, gestiti dallo staff in Squadra → Impostazioni; scorciatoia per riempire un piano. Ordine scelto dallo staff (↑ ↓). |
+| Eliminare (dalla libreria) | `removeFromLibrary` | Toglie l'esercizio modello: doppio tocco "Elimina" → "Conferma eliminazione". I piani che lo avevano copiato restano invariati. |
+| Impostazioni | `TeamSection.SETTINGS` | Seconda vista della scheda Squadra (staff): Libreria, poi Riferimenti. |
 | Area | `Category` | Ball handling, Tiro, Footwork, Atletica, Difesa, Recupero. |
 | Volume | `volume` | Quantità testuale (es. "3 × 20"). |
 | Spunta | `PlanCheck` | Il giocatore dichiara fatto un esercizio in un giorno. Solo il giocatore può spuntare. |

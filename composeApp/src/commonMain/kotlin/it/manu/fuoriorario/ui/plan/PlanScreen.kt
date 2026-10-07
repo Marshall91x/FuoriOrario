@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -16,19 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.progressSemantics
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,27 +43,14 @@ import androidx.compose.ui.semantics.Role as SemanticsRole
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fuoriorario.composeapp.generated.resources.Res
-import fuoriorario.composeapp.generated.resources.category_athletics
-import fuoriorario.composeapp.generated.resources.category_ball_handling
-import fuoriorario.composeapp.generated.resources.category_defense
-import fuoriorario.composeapp.generated.resources.category_footwork
-import fuoriorario.composeapp.generated.resources.category_recovery
-import fuoriorario.composeapp.generated.resources.category_shooting
-import fuoriorario.composeapp.generated.resources.close
 import fuoriorario.composeapp.generated.resources.days_short
 import fuoriorario.composeapp.generated.resources.exercise_added
-import fuoriorario.composeapp.generated.resources.exercise_category
 import fuoriorario.composeapp.generated.resources.exercise_days
-import fuoriorario.composeapp.generated.resources.exercise_description
 import fuoriorario.composeapp.generated.resources.exercise_edit
-import fuoriorario.composeapp.generated.resources.exercise_error_days
-import fuoriorario.composeapp.generated.resources.exercise_error_title
-import fuoriorario.composeapp.generated.resources.exercise_error_video
 import fuoriorario.composeapp.generated.resources.exercise_library
 import fuoriorario.composeapp.generated.resources.exercise_library_failed
 import fuoriorario.composeapp.generated.resources.exercise_new
@@ -78,11 +58,8 @@ import fuoriorario.composeapp.generated.resources.exercise_remove
 import fuoriorario.composeapp.generated.resources.exercise_remove_confirm
 import fuoriorario.composeapp.generated.resources.exercise_removed
 import fuoriorario.composeapp.generated.resources.exercise_save
-import fuoriorario.composeapp.generated.resources.exercise_title
 import fuoriorario.composeapp.generated.resources.exercise_update
 import fuoriorario.composeapp.generated.resources.exercise_updated
-import fuoriorario.composeapp.generated.resources.exercise_video
-import fuoriorario.composeapp.generated.resources.exercise_volume
 import fuoriorario.composeapp.generated.resources.note_edit
 import fuoriorario.composeapp.generated.resources.note_label
 import fuoriorario.composeapp.generated.resources.note_save
@@ -112,15 +89,12 @@ import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.data.PlanChangedException
 import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.domain.Category
-import it.manu.fuoriorario.domain.DESCRIPTION_MAX
 import it.manu.fuoriorario.domain.LibraryExercise
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.PlanCheck
 import it.manu.fuoriorario.domain.PlanItem
 import it.manu.fuoriorario.domain.PlanItemError
 import it.manu.fuoriorario.domain.Progress
-import it.manu.fuoriorario.domain.TITLE_MAX
-import it.manu.fuoriorario.domain.VOLUME_MAX
 import it.manu.fuoriorario.domain.WEEKLY_NOTE_MAX
 import it.manu.fuoriorario.domain.checkOn
 import it.manu.fuoriorario.domain.dayIndex
@@ -128,6 +102,9 @@ import it.manu.fuoriorario.domain.newPlanItem
 import it.manu.fuoriorario.domain.planItemError
 import it.manu.fuoriorario.domain.progress
 import it.manu.fuoriorario.domain.weekOf
+import it.manu.fuoriorario.ui.components.CategoryChip
+import it.manu.fuoriorario.ui.components.ExerciseErrorText
+import it.manu.fuoriorario.ui.components.ExerciseFields
 import it.manu.fuoriorario.ui.components.Field
 import it.manu.fuoriorario.ui.components.GhostButton
 import it.manu.fuoriorario.ui.components.GhostStyle
@@ -135,7 +112,7 @@ import it.manu.fuoriorario.ui.components.LoadFailed
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Panel
 import it.manu.fuoriorario.ui.components.PrimaryButton
-import it.manu.fuoriorario.ui.components.SelectField
+import it.manu.fuoriorario.ui.components.Sheet
 import it.manu.fuoriorario.ui.components.launchWrite
 import it.manu.fuoriorario.ui.components.short
 import it.manu.fuoriorario.ui.components.show
@@ -149,17 +126,6 @@ import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
-
-/** Italian name of each area. On web the names load asynchronously: empty until then. */
-private val categoryNames
-    @Composable get() = mapOf(
-        Category.BALL_HANDLING to stringResource(Res.string.category_ball_handling),
-        Category.SHOOTING to stringResource(Res.string.category_shooting),
-        Category.FOOTWORK to stringResource(Res.string.category_footwork),
-        Category.ATHLETICS to stringResource(Res.string.category_athletics),
-        Category.DEFENSE to stringResource(Res.string.category_defense),
-        Category.RECOVERY to stringResource(Res.string.category_recovery)
-    )
 
 /** "Lun"… "Dom", 0 = Monday. On web the names load asynchronously: empty until then. */
 @Composable
@@ -478,16 +444,7 @@ private fun ItemRow(
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    categoryNames.getValue(item.category).uppercase(),
-                    Modifier
-                        .background(c.surface2, RoundedCornerShape(50))
-                        .border(1.dp, c.line, RoundedCornerShape(50))
-                        .padding(horizontal = 8.dp, vertical = 3.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontSize = 11.sp,
-                    color = c.muted
-                )
+                CategoryChip(item.category)
                 Text(item.title, style = MaterialTheme.typography.titleMedium)
             }
             onEdit?.let {
@@ -632,35 +589,6 @@ private fun Days(item: PlanItem, checks: Set<PlanCheck>, today: Int?, onToggle: 
     }
 }
 
-/** Prototype bottom sheet: [label] and [name] over [content], with "Chiudi". */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun Sheet(label: String, name: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    val c = FuoriOrarioTheme.colors
-    ModalBottomSheet(
-        onDismiss,
-        // Fully open: half way the save button can sit below the screen.
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = c.surface,
-        shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp),
-        dragHandle = null
-    ) {
-        Column(
-            Modifier.verticalScroll(rememberScrollState()).padding(16.dp, 18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = c.muted)
-                    Text(name.uppercase(), style = MaterialTheme.typography.titleLarge)
-                }
-                GhostButton(stringResource(Res.string.close), onDismiss)
-            }
-            content()
-        }
-    }
-}
-
 /**
  * Prototype `openEx`: title, area, volume, description, video and days, empty for a new exercise (Mon, Wed, Fri by
  * default) or filled from [item] to edit it, which can also be removed with a second tap. A new one can start from an
@@ -677,74 +605,30 @@ private fun ExerciseSheet(
     onSave: (PlanItem) -> Unit,
     onRemove: (PlanItem) -> Unit
 ) {
-    val c = FuoriOrarioTheme.colors
-    var title by remember { mutableStateOf(item?.title.orEmpty()) }
-    var category by remember { mutableStateOf(item?.category ?: Category.entries.first()) }
-    var volume by remember { mutableStateOf(item?.volume.orEmpty()) }
-    var description by remember { mutableStateOf(item?.description.orEmpty()) }
-    var video by remember { mutableStateOf(item?.videoUrl.orEmpty()) }
+    var draft by remember {
+        mutableStateOf(
+            item?.run { LibraryExercise(title, category, volume, description, videoUrl) }
+                ?: LibraryExercise("", Category.entries.first())
+        )
+    }
     var days by remember { mutableStateOf(item?.days?.toSet() ?: setOf(0, 2, 4)) }
     var error by remember { mutableStateOf<PlanItemError?>(null) }
     var confirmingRemoval by remember { mutableStateOf(false) }
 
     fun save() {
-        error = planItemError(title, days, video)
+        error = planItemError(draft.title, days, draft.videoUrl.orEmpty())
         if (error != null) return
-        val new = newPlanItem(week, title, category, volume, description, video, days)
+        val new = draft.run {
+            newPlanItem(week, title, category, volume.orEmpty(), description.orEmpty(), videoUrl.orEmpty(), days)
+        }
         onSave(item?.let { new.copy(id = it.id, memberId = it.memberId) } ?: new)
     }
 
     Sheet(stringResource(if (item == null) Res.string.exercise_new else Res.string.exercise_edit), name, onDismiss) {
-        if (item == null && library.isNotEmpty()) {
-            LibraryPicker(library) {
-                title = it.title
-                category = it.category
-                volume = it.volume.orEmpty()
-                description = it.description.orEmpty()
-            }
-        }
-        Field(stringResource(Res.string.exercise_title), title, { title = it.take(TITLE_MAX) }, "exercise_title")
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            val names = categoryNames
-            SelectField(
-                stringResource(Res.string.exercise_category),
-                category,
-                Category.entries,
-                { names.getValue(it) },
-                "exercise_category",
-                Modifier.weight(1f)
-            ) { category = it }
-            Field(
-                stringResource(Res.string.exercise_volume),
-                volume,
-                { volume = it.take(VOLUME_MAX) },
-                "exercise_volume",
-                Modifier.weight(1f)
-            )
-        }
-        Field(
-            stringResource(Res.string.exercise_description),
-            description,
-            { description = it.take(DESCRIPTION_MAX) },
-            "exercise_description",
-            singleLine = false
-        )
-        Field(
-            stringResource(Res.string.exercise_video),
-            video,
-            { video = it },
-            "exercise_video",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
-        )
+        if (item == null && library.isNotEmpty()) LibraryPicker(library) { draft = it }
+        ExerciseFields(draft) { draft = it }
         DayPicker(days) { days = it }
-        error?.let {
-            val text = when (it) {
-                PlanItemError.TITLE -> Res.string.exercise_error_title
-                PlanItemError.NO_DAYS -> Res.string.exercise_error_days
-                PlanItemError.VIDEO -> Res.string.exercise_error_video
-            }
-            Text(stringResource(text), color = c.accent, style = MaterialTheme.typography.bodyMedium)
-        }
+        ExerciseErrorText(error)
         if (item == null) {
             PrimaryButton(stringResource(Res.string.exercise_save), ::save, Modifier.fillMaxWidth(), enabled = !busy)
         } else {

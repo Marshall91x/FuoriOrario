@@ -61,22 +61,39 @@ data class PlanItem(
     @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("member_id") val memberId: String? = null
 )
 
-/** An `exercise_library` row: a model exercise of the team (Libreria); plans copy it, never refer to it. */
+/**
+ * An `exercise_library` row: a model exercise of the team (Libreria); plans copy it, never refer to it. Team is filled
+ * by the database from the staff.
+ */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class LibraryExercise(
     val title: String,
     val category: Category,
-    val volume: String? = null,
-    val description: String? = null,
-    val id: String? = null
+    // Always sent, null too: an edit that empties them must clear them.
+    @EncodeDefault val volume: String? = null,
+    @EncodeDefault val description: String? = null,
+    @EncodeDefault @SerialName("video_url") val videoUrl: String? = null,
+    /** Position in the library, ascending. */
+    @EncodeDefault val sort: Int = 0,
+    /** Null until saved; never sent, the database generates it. */
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val id: String? = null
+)
+
+/** The library exercise to save from the form: trimmed, blanks null. */
+fun LibraryExercise.cleaned() = copy(
+    title = title.trim(),
+    volume = volume?.trim()?.ifEmpty { null },
+    description = description?.trim()?.ifEmpty { null },
+    videoUrl = videoUrl?.trim()?.ifEmpty { null }
 )
 
 enum class PlanItemError { TITLE, NO_DAYS, VIDEO }
 
-/** First problem with the exercise form as typed, or null. */
-fun planItemError(title: String, days: Set<Int>, video: String): PlanItemError? = when {
+/** First problem with the exercise form as typed, or null; [days] is null for a library exercise, which has none. */
+fun planItemError(title: String, days: Set<Int>?, video: String): PlanItemError? = when {
     title.isBlank() -> PlanItemError.TITLE
-    days.isEmpty() -> PlanItemError.NO_DAYS
+    days?.isEmpty() == true -> PlanItemError.NO_DAYS
     video.isNotBlank() && !video.trim().startsWith("https://") -> PlanItemError.VIDEO
     else -> null
 }

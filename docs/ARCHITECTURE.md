@@ -168,6 +168,7 @@ Funzioni helper `security definer stable`:
 
 `ack_privacy()` è l'unica scrittura del giocatore su `members` (RPC, aggiorna solo `privacy_ack_at`).
 `copy_previous_week(player, target, seen)` copia in un colpo gli esercizi della settimana prima (RPC `security invoker`: valgono le RLS di `plan_items`). Se la settimana non ha più `seen` esercizi (un altro staff l'ha cambiata) non copia nulla e alza `plan_changed` (SQLSTATE `FO002`): due copie insieme non creano doppioni.
+`reorder_library(ids)` mette la libreria nell'ordine dato con un solo `update` (RPC `security invoker`: valgono le RLS di `exercise_library`), così un errore non lascia due esercizi allo stesso posto.
 Trigger `keep_one_staff` (`before update of role, team_id or delete on members`): una squadra non resta mai senza staff; togliere o declassare l'ultimo alza `last_staff` (SQLSTATE `FO001`). Cancellare l'intera squadra resta possibile.
 Le RLS sono la vera barriera: la UI nasconde, il database impedisce. Coperte da test pgTAP in `supabase/tests/`.
 
@@ -192,7 +193,7 @@ Le migrazioni si applicano in produzione con `supabase db push` dal job di rilas
 | Livello | Dove | Cosa | In CI |
 |---|---|---|---|
 | Unit | `commonTest` | `domain/`: percentuali, somma zone, periodi/stagione, classe zona, completamento, settimane | ✓ |
-| UI | `commonTest` con `runComposeUiTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria | iOS Simulator + Wasm (browser headless). Android in locale |
+| UI | `commonTest` con `runComposeUiTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) | iOS Simulator + Wasm (browser headless). Android in locale |
 | DB | `supabase/tests` (pgTAP) | RLS: giocatore non legge/scrive dati altrui, solo staff gestisce rosa/piani, solo giocatore spunta | ✓ (Supabase locale in CI) |
 
 ## CI/CD (GitHub Actions)

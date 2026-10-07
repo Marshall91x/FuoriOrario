@@ -50,9 +50,11 @@ import fuoriorario.composeapp.generated.resources.ic_tab_shot_log
 import fuoriorario.composeapp.generated.resources.ic_tab_team
 import fuoriorario.composeapp.generated.resources.roster_empty_hint
 import fuoriorario.composeapp.generated.resources.roster_empty_title
+import fuoriorario.composeapp.generated.resources.roster_title
 import fuoriorario.composeapp.generated.resources.tab_plan
 import fuoriorario.composeapp.generated.resources.tab_shot_log
 import fuoriorario.composeapp.generated.resources.tab_team
+import fuoriorario.composeapp.generated.resources.team_settings
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.data.RosterRepository
@@ -65,9 +67,11 @@ import it.manu.fuoriorario.ui.components.LoadFailed
 import it.manu.fuoriorario.ui.components.LocalToast
 import it.manu.fuoriorario.ui.components.Page
 import it.manu.fuoriorario.ui.components.Panel
+import it.manu.fuoriorario.ui.components.SegmentedControl
 import it.manu.fuoriorario.ui.components.ToastHost
 import it.manu.fuoriorario.ui.plan.PlanScreen
 import it.manu.fuoriorario.ui.roster.RosterScreen
+import it.manu.fuoriorario.ui.settings.LibraryScreen
 import it.manu.fuoriorario.ui.shots.ShotLogScreen
 import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import org.jetbrains.compose.resources.DrawableResource
@@ -80,6 +84,12 @@ private enum class Tab(val label: StringResource, val icon: DrawableResource, va
     SHOT_LOG(Res.string.tab_shot_log, Res.drawable.ic_tab_shot_log),
     PLAN(Res.string.tab_plan, Res.drawable.ic_tab_plan),
     TEAM(Res.string.tab_team, Res.drawable.ic_tab_team, staffOnly = true)
+}
+
+/** What the Squadra tab shows; [tag] is the test tag of its switch. */
+private enum class TeamSection(val label: StringResource, val tag: String) {
+    ROSTER(Res.string.roster_title, "team_roster"),
+    SETTINGS(Res.string.team_settings, "team_settings")
 }
 
 /**
@@ -103,6 +113,7 @@ fun Home(
     val toast = remember { SnackbarHostState() }
     var period by remember { mutableStateOf(Period.DAYS_30) }
     var week by remember { mutableStateOf(weekOf(today())) }
+    var section by remember { mutableStateOf(TeamSection.ROSTER) }
 
     CompositionLocalProvider(LocalToast provides toast) {
         Column(Modifier.fillMaxSize()) {
@@ -118,7 +129,18 @@ fun Home(
                         composable(tab.name) {
                             Page {
                                 when {
-                                    tab == Tab.TEAM -> RosterScreen(roster, onRosterChanged)
+                                    tab == Tab.TEAM -> {
+                                        SegmentedControl(
+                                            TeamSection.entries.associateWith { it.label },
+                                            section,
+                                            { section = it },
+                                            tag = { it.tag }
+                                        )
+                                        when (section) {
+                                            TeamSection.ROSTER -> RosterScreen(roster, onRosterChanged)
+                                            TeamSection.SETTINGS -> LibraryScreen(plans)
+                                        }
+                                    }
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {
                                         if (tab == Tab.SHOT_LOG) {

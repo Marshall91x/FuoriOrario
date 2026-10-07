@@ -29,6 +29,8 @@ class PlanTest {
         assertEquals(PlanItemError.VIDEO, planItemError("Mikan", setOf(0), "http://x"))
         assertEquals(PlanItemError.VIDEO, planItemError("Mikan", setOf(0), "www.youtube.com"))
         assertNull(planItemError("Mikan", setOf(0), " https://youtu.be/x "))
+        // The library has no days.
+        assertNull(planItemError("Mikan", null, ""))
         assertNull(planItemError("Mikan", setOf(0), ""))
     }
 

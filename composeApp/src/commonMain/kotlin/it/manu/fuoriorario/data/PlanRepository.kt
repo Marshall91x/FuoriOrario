@@ -36,6 +36,18 @@ interface PlanRepository {
     /** The team's library, in its order. */
     suspend fun library(): List<LibraryExercise>
 
+    /** Saves [exercise] in the staff's team library, returning it with its id. Throws [PermissionDeniedException]. */
+    suspend fun addToLibrary(exercise: LibraryExercise): LibraryExercise
+
+    /** Saves the edited library [exercise] in place; plans keep their copies. Throws [PermissionDeniedException]. */
+    suspend fun updateInLibrary(exercise: LibraryExercise)
+
+    /** Deletes [exercise] from the library; plans keep their copies. Throws [PermissionDeniedException]. */
+    suspend fun removeFromLibrary(exercise: LibraryExercise)
+
+    /** Puts the library in the order of [library], all at once. Throws [PermissionDeniedException]. */
+    suspend fun reorderLibrary(library: List<LibraryExercise>)
+
     /** [member]'s staff note for [week], if any. */
     suspend fun note(member: Member, week: LocalDate): String?
 

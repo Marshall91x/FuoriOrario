@@ -50,11 +50,14 @@ class FakeAuthRepository(signedIn: Member? = null, private val roster: FakeRoste
 @OptIn(ExperimentalTestApi::class)
 suspend fun ComposeUiTest.awaitText(text: String) = awaitNode(hasText(text))
 
+/** Waits for exactly [count] nodes matching [matcher]: 0 waits for them to go. */
 @OptIn(ExperimentalTestApi::class)
-suspend fun ComposeUiTest.awaitNode(matcher: SemanticsMatcher) {
+suspend fun ComposeUiTest.awaitNode(matcher: SemanticsMatcher, count: Int = 1) {
+    var found = 0
     repeat(200) {
-        if (onAllNodes(matcher).fetchSemanticsNodes().size == 1) return
+        found = onAllNodes(matcher).fetchSemanticsNodes().size
+        if (found == count) return
         withContext(Dispatchers.Default) { delay(25) }
     }
-    fail("${matcher.description} not shown")
+    fail("${matcher.description}: $found nodes, expected $count")
 }
