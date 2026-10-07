@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(11);
 
 insert into public.teams (id, name) values ('00000000-0000-0000-0000-000000000002', 'Altra squadra');
 insert into auth.users (id, email) values
@@ -26,6 +26,10 @@ select throws_ok($$ select public.set_zone_refs(zone_refs - 'tl') from public.te
   'every zone needs a riferimento');
 select throws_ok($$ select public.set_zone_refs(jsonb_set(zone_refs, '{tl}', '1.5')) from public.teams $$, '23514', null,
   'a riferimento is between 0 and 1');
+
+select throws_ok($$ select public.set_zone_refs(jsonb_set(zone_refs, '{tl}', '"0.7"')) from public.teams $$, '23514', null,
+  'a riferimento is a number');
+select throws_ok($$ select public.set_zone_refs('[]') $$, '23514', null, 'riferimenti are an object');
 
 -- Anonymous
 reset role;

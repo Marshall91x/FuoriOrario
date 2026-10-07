@@ -2,13 +2,16 @@
 
 create function public.valid_zone_refs(refs jsonb) returns boolean
 language sql immutable set search_path = '' as $$
-  select jsonb_typeof(refs) = 'object'
-    and (select array_agg(zone order by zone) from jsonb_object_keys(refs) as zone)
-      = array['acd', 'acs', 'ald', 'als', 'cen', 'mlc', 'mld', 'mls', 'pit', 'tl']
-    and not exists (
+  -- case, not and: Postgres may evaluate and-ed conditions in any order, and the later ones throw on a wrong type.
+  select case
+    when jsonb_typeof(refs) <> 'object' then false
+    when (select array_agg(zone order by zone) from jsonb_object_keys(refs) as zone)
+      <> array['acd', 'acs', 'ald', 'als', 'cen', 'mlc', 'mld', 'mls', 'pit', 'tl'] then false
+    else not exists (
       select 1 from jsonb_each(refs) as r(zone, ref)
-      where jsonb_typeof(ref) <> 'number' or ref::numeric not between 0 and 1
+      where case when jsonb_typeof(ref) <> 'number' then true else ref::numeric not between 0 and 1 end
     )
+  end
 $$;
 
 alter table public.teams add constraint teams_zone_refs_check check (public.valid_zone_refs(zone_refs));
