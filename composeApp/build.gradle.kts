@@ -88,6 +88,8 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
+            // A real Supabase 401 for the error handlers.
+            implementation(libs.ktor.client.mock)
             @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(libs.compose.uiTest)
             implementation(libs.multiplatform.settings.test)

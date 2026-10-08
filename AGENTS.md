@@ -18,7 +18,7 @@ Prima di toccare il codice leggi [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), i
 - Nessun repository creato in un composable: lo inietta Koin nel ViewModel.
 - Nel ViewModel vanno i dati e le bozze dei form (`data class` nello `ScreenState`, metodi `onXChanged`). In `remember` va solo lo stato visivo: gesto in corso, animazione, scroll, foglio aperto o chiuso.
 - I caricamenti usano `defaultLaunch`; in caso di errore c'è la schermata d'errore, con "Riprova" se l'errore è di rete.
-- Le azioni (salva, spunta, elimina) usano `defaultLaunchForChannels`; in caso di errore c'è un toast (`LocalToast`) e i dati restano a schermo.
+- Le azioni (salva, spunta, elimina) usano `defaultLaunchForChannels`; in caso di errore c'è un toast (`LocalToast`) e i dati restano a schermo. Fanno eccezione login e informativa, che mostrano l'errore sotto il campo (ADR 0009).
 - Le eccezioni di dominio (`mapErrors`) diventano stato della schermata, non un errore generico.
 - Il giocatore scelto dallo staff si legge da `SelectedPlayer`, mai direttamente dai settings.
 - Nessun `Authenticator` o `Interceptor` per il token: il JWT lo gestisce `supabase-kt`.

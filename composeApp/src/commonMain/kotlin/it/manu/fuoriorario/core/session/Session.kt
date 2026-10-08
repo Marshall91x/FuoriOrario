@@ -14,6 +14,9 @@ sealed interface Session {
     data class SignedIn(val member: Member) : Session
 }
 
+/** Who's signed in, if anyone. */
+val Session.member get() = (this as? Session.SignedIn)?.member
+
 /**
  * Where a session ends. supabase-kt clears it ([sessionCleared]) both on sign-out and when it refuses the refresh;
  * with no saved session at all it never had one. Only the app knows whether it [signOutRequested].

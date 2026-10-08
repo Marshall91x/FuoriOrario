@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 // Copied from sinetwork (utils/ComposeViewModel.kt): same public API. Adapted as ADR 0009 says: no Context
-// (checkError reads Compose Resources), `::class.simpleName`, network errors are kotlinx.io.IOException.
+// (ErrorManager.checkError replaces checkError(e, context)), `::class.simpleName`, network errors are kotlinx.io.IOException.
 
 abstract class ComposeViewModel<T>(
     defaultState: UiState<T> = UiState(),
@@ -95,7 +95,7 @@ abstract class ComposeViewModel<T>(
                         errorFunction(
                             ErrorException(
                                 code = 0,
-                                userMessage = checkError(e),
+                                userMessage = errorManager.checkError(e),
                                 systemMessage = e.message
                             )
                         )

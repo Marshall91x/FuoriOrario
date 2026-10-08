@@ -4,6 +4,7 @@ import it.manu.fuoriorario.core.error.ErrorManager
 import it.manu.fuoriorario.core.navigation.Route
 import it.manu.fuoriorario.core.session.SelectedPlayer
 import it.manu.fuoriorario.core.session.Session
+import it.manu.fuoriorario.core.session.member
 import it.manu.fuoriorario.core.viewmodel.ComposeViewModel
 import it.manu.fuoriorario.core.viewmodel.DispatcherProvider
 import it.manu.fuoriorario.data.RosterRepository
@@ -35,7 +36,7 @@ data class MainScreenState(
     val players: Result<List<Member>>? = null,
     val followed: Member? = null
 ) {
-    val member get() = (session as? Session.SignedIn)?.member
+    val member get() = session.member
 
     val route
         get() = when (session) {
@@ -65,7 +66,10 @@ class MainViewModel(
         }
     }
 
-    fun onPick(player: Member) = selectedPlayer.select(player.id!!)
+    /** Players in the menu come from the roster: they all have an id. */
+    fun onPick(player: Member) {
+        player.id?.let(selectedPlayer::select)
+    }
 
     fun onRetryPlayers() = playersReload.update { it + 1 }
 
@@ -83,7 +87,7 @@ class MainViewModel(
     /** A fresh list per staff member (null until it arrives); a retry keeps the old one on screen meanwhile. */
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun Flow<Session>.players(): Flow<Result<List<Member>>?> =
-        map { s -> (s as? Session.SignedIn)?.member.let { (it?.role == Role.STAFF) to it?.id } }
+        map { s -> s.member.let { (it?.role == Role.STAFF) to it?.id } }
             .distinctUntilChanged()
             .flatMapLatest { (staff, _) ->
                 if (!staff) {
@@ -102,7 +106,7 @@ class MainViewModel(
     }
 
     private fun followed(session: Session, players: Result<List<Member>>?, picked: String?): Member? {
-        val me = (session as? Session.SignedIn)?.member ?: return null
+        val me = session.member ?: return null
         if (me.role != Role.STAFF) return me
         return players?.getOrNull()?.let { list -> list.find { it.id == picked } ?: list.firstOrNull() }
     }
