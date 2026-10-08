@@ -73,16 +73,15 @@ import it.manu.fuoriorario.core.designsystem.show
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.data.PlanRepository
-import it.manu.fuoriorario.data.PlayRepository
 import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.weekOf
+import it.manu.fuoriorario.feature.plays.PlaysScreen
 import it.manu.fuoriorario.feature.shots.ShotLogScreen
 import it.manu.fuoriorario.feature.shots.data.ShotRepository
 import it.manu.fuoriorario.ui.plan.PlanScreen
-import it.manu.fuoriorario.ui.plays.PlaysScreen
 import it.manu.fuoriorario.ui.roster.RosterScreen
 import it.manu.fuoriorario.ui.settings.LibraryScreen
 import it.manu.fuoriorario.ui.settings.ZoneRefsScreen
@@ -126,8 +125,7 @@ fun Home(
     // Until their screens get a ViewModel (#51–#56).
     roster: RosterRepository = koinInject(),
     shots: ShotRepository = koinInject(),
-    plans: PlanRepository = koinInject(),
-    plays: PlayRepository = koinInject()
+    plans: PlanRepository = koinInject()
 ) {
     val tabs = Tab.entries.filter { !it.staffOnly || member.role == Role.STAFF }
     val nav = rememberNavController()
@@ -197,9 +195,11 @@ fun Home(
                                             }
                                         }
                                     }
-                                    tab == Tab.PLAYS -> PlaysScreen(plays, member.role == Role.STAFF) {
-                                        unsavedPlay = it
-                                        leavingTo = null
+                                    tab == Tab.PLAYS -> ScreenViewModels {
+                                        PlaysScreen(member.role == Role.STAFF, onUnsaved = {
+                                            unsavedPlay = it
+                                            leavingTo = null
+                                        })
                                     }
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {

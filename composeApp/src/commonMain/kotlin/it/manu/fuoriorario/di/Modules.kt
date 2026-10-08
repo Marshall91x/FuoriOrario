@@ -13,15 +13,16 @@ import it.manu.fuoriorario.core.session.SessionExpiry
 import it.manu.fuoriorario.core.viewmodel.DefaultDispatcherProvider
 import it.manu.fuoriorario.core.viewmodel.DispatcherProvider
 import it.manu.fuoriorario.data.PlanRepository
-import it.manu.fuoriorario.data.PlayRepository
 import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.data.SupabasePlanRepository
-import it.manu.fuoriorario.data.SupabasePlayRepository
 import it.manu.fuoriorario.data.SupabaseRosterRepository
 import it.manu.fuoriorario.feature.auth.LoginViewModel
 import it.manu.fuoriorario.feature.auth.PrivacyViewModel
 import it.manu.fuoriorario.feature.auth.data.AuthRepository
 import it.manu.fuoriorario.feature.auth.data.SupabaseAuthRepository
+import it.manu.fuoriorario.feature.plays.PlaysViewModel
+import it.manu.fuoriorario.feature.plays.data.PlayRepository
+import it.manu.fuoriorario.feature.plays.data.SupabasePlayRepository
 import it.manu.fuoriorario.feature.shots.ShotLogViewModel
 import it.manu.fuoriorario.feature.shots.data.ShotRepository
 import it.manu.fuoriorario.feature.shots.data.SupabaseShotRepository
@@ -54,6 +55,7 @@ val appModule = module {
     viewModelOf(::PrivacyViewModel)
     // The player comes from the screen: koinViewModel { parametersOf(player) }.
     viewModelOf(::ShotLogViewModel)
+    viewModelOf(::PlaysViewModel)
 }
 
 /** Supabase and the device's own storage (only the staff's picked player). */
