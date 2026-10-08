@@ -55,6 +55,16 @@ class ComposeViewModelTest {
     }
 
     @Test
+    fun retry_showsLoadingInPlaceOfTheError() = runTest(dispatcher) {
+        vm.load()
+        advanceUntilIdle()
+
+        retry()()
+
+        assertEquals(UseCaseMutableState.Loading, vm.uiState.value.state)
+    }
+
+    @Test
     fun retry_tappedTwice_loadsOnce() = runTest(dispatcher) {
         vm.load()
         advanceUntilIdle()

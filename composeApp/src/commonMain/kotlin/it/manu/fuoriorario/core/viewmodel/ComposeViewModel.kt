@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 // Copied from sinetwork (utils/ComposeViewModel.kt): same public API. Adapted as ADR 0009 says: no Context
 // (ErrorManager.checkError replaces checkError(e, context)), `::class.simpleName`, network errors are kotlinx.io.IOException,
-// "Riprova" never runs out and replaces the load in flight (#60).
+// "Riprova" never runs out, shows Loading and replaces the load in flight (#60).
 
 abstract class ComposeViewModel<T>(
     defaultState: UiState<T> = UiState(),
@@ -126,7 +126,12 @@ abstract class ComposeViewModel<T>(
                 } catch (e: Exception) {
                     ensureActive() // replaced by a retry while failing: the new load owns the state
                     if (emitError) {
-                        if (isNetworkError(e) { internalLaunch() }) {
+                        // Loading takes the error screen, and its button, away until this retry ends.
+                        val retry = {
+                            _uiState.value = _uiState.value.copy(state = UseCaseMutableState.Loading)
+                            internalLaunch()
+                        }
+                        if (isNetworkError(e, retry)) {
                             return@launch
                         }
                         retryFunction?.let { function ->
