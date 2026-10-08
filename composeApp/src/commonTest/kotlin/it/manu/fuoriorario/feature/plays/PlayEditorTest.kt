@@ -6,6 +6,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -37,6 +38,7 @@ import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 
 private const val ACK = "2026-10-01T10:00:00Z"
 
@@ -281,5 +283,29 @@ class PlayEditorTest {
         onNodeWithTag("play_remove").performClick()
         awaitText("Ancora nessuno schema.")
         assertEquals(0, plays.plays.size)
+    }
+
+    @Test
+    fun aSaveInFlightCoversTheEditorAndAFailureKeepsTheDraft() = runAppTest {
+        val gate = CompletableDeferred<Unit>()
+        val plays = FakePlayRepository(box).apply { this.gate = gate }
+        open(FakeAuthRepository(coach), plays)
+
+        awaitText("Schemi")
+        onNodeWithText("Schemi").performClick()
+        onNodeWithText("Box").performClick()
+        onNodeWithTag("play_edit").performScrollTo().performClick()
+        onNodeWithTag("play_title").performTextInput(" 2")
+        awaitNode(hasTestTag("loading_overlay"), count = 0)
+        onNodeWithTag("play_save").performScrollTo().performClick()
+        awaitNode(hasTestTag("loading_overlay"))
+
+        plays.failNext = true
+        gate.complete(Unit)
+        awaitText("Salvataggio non riuscito. Riprova tra poco.")
+        awaitNode(hasTestTag("loading_overlay"), count = 0)
+        // The draft is still there.
+        awaitNode(hasTestTag("play_title") and hasText(" 2", substring = true))
+        assertEquals("Box", plays.plays.single().title)
     }
 }

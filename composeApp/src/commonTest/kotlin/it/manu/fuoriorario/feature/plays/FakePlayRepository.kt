@@ -2,6 +2,7 @@ package it.manu.fuoriorario.feature.plays
 
 import it.manu.fuoriorario.domain.Play
 import it.manu.fuoriorario.feature.plays.data.PlayRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.io.IOException
 
 class FakePlayRepository(vararg plays: Play) : PlayRepository {
@@ -13,6 +14,9 @@ class FakePlayRepository(vararg plays: Play) : PlayRepository {
     /** Next write fails like a network error. */
     var failNext = false
 
+    /** Writes wait for it, while it's set: the screen stays mid-save. */
+    var gate: CompletableDeferred<Unit>? = null
+
     override suspend fun plays(): List<Play> {
         if (failLoad) {
             failLoad = false
@@ -22,21 +26,22 @@ class FakePlayRepository(vararg plays: Play) : PlayRepository {
     }
 
     override suspend fun add(play: Play): Play {
-        failIfAsked()
+        beforeWrite()
         return play.copy(id = "play${plays.size}").also { plays += it }
     }
 
     override suspend fun update(play: Play) {
-        failIfAsked()
+        beforeWrite()
         plays[plays.indexOfFirst { it.id == play.id }] = play
     }
 
     override suspend fun remove(play: Play) {
-        failIfAsked()
+        beforeWrite()
         plays.removeAll { it.id == play.id }
     }
 
-    private fun failIfAsked() {
+    private suspend fun beforeWrite() {
+        gate?.await()
         if (failNext) {
             failNext = false
             error("offline")
