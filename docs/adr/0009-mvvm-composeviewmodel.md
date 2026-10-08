@@ -12,13 +12,14 @@ Lo standard dei progetti aziendali Android è quello di [gestione-commessa-kerne
   1. `XScreen(vm)`: raccoglie lo stato e collega gli eventi.
   2. `XStateContent(state)`: fa un `when` su `UseCaseMutableState` (Loading / ShowData / Error).
   3. `XContent(...)`: è senza stato e riceve solo parametri e lambda.
-- **`ComposeViewModel` copiato in `commonMain`**, non usato come dipendenza. Si copiano `core/viewmodel/` (`ComposeViewModel`, `UiState`, `UseCaseMutableState`, `DispatcherProvider`) e `core/error/` (`ErrorManager`, `ErrorHandler`, `ErrorHandlerWithRetry`, `FallbackHandler`). La base è il lifecycle ViewModel multipiattaforma di JetBrains. L'API pubblica resta identica a sinetwork; cambia solo ciò che è Android:
+- **`ComposeViewModel` copiato in `commonMain`**, non usato come dipendenza. Si copiano `core/viewmodel/` (`ComposeViewModel`, `UiState`, `UseCaseMutableState`, `DispatcherProvider`) e `core/error/` (`ErrorManager`, `ErrorHandler`, `ErrorHandlerWithRetry`, `FallbackHandler`). La base è il lifecycle ViewModel multipiattaforma di JetBrains. L'API pubblica resta identica a sinetwork; cambia solo ciò che è Android, più le correzioni elencate qui sotto:
   - `ErrorManager` senza `Context`: i testi arrivano da Compose Resources, nell'`ErrorHandler` `@Composable` per i caricamenti e in `ErrorManager.checkError(e)` per le azioni (al posto di `checkError(e, errorManager.context)`);
   - `DispatcherProvider.io()` usa `Dispatchers.Default` su wasm, dove `Dispatchers.IO` non esiste;
   - `e::class.simpleName` al posto di `e::class.java`;
   - riconoscimento degli errori di rete da Ktor (`HttpRequestException`) e `kotlinx.io.IOException`, al posto di `okio.IOException`;
   - `checkError` (il testo del toast di un'azione fallita) non mostra mai `e.message`, che da Supabase arriva tecnico e in inglese: dà "La sessione è scaduta…" per un 401, "Non hai i permessi…" per `PermissionDeniedException` e "Salvataggio non riuscito…" per il resto, come l'app faceva già;
-  - `println` al posto di `SILog`.
+  - `println` al posto di `SILog`;
+  - "Riprova" dei caricamenti (#60): resta dopo qualsiasi numero di errori di rete, mentre sinetwork lo toglieva dopo `maxRetry` tentativi (il parametro di `defaultLaunchWithRetry` resta, ma non è usato). "Riprova" porta la schermata in `Loading`, così il bottone sparisce finché il caricamento non finisce; se arriva comunque un secondo "Riprova", cancella il caricamento in corso invece di avviarne un altro in parallelo. Questa correzione non è in sinetwork.
 - **Errori.** I caricamenti usano `defaultLaunch`: in caso di errore, schermata intera con "Riprova" se l'errore è di rete. Le azioni (salva, spunta, elimina) usano `defaultLaunchForChannels`: l'errore arriva come toast (`LocalToast`) e lo stato resta `ShowData`. `AppErrorManager` valuta gli handler in questo ordine:
   1. `SessionExpiredErrorHandler` (401), senza riprova. Un 401, in un caricamento o in un'azione, fa chiamare ad `AppErrorManager` anche `SessionExpiry`, che cancella la sessione locale e riporta al login con l'avviso;
   2. `PermissionDeniedErrorHandler`;
