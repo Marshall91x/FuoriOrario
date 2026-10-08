@@ -46,7 +46,6 @@ import it.manu.fuoriorario.core.designsystem.LoadFailed
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
 import it.manu.fuoriorario.core.today
-import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.OverviewRow
 import it.manu.fuoriorario.domain.Period
@@ -55,6 +54,7 @@ import it.manu.fuoriorario.domain.overviewRow
 import it.manu.fuoriorario.domain.planLevel
 import it.manu.fuoriorario.domain.progress
 import it.manu.fuoriorario.domain.weekOf
+import it.manu.fuoriorario.feature.plan.data.PlanRepository
 import it.manu.fuoriorario.feature.shots.data.ShotRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async

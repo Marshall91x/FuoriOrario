@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import it.manu.fuoriorario.di.appModule
 import it.manu.fuoriorario.di.dataModule
 import it.manu.fuoriorario.domain.Member
+import kotlinx.datetime.LocalDate
 import org.junit.Test
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.dsl.module
@@ -14,7 +15,9 @@ class ModulesTest {
     @OptIn(KoinExperimentalAPI::class)
     @Test
     fun everyDefinitionResolves() {
-        // SavedStateHandle and the followed player come from the screen, not from a definition.
-        module { includes(appModule, dataModule) }.verify(extraTypes = listOf(SavedStateHandle::class, Member::class))
+        // SavedStateHandle, the followed player and the plan's week come from the screen, not from a definition.
+        module { includes(appModule, dataModule) }.verify(
+            extraTypes = listOf(SavedStateHandle::class, Member::class, LocalDate::class)
+        )
     }
 }

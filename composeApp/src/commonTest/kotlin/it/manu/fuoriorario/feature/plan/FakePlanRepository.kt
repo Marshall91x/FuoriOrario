@@ -1,14 +1,15 @@
-package it.manu.fuoriorario.ui.plan
+package it.manu.fuoriorario.feature.plan
 
-import it.manu.fuoriorario.data.PlanChangedException
-import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.domain.LibraryExercise
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.PlanCheck
 import it.manu.fuoriorario.domain.PlanItem
+import it.manu.fuoriorario.feature.plan.data.PlanChangedException
+import it.manu.fuoriorario.feature.plan.data.PlanRepository
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
+import kotlinx.io.IOException
 
 class FakePlanRepository(
     vararg items: PlanItem,
@@ -28,8 +29,16 @@ class FakePlanRepository(
     /** Next write fails like a network error. */
     var failNext = false
 
-    override suspend fun items(member: Member, week: LocalDate) =
-        items.filter { it.memberId == member.id && it.week == week }
+    /** Next week's load fails without network, so the screen offers "Riprova". */
+    var failLoad = false
+
+    override suspend fun items(member: Member, week: LocalDate): List<PlanItem> {
+        if (failLoad) {
+            failLoad = false
+            throw IOException("offline")
+        }
+        return items.filter { it.memberId == member.id && it.week == week }
+    }
 
     override suspend fun teamWeek(week: LocalDate) = items.filter { it.week == week }.let { it to checks(it) }
 
@@ -87,7 +96,7 @@ class FakePlanRepository(
         this.library += reordered
     }
 
-    override suspend fun note(member: Member, week: LocalDate) = notes[member.id!! to week]
+    override suspend fun note(member: Member, week: LocalDate) = member.id?.let { notes[it to week] }
 
     override suspend fun saveNote(member: Member, week: LocalDate, note: String?) {
         failIfAsked()
