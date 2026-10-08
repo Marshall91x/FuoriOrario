@@ -20,11 +20,11 @@ import it.manu.fuoriorario.domain.ShotSession
 import it.manu.fuoriorario.domain.Shots
 import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.feature.plan.FakePlanRepository
 import it.manu.fuoriorario.feature.shots.FakeShotRepository
 import it.manu.fuoriorario.testing.TestApp
 import it.manu.fuoriorario.testing.awaitText
 import it.manu.fuoriorario.testing.runAppTest
-import it.manu.fuoriorario.ui.plan.FakePlanRepository
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals

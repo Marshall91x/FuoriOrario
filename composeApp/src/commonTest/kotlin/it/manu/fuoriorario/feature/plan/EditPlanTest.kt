@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.plan
+package it.manu.fuoriorario.feature.plan
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertTextEquals

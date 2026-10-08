@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.plan
+package it.manu.fuoriorario.feature.plan
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalUriHandler

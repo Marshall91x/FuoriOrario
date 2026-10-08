@@ -54,12 +54,12 @@ import it.manu.fuoriorario.core.designsystem.Sheet
 import it.manu.fuoriorario.core.designsystem.launchWrite
 import it.manu.fuoriorario.core.designsystem.show
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
-import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.domain.Category
 import it.manu.fuoriorario.domain.LibraryExercise
 import it.manu.fuoriorario.domain.PlanItemError
 import it.manu.fuoriorario.domain.cleaned
 import it.manu.fuoriorario.domain.planItemError
+import it.manu.fuoriorario.feature.plan.data.PlanRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

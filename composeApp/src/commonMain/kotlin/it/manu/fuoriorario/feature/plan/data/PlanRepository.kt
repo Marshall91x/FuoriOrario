@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.data
+package it.manu.fuoriorario.feature.plan.data
 
 import it.manu.fuoriorario.domain.LibraryExercise
 import it.manu.fuoriorario.domain.Member

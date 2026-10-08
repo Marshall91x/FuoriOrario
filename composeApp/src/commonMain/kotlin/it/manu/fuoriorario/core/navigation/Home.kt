@@ -72,16 +72,16 @@ import it.manu.fuoriorario.core.designsystem.ToastHost
 import it.manu.fuoriorario.core.designsystem.show
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
 import it.manu.fuoriorario.core.today
-import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.weekOf
+import it.manu.fuoriorario.feature.plan.PlanScreen
+import it.manu.fuoriorario.feature.plan.data.PlanRepository
 import it.manu.fuoriorario.feature.plays.PlaysScreen
 import it.manu.fuoriorario.feature.shots.ShotLogScreen
 import it.manu.fuoriorario.feature.shots.data.ShotRepository
-import it.manu.fuoriorario.ui.plan.PlanScreen
 import it.manu.fuoriorario.ui.roster.RosterScreen
 import it.manu.fuoriorario.ui.settings.LibraryScreen
 import it.manu.fuoriorario.ui.settings.ZoneRefsScreen
@@ -122,7 +122,7 @@ fun Home(
     onPick: (Member) -> Unit,
     onRetryPlayers: () -> Unit,
     onRosterChanged: (Member) -> Unit,
-    // Until their screens get a ViewModel (#51–#56).
+    // Until their screens get a ViewModel (#53–#56).
     roster: RosterRepository = koinInject(),
     shots: ShotRepository = koinInject(),
     plans: PlanRepository = koinInject()
@@ -203,12 +203,13 @@ fun Home(
                                     }
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {
-                                        if (tab == Tab.SHOT_LOG) {
-                                            ScreenViewModels {
+                                        ScreenViewModels {
+                                            if (tab == Tab.SHOT_LOG) {
                                                 ShotLogScreen(followed, period, onPeriod = { period = it })
+                                            } else {
+                                                val staff = member.role == Role.STAFF
+                                                PlanScreen(followed, staff, week, onWeek = { week = it })
                                             }
-                                        } else {
-                                            PlanScreen(plans, followed, member.role == Role.STAFF, week) { week = it }
                                         }
                                     }
                                     players?.isFailure == true -> LoadFailed(onRetryPlayers)
