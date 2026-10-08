@@ -440,12 +440,13 @@ enabled = true
 # [remotes.production.auth.email]
 # max_frequency = "60s"
 #
-# # OTP emails go through Resend (sending domain verified there); the API key is the SMTP password.
+# # OTP emails go through a dedicated Gmail account (no domain needed, ~500 emails/day): the SMTP password
+# # is a Google app password, and the sender is the account itself.
 # [remotes.production.auth.email.smtp]
 # enabled = true
-# host = "smtp.resend.com"
+# host = "smtp.gmail.com"
 # port = 465
-# user = "resend"
-# pass = "env(RESEND_API_KEY)"
-# admin_email = "env(SMTP_SENDER_EMAIL)"
+# user = "env(SMTP_USER)"
+# pass = "env(SMTP_PASSWORD)"
+# admin_email = "env(SMTP_USER)"
 # sender_name = "Fuori Orario"

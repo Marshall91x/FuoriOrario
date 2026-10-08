@@ -212,7 +212,7 @@
     <string name="privacy_purpose_title">Perché</string>
     <string name="privacy_purpose_body">Solo per farti accedere e seguire il tuo lavoro individuale insieme allo staff della squadra, con il tuo consenso. Niente pubblicità, profilazione o cessione a terzi. I dati restano finché sei in squadra.</string>
     <string name="privacy_where_title">Dove</string>
-    <string name="privacy_where_body">Su Supabase, con server a Francoforte (UE). Le email con il codice di accesso partono tramite Resend, che riceve solo il tuo indirizzo e il codice. I dati li vedi tu e lo staff della tua squadra.</string>
+    <string name="privacy_where_body">Su Supabase, con server a Francoforte (UE). Le email con il codice di accesso partono da un account Gmail (Google) dell'app. I dati li vedi tu e lo staff della tua squadra.</string>
     <string name="privacy_rights_title">I tuoi diritti</string>
     <string name="privacy_rights_body">Puoi chiedere in qualsiasi momento di vedere, correggere o cancellare i tuoi dati: chiedilo allo staff o scrivi ad anima91x@gmail.com. Quando un membro viene tolto dalla squadra, i suoi dati e il suo account vengono eliminati. Puoi anche presentare reclamo al Garante per la protezione dei dati personali.</string>
     <string name="privacy_accept">Ho letto</string>
