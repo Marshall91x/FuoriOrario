@@ -9,13 +9,13 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import it.manu.fuoriorario.App
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
-import it.manu.fuoriorario.ui.auth.FakeAuthRepository
-import it.manu.fuoriorario.ui.auth.awaitNode
-import it.manu.fuoriorario.ui.auth.awaitText
-import it.manu.fuoriorario.ui.auth.runAppTest
+import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.testing.TestApp
+import it.manu.fuoriorario.testing.awaitNode
+import it.manu.fuoriorario.testing.awaitText
+import it.manu.fuoriorario.testing.runAppTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -25,7 +25,7 @@ class AddPlayerTest {
     fun staffAddsPlayer() = runAppTest {
         val staff = Member("Coach", Role.STAFF, "2026-10-01T10:00:00Z", email = "staff@example.com")
         val roster = FakeRosterRepository(staff)
-        setContent { App(FakeAuthRepository(staff), roster) }
+        setContent { TestApp(FakeAuthRepository(staff), roster) }
 
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()

@@ -16,16 +16,16 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import com.russhwolf.settings.MapSettings
-import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.ShotSession
 import it.manu.fuoriorario.domain.Shots
 import it.manu.fuoriorario.domain.Zone
-import it.manu.fuoriorario.ui.auth.FakeAuthRepository
-import it.manu.fuoriorario.ui.auth.awaitText
-import it.manu.fuoriorario.ui.auth.runAppTest
+import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.testing.TestApp
+import it.manu.fuoriorario.testing.awaitText
+import it.manu.fuoriorario.testing.runAppTest
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -50,7 +50,7 @@ class StaffShotLogTest {
         val roster = FakeRosterRepository(anna, coach, marco, luca)
         val prefs = MapSettings()
         var launch by mutableIntStateOf(0)
-        setContent { key(launch) { App(FakeAuthRepository(coach), roster, shots, prefs) } }
+        setContent { key(launch) { TestApp(FakeAuthRepository(coach), roster, shots, prefs) } }
 
         // First in roster order, only that player's sessions.
         awaitText("3/5 · 60%")
@@ -108,7 +108,12 @@ class StaffShotLogTest {
     @Test
     fun playerHasNoPicker() = runAppTest {
         setContent {
-            App(FakeAuthRepository(luca), FakeRosterRepository(coach, luca, marco), FakeShotRepository(), MapSettings())
+            TestApp(
+                FakeAuthRepository(luca),
+                FakeRosterRepository(coach, luca, marco),
+                FakeShotRepository(),
+                MapSettings()
+            )
         }
 
         awaitText("+ Registra sessione")

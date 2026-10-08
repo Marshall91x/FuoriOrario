@@ -66,6 +66,9 @@ import fuoriorario.composeapp.generated.resources.map_free_none
 import fuoriorario.composeapp.generated.resources.map_hint
 import fuoriorario.composeapp.generated.resources.map_no_shots
 import fuoriorario.composeapp.generated.resources.map_title
+import it.manu.fuoriorario.core.designsystem.Legend
+import it.manu.fuoriorario.core.theme.FuoriOrarioColors
+import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
 import it.manu.fuoriorario.domain.ARC_CORNER_Y
 import it.manu.fuoriorario.domain.ARC_RADIUS
 import it.manu.fuoriorario.domain.ARC_SIDE
@@ -83,9 +86,6 @@ import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.domain.ZoneHeat
 import it.manu.fuoriorario.domain.heat
 import it.manu.fuoriorario.domain.zoneAt
-import it.manu.fuoriorario.ui.components.Legend
-import it.manu.fuoriorario.ui.theme.FuoriOrarioColors
-import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlin.math.PI
 import kotlin.math.atan2
 import org.jetbrains.compose.resources.stringResource

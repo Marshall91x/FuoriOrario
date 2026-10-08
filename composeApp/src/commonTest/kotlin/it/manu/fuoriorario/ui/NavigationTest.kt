@@ -6,13 +6,13 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import it.manu.fuoriorario.App
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
-import it.manu.fuoriorario.ui.auth.FakeAuthRepository
-import it.manu.fuoriorario.ui.auth.awaitNode
-import it.manu.fuoriorario.ui.auth.awaitText
-import it.manu.fuoriorario.ui.auth.runAppTest
+import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.testing.TestApp
+import it.manu.fuoriorario.testing.awaitNode
+import it.manu.fuoriorario.testing.awaitText
+import it.manu.fuoriorario.testing.runAppTest
 import it.manu.fuoriorario.ui.plan.FakePlanRepository
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
@@ -26,7 +26,7 @@ class NavigationTest {
     @Test
     fun player_hasNoTeamTab() = runAppTest {
         setContent {
-            App(
+            TestApp(
                 FakeAuthRepository(Member("Luca B.", Role.PLAYER, ACK)),
                 FakeRosterRepository(),
                 FakeShotRepository(),
@@ -44,7 +44,7 @@ class NavigationTest {
 
     @Test
     fun staff_reachesTeam() = runAppTest {
-        setContent { App(FakeAuthRepository(Member("Coach", Role.STAFF, ACK)), FakeRosterRepository()) }
+        setContent { TestApp(FakeAuthRepository(Member("Coach", Role.STAFF, ACK)), FakeRosterRepository()) }
 
         awaitText("VISTA STAFF")
         awaitText("Squadra")

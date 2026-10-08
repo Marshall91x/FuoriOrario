@@ -42,6 +42,9 @@ import fuoriorario.composeapp.generated.resources.overview_shots_7
 import fuoriorario.composeapp.generated.resources.overview_three_30
 import fuoriorario.composeapp.generated.resources.overview_title
 import fuoriorario.composeapp.generated.resources.overview_week
+import it.manu.fuoriorario.core.designsystem.LoadFailed
+import it.manu.fuoriorario.core.designsystem.Panel
+import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.data.ShotRepository
@@ -53,9 +56,6 @@ import it.manu.fuoriorario.domain.overviewRow
 import it.manu.fuoriorario.domain.planLevel
 import it.manu.fuoriorario.domain.progress
 import it.manu.fuoriorario.domain.weekOf
-import it.manu.fuoriorario.ui.components.LoadFailed
-import it.manu.fuoriorario.ui.components.Panel
-import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope

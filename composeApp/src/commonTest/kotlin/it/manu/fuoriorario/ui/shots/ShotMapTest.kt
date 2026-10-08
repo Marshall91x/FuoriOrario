@@ -9,16 +9,16 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.ShotSession
 import it.manu.fuoriorario.domain.Shots
 import it.manu.fuoriorario.domain.Zone
-import it.manu.fuoriorario.ui.auth.FakeAuthRepository
-import it.manu.fuoriorario.ui.auth.awaitText
-import it.manu.fuoriorario.ui.auth.runAppTest
+import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.testing.TestApp
+import it.manu.fuoriorario.testing.awaitText
+import it.manu.fuoriorario.testing.runAppTest
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.Test
 
@@ -36,7 +36,7 @@ class ShotMapTest {
         )
         // The team's own riferimenti, not the defaults: 40% on 50% is under 85%.
         shots.refs += Zone.PIT to 50
-        setContent { App(FakeAuthRepository(luca), FakeRosterRepository(), shots) }
+        setContent { TestApp(FakeAuthRepository(luca), FakeRosterRepository(), shots) }
         awaitText("Mappa di tiro")
 
         onNodeWithContentDescription("Pitturato").assert(heat("Sotto il riferimento"))

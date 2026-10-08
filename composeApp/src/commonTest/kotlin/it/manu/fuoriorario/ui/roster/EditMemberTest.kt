@@ -7,12 +7,12 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import it.manu.fuoriorario.App
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
-import it.manu.fuoriorario.ui.auth.FakeAuthRepository
-import it.manu.fuoriorario.ui.auth.awaitText
-import it.manu.fuoriorario.ui.auth.runAppTest
+import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.testing.TestApp
+import it.manu.fuoriorario.testing.awaitText
+import it.manu.fuoriorario.testing.runAppTest
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,7 +27,7 @@ class EditMemberTest {
     @Test
     fun staffEditsMember() = runAppTest {
         val roster = FakeRosterRepository(staff, luca)
-        setContent { App(FakeAuthRepository(staff), roster) }
+        setContent { TestApp(FakeAuthRepository(staff), roster) }
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
         onNodeWithTag("team_roster").performClick()
@@ -54,7 +54,7 @@ class EditMemberTest {
     @Test
     fun staffRemovesMemberWithConfirmation() = runAppTest {
         val roster = FakeRosterRepository(staff, luca)
-        setContent { App(FakeAuthRepository(staff), roster) }
+        setContent { TestApp(FakeAuthRepository(staff), roster) }
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
         onNodeWithTag("team_roster").performClick()
@@ -77,7 +77,7 @@ class EditMemberTest {
     @Test
     fun staffDemotingThemselvesBecomesPlayer() = runAppTest {
         val roster = FakeRosterRepository(staff, vice)
-        setContent { App(FakeAuthRepository(staff, roster), roster, FakeShotRepository()) }
+        setContent { TestApp(FakeAuthRepository(staff, roster), roster, FakeShotRepository()) }
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
         onNodeWithTag("team_roster").performClick()
@@ -96,7 +96,7 @@ class EditMemberTest {
     @Test
     fun staffRemovingThemselvesIsSignedOut() = runAppTest {
         val roster = FakeRosterRepository(staff, vice)
-        setContent { App(FakeAuthRepository(staff, roster), roster) }
+        setContent { TestApp(FakeAuthRepository(staff, roster), roster) }
         awaitText("Squadra")
         onNodeWithText("Squadra").performClick()
         onNodeWithTag("team_roster").performClick()

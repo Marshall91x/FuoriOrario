@@ -1,8 +1,8 @@
 package it.manu.fuoriorario.ui.roster
 
+import it.manu.fuoriorario.core.error.PermissionDeniedException
 import it.manu.fuoriorario.data.EmailTakenException
 import it.manu.fuoriorario.data.LastStaffException
-import it.manu.fuoriorario.data.PermissionDeniedException
 import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role

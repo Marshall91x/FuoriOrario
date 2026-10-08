@@ -8,16 +8,16 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import it.manu.fuoriorario.App
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.ShotSession
 import it.manu.fuoriorario.domain.Shots
 import it.manu.fuoriorario.domain.Zone
-import it.manu.fuoriorario.ui.auth.FakeAuthRepository
-import it.manu.fuoriorario.ui.auth.awaitText
-import it.manu.fuoriorario.ui.auth.runAppTest
+import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.testing.TestApp
+import it.manu.fuoriorario.testing.awaitText
+import it.manu.fuoriorario.testing.runAppTest
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -36,7 +36,7 @@ class LogSessionTest {
     @Test
     fun playerLogsSessionWithValidation() = runAppTest {
         val shots = FakeShotRepository(older)
-        setContent { App(FakeAuthRepository(luca), FakeRosterRepository(), shots) }
+        setContent { TestApp(FakeAuthRepository(luca), FakeRosterRepository(), shots) }
         awaitText("3/5 · 60%")
         awaitText("+ Registra sessione")
         onNodeWithText("+ Registra sessione").performClick()
@@ -85,7 +85,7 @@ class LogSessionTest {
     @Test
     fun playerDeletesSessionWithConfirmation() = runAppTest {
         val shots = FakeShotRepository(older)
-        setContent { App(FakeAuthRepository(luca), FakeRosterRepository(), shots) }
+        setContent { TestApp(FakeAuthRepository(luca), FakeRosterRepository(), shots) }
         awaitText("Prima")
         onNodeWithTag("delete_old").performScrollTo().performClick()
         awaitText("Conferma")

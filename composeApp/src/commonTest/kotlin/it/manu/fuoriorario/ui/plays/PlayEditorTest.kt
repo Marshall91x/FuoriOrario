@@ -15,8 +15,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import com.russhwolf.settings.MapSettings
-import it.manu.fuoriorario.App
-import it.manu.fuoriorario.data.Session
+import it.manu.fuoriorario.core.session.Session
 import it.manu.fuoriorario.domain.COURT_MARGIN
 import it.manu.fuoriorario.domain.COURT_WIDTH
 import it.manu.fuoriorario.domain.CourtSize
@@ -26,10 +25,11 @@ import it.manu.fuoriorario.domain.PlayCategory
 import it.manu.fuoriorario.domain.Point
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.startingStep
-import it.manu.fuoriorario.ui.auth.FakeAuthRepository
-import it.manu.fuoriorario.ui.auth.awaitNode
-import it.manu.fuoriorario.ui.auth.awaitText
-import it.manu.fuoriorario.ui.auth.runAppTest
+import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.testing.TestApp
+import it.manu.fuoriorario.testing.awaitNode
+import it.manu.fuoriorario.testing.awaitText
+import it.manu.fuoriorario.testing.runAppTest
 import it.manu.fuoriorario.ui.plan.FakePlanRepository
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
@@ -57,7 +57,7 @@ class PlayEditorTest {
 
     private fun ComposeUiTest.open(auth: FakeAuthRepository, plays: FakePlayRepository) {
         setContent {
-            App(
+            TestApp(
                 auth,
                 FakeRosterRepository(coach, luca),
                 FakeShotRepository(),
