@@ -6,10 +6,8 @@ import fuoriorario.composeapp.generated.resources.play_removed
 import fuoriorario.composeapp.generated.resources.play_saved
 import fuoriorario.composeapp.generated.resources.play_unsaved
 import it.manu.fuoriorario.core.error.ErrorManager
-import it.manu.fuoriorario.core.viewmodel.ComposeViewModel
 import it.manu.fuoriorario.core.viewmodel.DispatcherProvider
-import it.manu.fuoriorario.core.viewmodel.UiState
-import it.manu.fuoriorario.core.viewmodel.UseCaseMutableState
+import it.manu.fuoriorario.core.viewmodel.ScreenModel
 import it.manu.fuoriorario.domain.CourtSize
 import it.manu.fuoriorario.domain.MoveKind
 import it.manu.fuoriorario.domain.PLAY_DESCRIPTION_MAX
@@ -33,10 +31,7 @@ import it.manu.fuoriorario.domain.withDefense
 import it.manu.fuoriorario.domain.within
 import it.manu.fuoriorario.domain.without
 import it.manu.fuoriorario.feature.plays.data.PlayRepository
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.getString
 
 /** A handle's key among the drag targets: the piece whose move it bends, marked. */
 const val HANDLE = "~"
@@ -86,18 +81,13 @@ class PlaysViewModel(
     private val repository: PlayRepository,
     private val dispatchers: DispatcherProvider,
     errorManager: ErrorManager
-) : ComposeViewModel<PlaysScreenState>(
+) : ScreenModel<PlaysScreenState>(
     // Nothing on screen until the plays arrive, as before: they fill in when loaded.
-    defaultState = PlaysScreenState().let { UiState(UseCaseMutableState.ShowData(it), it) },
-    dispatcherProvider = dispatchers,
-    errorManager = errorManager
+    PlaysScreenState(),
+    dispatchers,
+    errorManager,
+    busy = { copy(busy = it) }
 ) {
-    private val state get() = uiState.value.data!!
-    private val toastChannel = Channel<String>(Channel.BUFFERED)
-
-    /** Messages for the toast: saved, removed, unsaved changes, or why an action failed. */
-    val toasts = toastChannel.receiveAsFlow()
-
     init {
         // On main, like every keystroke: a background `set` could drop one typed meanwhile.
         defaultLaunch(dispatchers.main()) {
@@ -182,7 +172,7 @@ class PlaysViewModel(
         val draft = state.draft ?: return
         if (!draft.unsaved || draft.confirmingExit) return update { copy(draft = null) }
         updateDraft { copy(confirmingExit = true) }
-        viewModelScope.launch(dispatchers.unconfined()) { toastChannel.send(getString(Res.string.play_unsaved)) }
+        viewModelScope.launch(dispatchers.unconfined()) { toast(Res.string.play_unsaved) }
     }
 
     /** Saved, it opens in the viewer. */
@@ -200,7 +190,7 @@ class PlaysViewModel(
                 val updated = if (play.id == null) list + saved else list.map { if (it.id == saved.id) saved else it }
                 copy(plays = updated, draft = null, openId = saved.id)
             }
-            toastChannel.send(getString(Res.string.play_saved))
+            toast(Res.string.play_saved)
         }
     }
 
@@ -212,19 +202,7 @@ class PlaysViewModel(
         act {
             repository.remove(draft.original)
             set { copy(plays = plays.orEmpty().filter { it.id != draft.original.id }, draft = null, openId = null) }
-            toastChannel.send(getString(Res.string.play_removed))
-        }
-    }
-
-    /** A write: a failure toasts and leaves the editor as drawn. */
-    private fun act(block: suspend () -> Unit) {
-        update { copy(busy = true) }
-        defaultLaunchForChannels(dispatchers.main(), errorFunction = {
-            set { copy(busy = false) }
-            it.userMessage?.let { message -> toastChannel.send(message) }
-        }) {
-            block()
-            set { copy(busy = false) }
+            toast(Res.string.play_removed)
         }
     }
 
@@ -238,12 +216,5 @@ class PlaysViewModel(
         if (edited == step) this else changed(play.copy(steps = play.steps.with(index, edited)))
     }
 
-    private suspend fun set(change: PlaysScreenState.() -> PlaysScreenState) = emitSuccess(state.change())
-
     private fun updateDraft(change: PlayDraft.() -> PlayDraft) = update { copy(draft = draft?.change()) }
-
-    /** Unconfined runs it before returning: a drag or keystroke lands before the next one, as with a `remember`. */
-    private fun update(change: PlaysScreenState.() -> PlaysScreenState) {
-        viewModelScope.launch(dispatchers.unconfined()) { set(change) }
-    }
 }
