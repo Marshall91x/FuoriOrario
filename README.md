@@ -102,19 +102,19 @@ Per firmare in locale, le stesse chiavi (con `ANDROID_KEYSTORE_PATH` al posto di
 ### Supabase di produzione (una tantum)
 
 1. Crea il progetto su supabase.com nella regione **Central EU (Frankfurt)**.
-2. Crea un account Gmail dedicato all'app (sarà il mittente dei codici), attiva la verifica in due passaggi e crea una [password per le app](https://myaccount.google.com/apppasswords).
+2. L'account Gmail dell'app è `fuoriorario.tech@gmail.com` (mittente dei codici): ha la verifica in due passaggi e una [password per le app](https://myaccount.google.com/apppasswords).
 3. Collega il progetto (ref `bwrxcpyrxbimacbwjhhr`, già nel blocco `[remotes.production]` di `supabase/config.toml`) e applica migrazioni e config (hook delle email fuori rosa, SMTP, `site_url`, limiti di invio email):
 
    ```sh
    supabase link --project-ref bwrxcpyrxbimacbwjhhr
    supabase db push                       # solo migrazioni: seed.sql è per lo sviluppo
-   SMTP_USER=<account>@gmail.com SMTP_PASSWORD=<password per le app> supabase config diff
-   SMTP_USER=<account>@gmail.com SMTP_PASSWORD=<password per le app> supabase config push
+   SMTP_PASSWORD=<password per le app> supabase config diff
+   SMTP_PASSWORD=<password per le app> supabase config push
    ```
 
 4. Copia `supabase/seed.production.example.sql` in `supabase/seed.production.sql` (non versionato), metti nome della squadra ed email dello staff, ed eseguilo una volta nel SQL Editor della dashboard. I giocatori li aggiunge lo staff da Rosa.
 5. In GitHub → Settings → Secrets and variables → Actions imposta `SUPABASE_URL` e `SUPABASE_ANON_KEY` del progetto cloud: le usa la build di rilascio.
 
-Prova: accedi con un'email dello staff e controlla che il codice arrivi dall'account Gmail; un'email fuori rosa deve essere rifiutata.
+Prova: accedi con un'email dello staff e controlla che il codice arrivi da `fuoriorario.tech@gmail.com`; un'email fuori rosa deve essere rifiutata.
 
 Font Saira Condensed e Instrument Sans sotto licenza SIL OFL 1.1 (`licenses/`).
