@@ -430,6 +430,11 @@ enabled = true
 [remotes.production]
 project_id = "bwrxcpyrxbimacbwjhhr"
 
+# Pool sizes follow the cloud plan's compute: keep the project's own values, not the local ones.
+[remotes.production.db.pooler]
+default_pool_size = 15
+max_client_conn = 200
+
 [remotes.production.auth]
 site_url = "https://marshall91x.github.io/FuoriOrario/"
 additional_redirect_urls = []
