@@ -1,0 +1,138 @@
+package it.manu.fuoriorario.feature.shots
+
+import androidx.lifecycle.viewModelScope
+import fuoriorario.composeapp.generated.resources.Res
+import fuoriorario.composeapp.generated.resources.session_saved
+import fuoriorario.composeapp.generated.resources.shots_deleted
+import it.manu.fuoriorario.core.error.ErrorManager
+import it.manu.fuoriorario.core.today
+import it.manu.fuoriorario.core.viewmodel.ComposeViewModel
+import it.manu.fuoriorario.core.viewmodel.DispatcherProvider
+import it.manu.fuoriorario.core.viewmodel.UiState
+import it.manu.fuoriorario.core.viewmodel.UseCaseMutableState
+import it.manu.fuoriorario.domain.Member
+import it.manu.fuoriorario.domain.NOTE_MAX
+import it.manu.fuoriorario.domain.SessionError
+import it.manu.fuoriorario.domain.ShotSession
+import it.manu.fuoriorario.domain.Shots
+import it.manu.fuoriorario.domain.Zone
+import it.manu.fuoriorario.domain.newSession
+import it.manu.fuoriorario.domain.sessionError
+import it.manu.fuoriorario.feature.shots.data.ShotRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.getString
+
+/** The "Registra sessione" form as typed: [error] is the last failed check, shown in the sheet. */
+data class SessionDraft(
+    val date: LocalDate,
+    val zones: Map<Zone, Shots> = Zone.entries.associateWith { Shots() },
+    val note: String = "",
+    val error: SessionError? = null
+)
+
+/**
+ * [sessions] and [refs] are null until loaded. [draft] is the open sheet, null when closed.
+ * [confirmingDelete] took the first "Elimina" tap; [busy]: a save or delete is in flight.
+ */
+data class ShotLogScreenState(
+    val player: Member,
+    val today: LocalDate,
+    val sessions: List<ShotSession>? = null,
+    val refs: Map<Zone, Int>? = null,
+    val draft: SessionDraft? = null,
+    val confirmingDelete: ShotSession? = null,
+    val busy: Boolean = false
+)
+
+/** [player]'s Diario di tiro (PRD F3): their sessions and the team's riferimenti, with log and delete. */
+class ShotLogViewModel(
+    player: Member,
+    private val shots: ShotRepository,
+    private val dispatchers: DispatcherProvider,
+    errorManager: ErrorManager
+) : ComposeViewModel<ShotLogScreenState>(
+    // The header is there before the sessions: they fill in when loaded.
+    defaultState = ShotLogScreenState(player, today()).let { UiState(UseCaseMutableState.ShowData(it), it) },
+    dispatcherProvider = dispatchers,
+    errorManager = errorManager
+) {
+    private val state get() = uiState.value.data!!
+    private val toastChannel = Channel<String>(Channel.BUFFERED)
+
+    /** Messages for the toast: saved, deleted, or why an action failed. */
+    val toasts = toastChannel.receiveAsFlow()
+
+    init {
+        load()
+    }
+
+    // On main, like every keystroke: a background `set` could drop one typed meanwhile. The calls suspend, never block.
+    private fun load() = defaultLaunch(dispatchers.main()) {
+        val teamRefs = async { shots.zoneRefs() }
+        val sessions = shots.sessions(state.player)
+        val refs = teamRefs.await()
+        set { copy(sessions = sessions, refs = refs) }
+    }
+
+    fun onLog() = update { copy(draft = SessionDraft(today), confirmingDelete = null) }
+
+    fun onDismissLog() = update { copy(draft = null) }
+
+    fun onDateChanged(date: LocalDate) = updateDraft { copy(date = date) }
+
+    fun onZoneChanged(zone: Zone, shots: Shots) = updateDraft { copy(zones = zones + (zone to shots)) }
+
+    fun onNoteChanged(note: String) = updateDraft { copy(note = note.take(NOTE_MAX)) }
+
+    fun onSave() {
+        val draft = state.draft ?: return
+        if (state.busy) return
+        val error = sessionError(draft.zones)
+        updateDraft { copy(error = error) }
+        if (error != null) return
+        val session = newSession(draft.date, draft.zones, draft.note).copy(memberId = state.player.id)
+        act {
+            val saved = shots.add(session)
+            // Stable sort: the new one goes first among sessions of the same day.
+            set { copy(sessions = (listOf(saved) + sessions.orEmpty()).sortedByDescending { it.date }, draft = null) }
+            toastChannel.send(getString(Res.string.session_saved))
+        }
+    }
+
+    /** The first tap asks to confirm, the second deletes. */
+    fun onDelete(session: ShotSession) {
+        if (state.busy) return
+        if (state.confirmingDelete != session) return update { copy(confirmingDelete = session) }
+        update { copy(confirmingDelete = null) }
+        act {
+            shots.delete(session)
+            set { copy(sessions = sessions.orEmpty().filter { it.id != session.id }) }
+            toastChannel.send(getString(Res.string.shots_deleted))
+        }
+    }
+
+    /** A write: a failure toasts and leaves everything on screen as it was, sheet included. */
+    private fun act(block: suspend () -> Unit) {
+        update { copy(busy = true) }
+        defaultLaunchForChannels(dispatchers.main(), errorFunction = {
+            set { copy(busy = false) }
+            it.userMessage?.let { message -> toastChannel.send(message) }
+        }) {
+            block()
+            set { copy(busy = false) }
+        }
+    }
+
+    private suspend fun set(change: ShotLogScreenState.() -> ShotLogScreenState) = emitSuccess(state.change())
+
+    private fun updateDraft(change: SessionDraft.() -> SessionDraft) = update { copy(draft = draft?.change()) }
+
+    /** Unconfined runs it before returning: a keystroke lands before the next one, as with a `remember`. */
+    private fun update(change: ShotLogScreenState.() -> ShotLogScreenState) {
+        viewModelScope.launch(dispatchers.unconfined()) { set(change) }
+    }
+}

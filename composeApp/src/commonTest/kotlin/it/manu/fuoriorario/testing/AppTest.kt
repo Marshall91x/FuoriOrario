@@ -23,14 +23,14 @@ import it.manu.fuoriorario.core.viewmodel.DispatcherProvider
 import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.data.PlayRepository
 import it.manu.fuoriorario.data.RosterRepository
-import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.di.appModule
 import it.manu.fuoriorario.feature.auth.FakeAuthRepository
 import it.manu.fuoriorario.feature.auth.data.AuthRepository
+import it.manu.fuoriorario.feature.shots.FakeShotRepository
+import it.manu.fuoriorario.feature.shots.data.ShotRepository
 import it.manu.fuoriorario.ui.plan.FakePlanRepository
 import it.manu.fuoriorario.ui.plays.FakePlayRepository
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
-import it.manu.fuoriorario.ui.shots.FakeShotRepository
 import kotlin.test.fail
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

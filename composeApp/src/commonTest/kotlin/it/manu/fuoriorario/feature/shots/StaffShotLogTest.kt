@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.shots
+package it.manu.fuoriorario.feature.shots
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key

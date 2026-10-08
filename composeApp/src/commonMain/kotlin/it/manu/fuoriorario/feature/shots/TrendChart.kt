@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.shots
+package it.manu.fuoriorario.feature.shots
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Row

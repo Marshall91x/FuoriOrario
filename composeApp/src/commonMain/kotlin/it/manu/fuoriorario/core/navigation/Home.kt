@@ -27,6 +27,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +40,9 @@ import androidx.compose.ui.semantics.Role as SemanticsRole
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -71,17 +75,17 @@ import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.data.PlayRepository
 import it.manu.fuoriorario.data.RosterRepository
-import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.weekOf
+import it.manu.fuoriorario.feature.shots.ShotLogScreen
+import it.manu.fuoriorario.feature.shots.data.ShotRepository
 import it.manu.fuoriorario.ui.plan.PlanScreen
 import it.manu.fuoriorario.ui.plays.PlaysScreen
 import it.manu.fuoriorario.ui.roster.RosterScreen
 import it.manu.fuoriorario.ui.settings.LibraryScreen
 import it.manu.fuoriorario.ui.settings.ZoneRefsScreen
-import it.manu.fuoriorario.ui.shots.ShotLogScreen
 import it.manu.fuoriorario.ui.team.TeamOverviewScreen
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
@@ -200,7 +204,9 @@ fun Home(
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {
                                         if (tab == Tab.SHOT_LOG) {
-                                            ShotLogScreen(shots, followed, period) { period = it }
+                                            ScreenViewModels {
+                                                ShotLogScreen(followed, period, onPeriod = { period = it })
+                                            }
                                         } else {
                                             PlanScreen(plans, followed, member.role == Role.STAFF, week) { week = it }
                                         }
@@ -217,6 +223,22 @@ fun Home(
             TabBar(tabs, entry?.destination?.route, ::select)
         }
     }
+}
+
+/**
+ * ViewModels that live while [content] is on screen, as the `remember` they replace did: each visit loads afresh
+ * (no cache, ARCHITECTURE "Gestione errori"), and leaving cancels what's in flight. The tab's own back stack entry
+ * would keep them across tab changes, showing riferimenti changed meanwhile in Impostazioni only after a restart.
+ */
+@Composable
+private fun ScreenViewModels(content: @Composable () -> Unit) {
+    val owner = remember {
+        object : ViewModelStoreOwner {
+            override val viewModelStore = ViewModelStore()
+        }
+    }
+    DisposableEffect(owner) { onDispose { owner.viewModelStore.clear() } }
+    CompositionLocalProvider(LocalViewModelStoreOwner provides owner, content = content)
 }
 
 /** Prototype `emptyRoster`, without the form: that's in Squadra. */

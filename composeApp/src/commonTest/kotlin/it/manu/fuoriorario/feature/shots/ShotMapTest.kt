@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.shots
+package it.manu.fuoriorario.feature.shots
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
