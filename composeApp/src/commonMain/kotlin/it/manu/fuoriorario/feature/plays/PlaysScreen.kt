@@ -32,7 +32,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -100,16 +102,17 @@ internal val categoryName = mapOf(
 
 /**
  * Schemi: the team's plays by category; tapping one opens it step by step, "Tutti gli schemi" goes back. Staff also
- * draw new ones and edit or delete any of them; [onUnsaved] tells whether the editor holds changes to lose.
+ * draw new ones and edit or delete any of them. [onSecondLevel] tells whether a play or the editor is open, a screen
+ * without the tab bar.
  */
 @Composable
-fun PlaysScreen(staff: Boolean, onUnsaved: (Boolean) -> Unit = {}, vm: PlaysViewModel = koinViewModel()) {
+fun PlaysScreen(staff: Boolean, onSecondLevel: (Boolean) -> Unit = {}, vm: PlaysViewModel = koinViewModel()) {
     val uiState = vm.uiState.collectAsStateWithLifecycle()
     val toast = LocalToast.current
     LaunchedEffect(vm) { vm.toasts.collect { launch { toast.show(it) } } }
-    val unsaved = uiState.value.data?.draft?.unsaved == true
-    LaunchedEffect(unsaved) { onUnsaved(unsaved) }
-    DisposableEffect(Unit) { onDispose { onUnsaved(false) } }
+    val secondLevel = uiState.value.data?.secondLevel == true
+    LaunchedEffect(secondLevel) { onSecondLevel(secondLevel) }
+    DisposableEffect(Unit) { onDispose { onSecondLevel(false) } }
     PlaysStateContent(
         uiState.value.state,
         staff,
@@ -252,11 +255,16 @@ private fun Chips(play: Play) {
 /**
  * One play: the court at a step with the moves that led there, its note, ◀ / ▶ and "Riproduci". ▶ and "Riproduci"
  * animate into the next step, "Riproduci" on to the last (from the first, if already there); ◀ jumps back, and
- * ◀ / ▶ stop it. Staff get [onEdit].
+ * ◀ / ▶ stop it. Staff get [onEdit]. The system back is [onBack] too.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun PlayViewer(play: Play, onEdit: (() -> Unit)?, onBack: () -> Unit) {
     val c = FuoriOrarioTheme.colors
+    // ponytail: deprecated, NavigationEventHandler when its compose artifact is among our dependencies (as in PlayEditor).
+    @Suppress("DEPRECATION")
+    BackHandler(onBack = onBack)
+
     val last = play.steps.lastIndex
     var index by remember { mutableIntStateOf(0) }
     val progress = remember { Animatable(1f) }

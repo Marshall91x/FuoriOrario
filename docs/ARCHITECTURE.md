@@ -77,6 +77,8 @@ Home = barra in basso:
 Header: menu giocatore (solo staff), logout
 ```
 
+Le schede sono il primo livello. Quello che si apre con un tasto da una scheda (oggi lo schema aperto e l'editor) è di secondo livello: la barra in basso non c'è e si esce con "indietro", il tasto o il gesto di sistema (`BackHandler`). I fogli e i dialoghi coprono già la barra e restano tali.
+
 Layout a colonna singola, larghezza massima 560dp centrata (web e tablet).
 
 ## Modello dati (Postgres)
@@ -222,7 +224,7 @@ Le migrazioni si applicano in produzione con `supabase db push` dal job di rilas
 | Livello | Dove | Cosa | In CI |
 |---|---|---|---|
 | Unit | `commonTest` | ViewModel (con `TestDispatcherProvider` e repository finti) · `domain/`: percentuali, somma zone, periodi/stagione, classe zona, completamento, settimane, movimenti e interpolazione degli schemi | ✓ |
-| UI | `commonTest` con `runAppTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) · staff modifica e ripristina i riferimenti, la mappa si ricolora · staff vede il quadro squadra e apre il diario di un giocatore · giocatore apre uno schema e va al passo successivo | iOS Simulator + Wasm (browser headless). Android in locale |
+| UI | `commonTest` con `runAppTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) · staff modifica e ripristina i riferimenti, la mappa si ricolora · staff vede il quadro squadra e apre il diario di un giocatore · giocatore apre uno schema e va al passo successivo · nello schema e nell'editor la barra sparisce, "indietro" la riporta | iOS Simulator + Wasm (browser headless). Android in locale |
 | DB | `supabase/tests` (pgTAP) | RLS: giocatore non legge/scrive dati altrui, solo staff gestisce rosa/piani/riferimenti, solo giocatore spunta | ✓ (Supabase locale in CI) |
 
 Architettura: Konsist + `verify()` dei moduli Koin in `androidUnitTest`.

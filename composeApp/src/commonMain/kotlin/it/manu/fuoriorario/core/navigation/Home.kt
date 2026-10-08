@@ -32,7 +32,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +52,6 @@ import fuoriorario.composeapp.generated.resources.ic_tab_plan
 import fuoriorario.composeapp.generated.resources.ic_tab_plays
 import fuoriorario.composeapp.generated.resources.ic_tab_shot_log
 import fuoriorario.composeapp.generated.resources.ic_tab_team
-import fuoriorario.composeapp.generated.resources.play_unsaved
 import fuoriorario.composeapp.generated.resources.roster_empty_hint
 import fuoriorario.composeapp.generated.resources.roster_empty_title
 import fuoriorario.composeapp.generated.resources.roster_title
@@ -69,7 +67,6 @@ import it.manu.fuoriorario.core.designsystem.Page
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.SegmentedControl
 import it.manu.fuoriorario.core.designsystem.ToastHost
-import it.manu.fuoriorario.core.designsystem.show
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
 import it.manu.fuoriorario.core.today
 import it.manu.fuoriorario.domain.Member
@@ -83,10 +80,8 @@ import it.manu.fuoriorario.feature.settings.LibraryScreen
 import it.manu.fuoriorario.feature.settings.ZoneRefsScreen
 import it.manu.fuoriorario.feature.shots.ShotLogScreen
 import it.manu.fuoriorario.feature.team.TeamOverviewScreen
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -133,24 +128,14 @@ fun Home(
         restoreState = true
     }
 
-    // The plays editor holds unsaved changes: another tab takes a second tap on it, as leaving the editor does.
-    val scope = rememberCoroutineScope()
-    var unsavedPlay by remember { mutableStateOf(false) }
-    var leavingTo by remember { mutableStateOf<Tab?>(null) }
-
-    fun select(tab: Tab) {
-        if (unsavedPlay && tab != Tab.PLAYS && leavingTo != tab) {
-            leavingTo = tab
-            scope.launch { toast.show(getString(Res.string.play_unsaved)) }
-            return
-        }
-        leavingTo = null
-        open(tab)
-    }
+    // A second-level screen (a play open, its editor) has no bar: back leaves it.
+    var secondLevel by remember { mutableStateOf(false) }
 
     CompositionLocalProvider(LocalToast provides toast) {
         Column(Modifier.fillMaxSize()) {
-            Box(Modifier.weight(1f)) {
+            // Without the bar the screen keeps clear of the system's bottom edge itself.
+            val bottomInset = WindowInsets.safeDrawing.exclude(WindowInsets.ime).only(WindowInsetsSides.Bottom)
+            Box(Modifier.weight(1f).then(if (secondLevel) Modifier.windowInsetsPadding(bottomInset) else Modifier)) {
                 // Tabs switch at once, like the prototype: a crossfade would show both screens at the same time.
                 NavHost(
                     nav,
@@ -190,10 +175,7 @@ fun Home(
                                         }
                                     }
                                     tab == Tab.PLAYS -> ScreenViewModels {
-                                        PlaysScreen(member.role == Role.STAFF, onUnsaved = {
-                                            unsavedPlay = it
-                                            leavingTo = null
-                                        })
+                                        PlaysScreen(member.role == Role.STAFF, onSecondLevel = { secondLevel = it })
                                     }
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {
@@ -215,7 +197,7 @@ fun Home(
                 }
                 ToastHost(toast, Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp))
             }
-            TabBar(tabs, entry?.destination?.route, ::select)
+            if (!secondLevel) TabBar(tabs, entry?.destination?.route, ::open)
         }
     }
 }

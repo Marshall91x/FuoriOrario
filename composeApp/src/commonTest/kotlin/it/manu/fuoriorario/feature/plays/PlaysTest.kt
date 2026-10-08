@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.navigationevent.DirectNavigationEventInput
 import com.russhwolf.settings.MapSettings
 import it.manu.fuoriorario.domain.CourtSize
 import it.manu.fuoriorario.domain.Member
@@ -80,6 +81,32 @@ class PlaysTest {
         steps = listOf(Step(start + ("X1" to Point(250f, 300f)), "1")),
         id = "box"
     )
+
+    @Test
+    fun aPlayOpenHasNoTabBarAndTheSystemBackLeavesIt() = runAppTest {
+        val back = DirectNavigationEventInput()
+        setContent {
+            TestApp(
+                FakeAuthRepository(luca),
+                FakeRosterRepository(luca),
+                FakeShotRepository(),
+                MapSettings(),
+                FakePlanRepository(),
+                FakePlayRepository(inbound, seed),
+                back
+            )
+        }
+
+        awaitText("Schemi")
+        onNodeWithText("Schemi").performClick()
+        onNodeWithText("Box").performClick()
+        awaitText("Passo 1 di 1")
+        awaitNode(hasText("Piano"), count = 0)
+
+        runOnIdle { back.backCompleted() }
+        awaitText("Pick and roll centrale")
+        awaitText("Piano")
+    }
 
     @Test
     fun playerOpensThePlayAndStepsThrough() = runAppTest {
