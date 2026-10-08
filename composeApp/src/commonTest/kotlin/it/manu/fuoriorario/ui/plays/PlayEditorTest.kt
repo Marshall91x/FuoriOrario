@@ -242,6 +242,31 @@ class PlayEditorTest {
     }
 
     @Test
+    fun aSlowDragMovesThePieceAndKeepsTheBall() = runAppTest {
+        val plays = FakePlayRepository(box)
+        open(FakeAuthRepository(coach), plays)
+
+        awaitText("Schemi")
+        onNodeWithText("Schemi").performClick()
+        onNodeWithText("Box").performClick()
+        onNodeWithTag("play_edit").performScrollTo().performClick()
+        // A finger dragging 2 down slowly, 1 px every 30 ms: past the hold time before a big move.
+        onCourt(Point(60f, 230f)) { start ->
+            down(start)
+            repeat(80) {
+                advanceEventTime(30)
+                moveBy(Offset(0f, 1f))
+            }
+            up()
+        }
+        onNodeWithTag("play_save").performScrollTo().performClick()
+        awaitText("Passo 1 di 1")
+        val step = plays.plays.single().steps.single()
+        assertEquals("1", step.ball)
+        assertTrue(step.pos.getValue("2").y > 240f, "${step.pos["2"]}")
+    }
+
+    @Test
     fun staffDeleteAPlayWithASecondTap() = runAppTest {
         val plays = FakePlayRepository(box)
         open(FakeAuthRepository(coach), plays)

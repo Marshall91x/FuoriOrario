@@ -2,8 +2,6 @@ package it.manu.fuoriorario.ui.plays
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
@@ -25,6 +23,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -103,6 +102,9 @@ private const val HANDLE = "~"
 
 /** How near a piece or handle a finger must land to drag it, in viewBox units. */
 private const val GRAB_REACH = 60f
+
+/** How far a finger must move, before the long-press time, to drag instead of holding. */
+private val DRAG_START = 4.dp
 
 /** How near an attacker a hold must be to give him the ball, in viewBox units: about two pieces. */
 private const val HOLD_REACH = 40f
@@ -216,7 +218,12 @@ fun PlayEditor(
             "play_description",
             singleLine = false
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        // On a phone the court control and "Con difesa" don't fit side by side: the pill wraps whole.
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            itemVerticalAlignment = Alignment.CenterVertically
+        ) {
             if (isNew) {
                 Text(
                     stringResource(Res.string.play_court).uppercase(),
@@ -264,32 +271,52 @@ fun PlayEditor(
             Modifier
                 .testTag("play_court")
                 .pointerInput(Unit) {
-                    // Only a finger near a piece or handle drags; elsewhere the page scrolls.
+                    // Drag and hold in one detector: a separate long-press detector would win over a slow drag that
+                    // hasn't passed the platform's touch slop yet. Away from every piece and handle, the page scrolls.
                     awaitEachGesture {
-                        // The hold detector below has already consumed the down.
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        val target = nearest(targets(), down.position.court(size.width), GRAB_REACH)
-                            ?: return@awaitEachGesture
-                        val start = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
-                            ?: return@awaitEachGesture
-                        lifted = target
-                        try {
-                            moveTo(target, start.position.court(size.width))
-                            drag(start.id) { change ->
-                                change.consume()
-                                moveTo(target, change.position.court(size.width))
+                        val down = awaitFirstDown()
+                        val at = down.position.court(size.width)
+                        val target = nearest(targets(), at, GRAB_REACH) ?: return@awaitEachGesture
+                        val slop = DRAG_START.toPx()
+                        var released = false
+                        val moved = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                            var change: PointerInputChange
+                            do {
+                                change = awaitPointerEvent().changes.firstOrNull { it.id == down.id }
+                                    ?.takeIf { it.pressed }
+                                    ?: run {
+                                        released = true
+                                        return@withTimeoutOrNull null
+                                    }
+                            } while ((change.position - down.position).getDistance() <= slop)
+                            change
+                        }
+                        when {
+                            released -> Unit
+                            // Held still: the ball to the attacker under the finger, if any.
+                            moved == null -> {
+                                val attacker = nearest(current().pos.filterKeys { !isDefender(it) }, at, HOLD_REACH)
+                                if (attacker != null) edit { it.copy(ball = attacker) }
+                                do {
+                                    val event = awaitPointerEvent()
+                                    event.changes.forEach { it.consume() }
+                                } while (event.changes.any { it.pressed })
                             }
-                        } finally {
-                            lifted = null
+                            else -> {
+                                moved.consume()
+                                lifted = target
+                                try {
+                                    moveTo(target, moved.position.court(size.width))
+                                    drag(moved.id) { change ->
+                                        change.consume()
+                                        moveTo(target, change.position.court(size.width))
+                                    }
+                                } finally {
+                                    lifted = null
+                                }
+                            }
                         }
                     }
-                }
-                .pointerInput(Unit) {
-                    detectTapGestures(onLongPress = { at ->
-                        val attacker =
-                            nearest(current().pos.filterKeys { !isDefender(it) }, at.court(size.width), HOLD_REACH)
-                        if (attacker != null) edit { it.copy(ball = attacker) }
-                    })
                 },
             targets().filterKeys { it.startsWith(HANDLE) }.values.toList(),
             lifted
