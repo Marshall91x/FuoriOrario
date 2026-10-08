@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
+import androidx.navigationevent.DirectNavigationEventInput
 import com.russhwolf.settings.MapSettings
 import it.manu.fuoriorario.core.session.Session
 import it.manu.fuoriorario.domain.COURT_MARGIN
@@ -57,7 +58,11 @@ class PlayEditorTest {
         id = "box"
     )
 
-    private fun ComposeUiTest.open(auth: FakeAuthRepository, plays: FakePlayRepository) {
+    private fun ComposeUiTest.open(
+        auth: FakeAuthRepository,
+        plays: FakePlayRepository,
+        back: DirectNavigationEventInput = DirectNavigationEventInput()
+    ) {
         setContent {
             TestApp(
                 auth,
@@ -65,7 +70,8 @@ class PlayEditorTest {
                 FakeShotRepository(),
                 MapSettings(),
                 FakePlanRepository(),
-                plays
+                plays,
+                back
             )
         }
     }
@@ -207,23 +213,25 @@ class PlayEditorTest {
     }
 
     @Test
-    fun anotherTabWithUnsavedChangesTakesASecondTap() = runAppTest {
+    fun theEditorHasNoTabBarAndTheSystemBackAsksFirst() = runAppTest {
         val plays = FakePlayRepository(box)
-        open(FakeAuthRepository(coach), plays)
+        val back = DirectNavigationEventInput()
+        open(FakeAuthRepository(coach), plays, back)
 
         awaitText("Schemi")
         onNodeWithText("Schemi").performClick()
         onNodeWithText("Box").performClick()
         onNodeWithTag("play_edit").performScrollTo().performClick()
+        awaitNode(hasText("Piano"), count = 0)
         onNodeWithTag("play_title").performTextInput(" 2")
-        onNodeWithText("Piano").performClick()
+        runOnIdle { back.backCompleted() }
         awaitText("Modifiche non salvate: ripeti per uscire senza salvarle.")
         awaitNode(hasTestTag("play_title"))
-        onNodeWithText("Piano").performClick()
-        awaitNode(hasTestTag("play_title"), count = 0)
+        runOnIdle { back.backCompleted() }
+        awaitText("Passo 1 di 1")
 
-        onNodeWithText("Schemi").performClick()
-        awaitText("Box")
+        runOnIdle { back.backCompleted() }
+        awaitText("Piano")
         assertEquals("Box", plays.plays.single().title)
     }
 

@@ -18,6 +18,8 @@ kotlinx-coroutines = "1.11.0"
 lifecycle = "2.9.6"
 material3 = "1.10.0-alpha05"
 navigation = "2.9.2"
+# What ui-backhandler already brings: the tests send the system back through it.
+navigationevent = "1.0.2"
 supabase = "3.8.0"
 # What supabase-kt already brings for the auth session.
 multiplatform-settings = "1.3.0"
@@ -33,6 +35,7 @@ compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", v
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigation" }
 compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "composeMultiplatform" }
 compose-uiTooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "composeMultiplatform" }
+navigationevent = { module = "androidx.navigationevent:navigationevent", version.ref = "navigationevent" }
 compose-uiTest = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "composeMultiplatform" }
 supabase-bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "supabase" }
 supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt" }

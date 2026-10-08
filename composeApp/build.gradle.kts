@@ -93,6 +93,7 @@ kotlin {
             @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(libs.compose.uiTest)
             implementation(libs.multiplatform.settings.test)
+            implementation(libs.navigationevent)
         }
         // Architecture rules (Konsist reads commonMain) and Koin verify(): JVM only.
         androidUnitTest.dependencies {

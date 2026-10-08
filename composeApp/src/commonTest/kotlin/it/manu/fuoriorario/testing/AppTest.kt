@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.InternalComposeUiApi
+import androidx.compose.ui.backhandler.LocalCompatNavigationEventDispatcherOwner
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
@@ -12,6 +14,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.navigationevent.DirectNavigationEventInput
 import com.russhwolf.settings.MapSettings
 import com.russhwolf.settings.Settings
 import fuoriorario.composeapp.generated.resources.Res
@@ -42,8 +45,10 @@ import org.koin.dsl.module
 
 /**
  * The real [App] with fakes in place of Supabase and of the device's storage ([prefs]). Leaving the composition
- * is quitting the app: ViewModels and Koin go with it, so a `key` around this is a restart.
+ * is quitting the app: ViewModels and Koin go with it, so a `key` around this is a restart. [back] sends the system
+ * back, as the gesture or the Android key does: `runOnIdle { back.backCompleted() }`.
  */
+@OptIn(InternalComposeUiApi::class)
 @Composable
 fun TestApp(
     auth: FakeAuthRepository = FakeAuthRepository(),
@@ -51,7 +56,8 @@ fun TestApp(
     shots: ShotRepository = FakeShotRepository(),
     prefs: Settings = MapSettings(),
     plans: PlanRepository = FakePlanRepository(),
-    plays: PlayRepository = FakePlayRepository()
+    plays: PlayRepository = FakePlayRepository(),
+    back: DirectNavigationEventInput = DirectNavigationEventInput()
 ) {
     val koin = remember {
         koinApplication {
@@ -75,6 +81,11 @@ fun TestApp(
         object : ViewModelStoreOwner {
             override val viewModelStore = ViewModelStore()
         }
+    }
+    val dispatcher = LocalCompatNavigationEventDispatcherOwner.current?.navigationEventDispatcher
+    DisposableEffect(dispatcher) {
+        dispatcher?.addInput(back)
+        onDispose { dispatcher?.removeInput(back) }
     }
     DisposableEffect(Unit) {
         onDispose {
