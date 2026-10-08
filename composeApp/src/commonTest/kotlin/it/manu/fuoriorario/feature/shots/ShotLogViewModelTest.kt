@@ -73,6 +73,22 @@ class ShotLogViewModelTest {
     }
 
     @Test
+    fun load_refsOffline_showsErrorThenRetryLoads() = runTest(dispatcher) {
+        shots.failRefs = true
+        val vm = vm()
+        advanceUntilIdle()
+
+        val handler = assertIs<UseCaseMutableState.Error>(vm.uiState.value.state).handler
+        assertIs<NetworkErrorHandler>(handler)
+
+        handler.retryFunction!!()
+        advanceUntilIdle()
+
+        assertEquals(listOf(older), vm.data.sessions)
+        assertEquals(DEFAULT_ZONE_REFS, vm.data.refs)
+    }
+
+    @Test
     fun save_invalid_showsErrorInTheSheet() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()

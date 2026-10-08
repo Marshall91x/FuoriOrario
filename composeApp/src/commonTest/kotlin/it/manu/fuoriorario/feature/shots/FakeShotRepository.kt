@@ -22,6 +22,9 @@ class FakeShotRepository(vararg sessions: ShotSession) : ShotRepository {
     /** Next player's load fails without network, so the screen offers "Riprova". */
     var failLoad = false
 
+    /** Next riferimenti load fails without network, so the screen offers "Riprova". */
+    var failRefs = false
+
     override suspend fun sessions(member: Member): List<ShotSession> {
         if (failLoad) {
             failLoad = false
@@ -38,7 +41,13 @@ class FakeShotRepository(vararg sessions: ShotSession) : ShotRepository {
         return sessions.filter { it.date >= since }
     }
 
-    override suspend fun zoneRefs() = refs
+    override suspend fun zoneRefs(): Map<Zone, Int> {
+        if (failRefs) {
+            failRefs = false
+            throw IOException("offline")
+        }
+        return refs
+    }
 
     override suspend fun setZoneRefs(refs: Map<Zone, Int>) {
         failIfAsked()
