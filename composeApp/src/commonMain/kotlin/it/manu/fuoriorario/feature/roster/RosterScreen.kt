@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.roster
+package it.manu.fuoriorario.feature.roster
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,25 +19,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.close
 import fuoriorario.composeapp.generated.resources.member_add
-import fuoriorario.composeapp.generated.resources.member_added
 import fuoriorario.composeapp.generated.resources.member_edit
 import fuoriorario.composeapp.generated.resources.member_email
 import fuoriorario.composeapp.generated.resources.member_error_email
@@ -49,10 +44,8 @@ import fuoriorario.composeapp.generated.resources.member_number
 import fuoriorario.composeapp.generated.resources.member_position
 import fuoriorario.composeapp.generated.resources.member_remove
 import fuoriorario.composeapp.generated.resources.member_remove_confirm
-import fuoriorario.composeapp.generated.resources.member_removed
 import fuoriorario.composeapp.generated.resources.member_role
 import fuoriorario.composeapp.generated.resources.member_save
-import fuoriorario.composeapp.generated.resources.member_saved
 import fuoriorario.composeapp.generated.resources.role_player
 import fuoriorario.composeapp.generated.resources.role_staff
 import fuoriorario.composeapp.generated.resources.roster_add_title
@@ -63,32 +56,23 @@ import fuoriorario.composeapp.generated.resources.staff_title
 import it.manu.fuoriorario.core.designsystem.Field
 import it.manu.fuoriorario.core.designsystem.GhostButton
 import it.manu.fuoriorario.core.designsystem.GhostStyle
-import it.manu.fuoriorario.core.designsystem.LoadFailed
 import it.manu.fuoriorario.core.designsystem.LocalToast
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.PrimaryButton
 import it.manu.fuoriorario.core.designsystem.SegmentedControl
 import it.manu.fuoriorario.core.designsystem.SelectField
-import it.manu.fuoriorario.core.designsystem.launchWrite
 import it.manu.fuoriorario.core.designsystem.show
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
-import it.manu.fuoriorario.data.EmailTakenException
-import it.manu.fuoriorario.data.RosterRepository
+import it.manu.fuoriorario.core.viewmodel.UseCaseMutableState
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.MemberError
 import it.manu.fuoriorario.domain.POSITIONS
 import it.manu.fuoriorario.domain.Role
-import it.manu.fuoriorario.domain.cleaned
-import it.manu.fuoriorario.domain.memberError
-import it.manu.fuoriorario.domain.newMemberError
 import it.manu.fuoriorario.domain.rosterOrder
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 private val errorText = mapOf(
     MemberError.EMAIL_INVALID to Res.string.member_error_email,
@@ -97,77 +81,56 @@ private val errorText = mapOf(
     MemberError.NUMBER_RANGE to Res.string.member_error_number
 )
 
-/** The add form's empty state; survives configuration changes as JSON. */
-private val blankMember = Member("", Role.PLAYER)
-private val MemberSaver =
-    Saver<Member, String>({
-        Json.encodeToString(Member.serializer(), it)
-    }, { Json.decodeFromString(Member.serializer(), it) })
-
 /**
  * Staff roster (PRD F2): players by number then name, then staff, then the add form. Tap a row to edit; "Togli" twice to remove.
  * [onChanged] runs after a member is added, edited or removed, so the player menu and the signed-in member catch up.
  */
 @Composable
-fun RosterScreen(roster: RosterRepository, onChanged: (Member) -> Unit) {
-    val c = FuoriOrarioTheme.colors
+fun RosterScreen(onChanged: (Member) -> Unit, vm: RosterViewModel = koinViewModel()) {
+    val uiState = vm.uiState.collectAsStateWithLifecycle()
     val toast = LocalToast.current
-    val scope = rememberCoroutineScope()
-    var members by remember { mutableStateOf<List<Member>?>(null) }
-    var loadFailed by remember { mutableStateOf(false) }
-    var attempt by remember { mutableIntStateOf(0) }
-    var editing by remember { mutableStateOf<Member?>(null) }
-    var confirmingRemoval by remember { mutableStateOf<Member?>(null) }
+    LaunchedEffect(vm) { vm.toasts.collect { launch { toast.show(it) } } }
+    val changed by rememberUpdatedState(onChanged)
+    LaunchedEffect(vm) { vm.changes.collect { changed(it) } }
+    RosterStateContent(
+        uiState.value.state,
+        RosterActions(
+            onDraftChanged = vm::onDraftChanged,
+            onAdd = vm::onAdd,
+            onEdit = vm::onEdit,
+            onEditChanged = vm::onEditChanged,
+            onDismissEdit = vm::onDismissEdit,
+            onSaveEdit = vm::onSaveEdit,
+            onRemove = vm::onRemove
+        )
+    )
+}
 
-    /** An edit or removal is in flight. */
-    var busy by remember { mutableStateOf(false) }
-    LaunchedEffect(attempt) {
-        loadFailed = false
-        try {
-            members = roster.members()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            loadFailed = true
-        }
-    }
+/** What the roster does, from the screen down to its sheet. */
+class RosterActions(
+    val onDraftChanged: (Member) -> Unit = {},
+    val onAdd: () -> Unit = {},
+    val onEdit: (Member) -> Unit = {},
+    val onEditChanged: (Member) -> Unit = {},
+    val onDismissEdit: () -> Unit = {},
+    val onSaveEdit: () -> Unit = {},
+    val onRemove: (Member) -> Unit = {}
+)
 
-    val team = members
-    if (loadFailed) {
-        LoadFailed { attempt++ }
+@Composable
+fun RosterStateContent(state: UseCaseMutableState<RosterScreenState>?, actions: RosterActions) {
+    when (state) {
+        is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
+        is UseCaseMutableState.ShowData -> RosterContent(state.items, actions)
+        UseCaseMutableState.Loading, null -> Unit
     }
-    if (team == null) return
+}
 
-    fun write(action: suspend CoroutineScope.() -> Unit) {
-        busy = true
-        scope.launchWrite(toast, onDone = { busy = false }, action)
-    }
-
-    fun remove(member: Member) {
-        if (busy) return
-        if (confirmingRemoval != member) {
-            confirmingRemoval = member
-            return
-        }
-        confirmingRemoval = null
-        write {
-            roster.remove(member)
-            members = members.orEmpty().filter { it.id != member.id }
-            launch { toast.show(getString(Res.string.member_removed, member.displayName)) }
-            onChanged(member)
-        }
-    }
-
-    fun save(edited: Member) {
-        if (busy) return
-        write {
-            roster.update(edited)
-            members = members.orEmpty().map { if (it.id == edited.id) edited else it }
-            editing = null
-            launch { toast.show(getString(Res.string.member_saved)) }
-            onChanged(edited)
-        }
-    }
+/** Nothing until the team arrives. */
+@Composable
+fun RosterContent(state: RosterScreenState, actions: RosterActions) {
+    val c = FuoriOrarioTheme.colors
+    val team = state.members ?: return
 
     @Composable
     fun MemberList(title: StringResource, list: List<Member>) {
@@ -178,12 +141,9 @@ fun RosterScreen(roster: RosterRepository, onChanged: (Member) -> Unit) {
                     if (i > 0) HorizontalDivider(color = c.line)
                     MemberRow(
                         member,
-                        confirming = confirmingRemoval == member,
-                        onEdit = {
-                            confirmingRemoval = null
-                            editing = member
-                        },
-                        onRemove = { remove(member) }
+                        confirming = state.confirmingRemoval == member,
+                        onEdit = { actions.onEdit(member) },
+                        onRemove = { actions.onRemove(member) }
                     )
                 }
             }
@@ -193,7 +153,6 @@ fun RosterScreen(roster: RosterRepository, onChanged: (Member) -> Unit) {
     val players = team.filter { it.role == Role.PLAYER }.rosterOrder()
     if (players.isNotEmpty()) MemberList(Res.string.roster_title, players)
     MemberList(Res.string.staff_title, team.filter { it.role == Role.STAFF }.rosterOrder())
-    // Same call site either way, so the form (and its pending toast) survives the first player turning the roster non-empty.
     Panel {
         if (players.isEmpty()) {
             Text(stringResource(Res.string.roster_empty_title).uppercase(), style = MaterialTheme.typography.titleLarge)
@@ -201,12 +160,33 @@ fun RosterScreen(roster: RosterRepository, onChanged: (Member) -> Unit) {
         } else {
             Text(stringResource(Res.string.roster_add_title), style = MaterialTheme.typography.titleMedium)
         }
-        AddMemberForm(team, roster) {
-            members = team + it
-            onChanged(it)
-        }
+        AddMemberForm(state.draft, state.addError, state.busy, actions)
     }
-    editing?.let { EditSheet(it, busy, onDismiss = { editing = null }, onSave = ::save) }
+    state.editing?.let { EditSheet(it, state.editError, state.busy, actions) }
+}
+
+@Preview
+@Composable
+private fun RosterContentPreview() = FuoriOrarioTheme {
+    Column {
+        RosterContent(
+            RosterScreenState(
+                listOf(
+                    Member("Coach", Role.STAFF, email = "staff@example.com", id = "s"),
+                    Member(
+                        "Luca B.",
+                        Role.PLAYER,
+                        email = "luca@example.com",
+                        jerseyNumber = "7",
+                        position = "Guardia",
+                        id = "l"
+                    ),
+                    Member("Marco R.", Role.PLAYER, email = "marco@example.com", jerseyNumber = "12", id = "m")
+                )
+            ),
+            RosterActions()
+        )
+    }
 }
 
 /** Prototype `.item`: `#num` then name over position, and the "Togli" → "Conferma" button. */
@@ -239,61 +219,28 @@ private fun MemberRow(member: Member, confirming: Boolean, onEdit: () -> Unit, o
     }
 }
 
-/** Errors stay inline; a failed save toasts and keeps what was typed. */
+/** The add form as typed, with its error under it. */
 @Composable
-private fun AddMemberForm(team: List<Member>, roster: RosterRepository, onAdded: (Member) -> Unit) {
-    val toast = LocalToast.current
-    val scope = rememberCoroutineScope()
-    var draft by rememberSaveable(stateSaver = MemberSaver) { mutableStateOf(blankMember) }
-    var error by remember { mutableStateOf<MemberError?>(null) }
-    var busy by remember { mutableStateOf(false) }
-
-    fun submit() {
-        if (busy) return
-        val member = draft.cleaned()
-        error = newMemberError(member.email, member.displayName, draft.jerseyNumber.orEmpty(), team)
-        if (error != null) return
-        busy = true
-        scope.launchWrite(toast, onDone = { busy = false }) {
-            try {
-                onAdded(roster.add(member))
-            } catch (_: EmailTakenException) {
-                error = MemberError.EMAIL_TAKEN
-                return@launchWrite
-            }
-            draft = blankMember
-            launch { toast.show(getString(Res.string.member_added, member.displayName)) }
-        }
-    }
-
+private fun AddMemberForm(draft: Member, error: MemberError?, busy: Boolean, actions: RosterActions) {
     Field(
         label = stringResource(Res.string.member_email),
         value = draft.email,
-        onValueChange = { draft = draft.copy(email = it) },
+        onValueChange = { actions.onDraftChanged(draft.copy(email = it)) },
         tag = "add_email",
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
     )
-    MemberFields("add", draft) { draft = it }
+    MemberFields("add", draft, actions.onDraftChanged)
     ErrorText(error)
-    PrimaryButton(stringResource(Res.string.member_add), ::submit, Modifier.fillMaxWidth(), enabled = !busy)
+    PrimaryButton(stringResource(Res.string.member_add), actions.onAdd, Modifier.fillMaxWidth(), enabled = !busy)
 }
 
-/** Prototype `.sheet` for editing everything but the email (it's the login). The screen saves, so the toast outlives the sheet. */
+/** Prototype `.sheet` for editing everything but the email (it's the login): [draft] as typed. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EditSheet(member: Member, busy: Boolean, onDismiss: () -> Unit, onSave: (Member) -> Unit) {
+private fun EditSheet(draft: Member, error: MemberError?, busy: Boolean, actions: RosterActions) {
     val c = FuoriOrarioTheme.colors
-    var draft by remember { mutableStateOf(member) }
-    var error by remember { mutableStateOf<MemberError?>(null) }
-
-    fun save() {
-        val edited = draft.cleaned()
-        error = memberError(edited.displayName, draft.jerseyNumber.orEmpty())
-        if (error == null) onSave(edited)
-    }
-
     ModalBottomSheet(
-        onDismiss,
+        actions.onDismissEdit,
         containerColor = c.surface,
         shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp),
         dragHandle = null
@@ -309,13 +256,18 @@ private fun EditSheet(member: Member, busy: Boolean, onDismiss: () -> Unit, onSa
                         style = MaterialTheme.typography.labelSmall,
                         color = c.muted
                     )
-                    Text(member.email, style = MaterialTheme.typography.titleMedium)
+                    Text(draft.email, style = MaterialTheme.typography.titleMedium)
                 }
-                GhostButton(stringResource(Res.string.close), onDismiss)
+                GhostButton(stringResource(Res.string.close), actions.onDismissEdit)
             }
-            MemberFields("edit", draft) { draft = it }
+            MemberFields("edit", draft, actions.onEditChanged)
             ErrorText(error)
-            PrimaryButton(stringResource(Res.string.member_save), ::save, Modifier.fillMaxWidth(), enabled = !busy)
+            PrimaryButton(
+                stringResource(Res.string.member_save),
+                actions.onSaveEdit,
+                Modifier.fillMaxWidth(),
+                enabled = !busy
+            )
         }
     }
 }

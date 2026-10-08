@@ -5,12 +5,12 @@ import it.manu.fuoriorario.core.error.AppErrorManager
 import it.manu.fuoriorario.core.navigation.Route
 import it.manu.fuoriorario.core.session.SelectedPlayer
 import it.manu.fuoriorario.core.session.Session
-import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.feature.roster.FakeRosterRepository
+import it.manu.fuoriorario.feature.roster.data.RosterRepository
 import it.manu.fuoriorario.testing.TestDispatcherProvider
-import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

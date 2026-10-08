@@ -7,11 +7,11 @@ import it.manu.fuoriorario.core.session.Session
 import it.manu.fuoriorario.core.session.member
 import it.manu.fuoriorario.core.viewmodel.ComposeViewModel
 import it.manu.fuoriorario.core.viewmodel.DispatcherProvider
-import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.rosterOrder
 import it.manu.fuoriorario.feature.auth.data.AuthRepository
+import it.manu.fuoriorario.feature.roster.data.RosterRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

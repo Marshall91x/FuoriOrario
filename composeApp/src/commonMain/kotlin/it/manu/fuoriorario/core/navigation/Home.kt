@@ -72,7 +72,6 @@ import it.manu.fuoriorario.core.designsystem.ToastHost
 import it.manu.fuoriorario.core.designsystem.show
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
 import it.manu.fuoriorario.core.today
-import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.Role
@@ -80,9 +79,9 @@ import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.feature.plan.PlanScreen
 import it.manu.fuoriorario.feature.plan.data.PlanRepository
 import it.manu.fuoriorario.feature.plays.PlaysScreen
+import it.manu.fuoriorario.feature.roster.RosterScreen
 import it.manu.fuoriorario.feature.shots.ShotLogScreen
 import it.manu.fuoriorario.feature.shots.data.ShotRepository
-import it.manu.fuoriorario.ui.roster.RosterScreen
 import it.manu.fuoriorario.ui.settings.LibraryScreen
 import it.manu.fuoriorario.ui.settings.ZoneRefsScreen
 import it.manu.fuoriorario.ui.team.TeamOverviewScreen
@@ -122,8 +121,7 @@ fun Home(
     onPick: (Member) -> Unit,
     onRetryPlayers: () -> Unit,
     onRosterChanged: (Member) -> Unit,
-    // Until their screens get a ViewModel (#53–#56).
-    roster: RosterRepository = koinInject(),
+    // Until their screens get a ViewModel (#55, #56).
     shots: ShotRepository = koinInject(),
     plans: PlanRepository = koinInject()
 ) {
@@ -188,7 +186,7 @@ fun Home(
                                                     }
                                                 }
                                             }
-                                            TeamSection.ROSTER -> RosterScreen(roster, onRosterChanged)
+                                            TeamSection.ROSTER -> ScreenViewModels { RosterScreen(onRosterChanged) }
                                             TeamSection.SETTINGS -> {
                                                 LibraryScreen(plans)
                                                 ZoneRefsScreen(shots)

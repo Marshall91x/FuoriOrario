@@ -7,7 +7,7 @@ import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.feature.auth.data.AuthRepository
 import it.manu.fuoriorario.feature.auth.data.InvalidCodeException
 import it.manu.fuoriorario.feature.auth.data.NotInTeamException
-import it.manu.fuoriorario.ui.roster.FakeRosterRepository
+import it.manu.fuoriorario.feature.roster.FakeRosterRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /** [roster], when given, is where [refresh] reloads the signed-in member from. */

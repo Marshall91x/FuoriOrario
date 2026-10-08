@@ -1,11 +1,12 @@
-package it.manu.fuoriorario.ui.roster
+package it.manu.fuoriorario.feature.roster
 
 import it.manu.fuoriorario.core.error.PermissionDeniedException
-import it.manu.fuoriorario.data.EmailTakenException
-import it.manu.fuoriorario.data.LastStaffException
-import it.manu.fuoriorario.data.RosterRepository
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
+import it.manu.fuoriorario.feature.roster.data.EmailTakenException
+import it.manu.fuoriorario.feature.roster.data.LastStaffException
+import it.manu.fuoriorario.feature.roster.data.RosterRepository
+import kotlinx.io.IOException
 
 class FakeRosterRepository(vararg members: Member) : RosterRepository {
     val members = members.toMutableList()
@@ -13,7 +14,16 @@ class FakeRosterRepository(vararg members: Member) : RosterRepository {
     /** Next write fails like a network error. */
     var failNext = false
 
-    override suspend fun members() = members.toList()
+    /** Next load fails without network, so the screen offers "Riprova". */
+    var failLoad = false
+
+    override suspend fun members(): List<Member> {
+        if (failLoad) {
+            failLoad = false
+            throw IOException("offline")
+        }
+        return members.toList()
+    }
 
     override suspend fun add(member: Member): Member {
         failIfAsked()
