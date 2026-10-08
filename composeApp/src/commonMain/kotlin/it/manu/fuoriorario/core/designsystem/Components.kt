@@ -27,6 +27,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +52,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.load_failed
 import fuoriorario.composeapp.generated.resources.months_short
@@ -305,6 +308,14 @@ fun LoadFailed(onRetry: () -> Unit) {
     Panel(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(stringResource(Res.string.load_failed), color = FuoriOrarioTheme.colors.muted)
         GhostButton(stringResource(Res.string.retry), onRetry)
+    }
+}
+
+/** A write in flight: a spinner over the whole screen, which takes every tap and the back until it ends. */
+@Composable
+fun LoadingOverlay() {
+    Dialog({}, DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)) {
+        CircularProgressIndicator(Modifier.testTag("loading_overlay"), color = FuoriOrarioTheme.colors.accent)
     }
 }
 

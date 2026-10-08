@@ -57,6 +57,7 @@ import fuoriorario.composeapp.generated.resources.play_with_defense
 import it.manu.fuoriorario.core.designsystem.Field
 import it.manu.fuoriorario.core.designsystem.GhostButton
 import it.manu.fuoriorario.core.designsystem.GhostStyle
+import it.manu.fuoriorario.core.designsystem.LoadingOverlay
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.PrimaryButton
 import it.manu.fuoriorario.core.designsystem.SegmentedControl
@@ -90,6 +91,7 @@ private fun Offset.court(width: Int): Point {
  * Staff's editor (ADR 0008): the play's fields, then one step at a time on the court. Drag a piece, or a move's handle to
  * bend it; hold an attacker to give him the ball. The court is chosen only for a new play. Leaving with changes, here
  * or with the system back, and deleting take a second tap.
+ * While [busy] saves or deletes, a spinner covers everything.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -109,6 +111,8 @@ fun PlayEditor(draft: PlayDraft, busy: Boolean, actions: PlaysActions) {
     // dependencies yet; switch when it is.
     @Suppress("DEPRECATION")
     BackHandler(onBack = actions.onLeave)
+
+    if (busy) LoadingOverlay()
 
     Panel {
         GhostButton(
