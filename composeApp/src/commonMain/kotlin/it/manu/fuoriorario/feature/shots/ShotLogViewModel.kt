@@ -17,6 +17,7 @@ import it.manu.fuoriorario.domain.newSession
 import it.manu.fuoriorario.domain.sessionError
 import it.manu.fuoriorario.feature.shots.data.ShotRepository
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.LocalDate
 
 /** The "Registra sessione" form as typed: [error] is the last failed check, shown in the sheet. */
@@ -60,9 +61,11 @@ class ShotLogViewModel(
 
     // On main, like every keystroke: a background `set` could drop one typed meanwhile. The calls suspend, never block.
     private fun load() = defaultLaunch(dispatchers.main()) {
-        val teamRefs = async { shots.zoneRefs() }
-        val sessions = shots.sessions(state.player)
-        val refs = teamRefs.await()
+        // In their own scope: a failed request would otherwise cancel the load before it shows the error.
+        val (sessions, refs) = coroutineScope {
+            val teamRefs = async { shots.zoneRefs() }
+            shots.sessions(state.player) to teamRefs.await()
+        }
         set { copy(sessions = sessions, refs = refs) }
     }
 
