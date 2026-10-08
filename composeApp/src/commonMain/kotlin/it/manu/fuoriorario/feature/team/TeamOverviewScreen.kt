@@ -38,6 +38,7 @@ import fuoriorario.composeapp.generated.resources.overview_shots_7
 import fuoriorario.composeapp.generated.resources.overview_three_30
 import fuoriorario.composeapp.generated.resources.overview_title
 import fuoriorario.composeapp.generated.resources.overview_week
+import it.manu.fuoriorario.core.designsystem.Loader
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
 import it.manu.fuoriorario.core.viewmodel.UseCaseMutableState
@@ -79,11 +80,11 @@ fun TeamOverviewStateContent(state: UseCaseMutableState<TeamOverviewScreenState>
         // No numbers from before next to the error.
         is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
         is UseCaseMutableState.ShowData -> TeamOverviewContent(state.items, onOpen)
-        UseCaseMutableState.Loading, null -> Unit
+        UseCaseMutableState.Loading, null -> Loader()
     }
 }
 
-/** The title at once, the table once loaded. */
+/** The title and the table. */
 @Composable
 fun TeamOverviewContent(state: TeamOverviewScreenState, onOpen: (Member) -> Unit) {
     val c = FuoriOrarioTheme.colors

@@ -11,8 +11,9 @@ import org.jetbrains.compose.resources.getString
 // Not from sinetwork: what the screens that write share on top of ComposeViewModel.
 
 /**
- * A screen that shows [initial] at once and fills it in as it loads, with actions that toast their outcome.
- * [busy] sets the screen's own "a write is in flight" flag.
+ * A screen that is [UseCaseMutableState.Loading] until its first `set`: the loader, then the data all at once (#73).
+ * Actions toast their outcome. [initial] is the state that load fills in; [busy] sets the screen's own "a write is
+ * in flight" flag.
  */
 abstract class ScreenModel<T>(
     initial: T,
@@ -20,7 +21,7 @@ abstract class ScreenModel<T>(
     errorManager: ErrorManager,
     private val busy: T.(Boolean) -> T
 ) : ComposeViewModel<T>(
-    defaultState = UiState(UseCaseMutableState.ShowData(initial), initial),
+    defaultState = UiState(UseCaseMutableState.Loading, initial),
     dispatcherProvider = dispatchers,
     errorManager = errorManager
 ) {

@@ -45,7 +45,8 @@ data class ExerciseDraft(
 )
 
 /**
- * [items] is null while [week] (a Monday) loads. [exercise] and [noteDraft] are the open sheets, null when closed.
+ * [items] is null until the first week loads; while another [week] (a Monday) loads, [reloading] and the previous
+ * week's [items], [checks] and [note] stay on screen. [exercise] and [noteDraft] are the open sheets, null when closed.
  * [library] fills on the first "Aggiungi esercizio". [confirmingCopy] took the first "Copia" tap into a week with
  * exercises; [busy]: a write is in flight.
  */
@@ -60,7 +61,8 @@ data class PlanScreenState(
     val exercise: ExerciseDraft? = null,
     val noteDraft: String? = null,
     val confirmingCopy: Boolean = false,
-    val busy: Boolean = false
+    val busy: Boolean = false,
+    val reloading: Boolean = false
 )
 
 /** [player]'s Piano (PRD F4) for a week: staff assign exercises and a note, the player checks the days done. */
@@ -71,7 +73,6 @@ class PlanViewModel(
     private val dispatchers: DispatcherProvider,
     errorManager: ErrorManager
 ) : ScreenModel<PlanScreenState>(
-    // The header is there before the exercises: they fill in when loaded.
     PlanScreenState(player, week, today()),
     dispatchers,
     errorManager,
@@ -93,12 +94,14 @@ class PlanViewModel(
             val items = plans.items(state.player, week)
             val checks = plans.checks(items)
             val note = plans.note(state.player, week)
-            set { if (this.week == week) copy(items = items, checks = checks, note = note) else this }
+            set {
+                if (this.week == week) copy(items = items, checks = checks, note = note, reloading = false) else this
+            }
         }
     }
 
     fun onWeek(week: LocalDate) {
-        update { copy(week = week, items = null, checks = emptySet(), note = null, confirmingCopy = false) }
+        update { copy(week = week, reloading = true, confirmingCopy = false) }
         load()
     }
 
@@ -179,7 +182,7 @@ class PlanViewModel(
     /** Once the week is loaded; into one with exercises only on a second tap, and only if there is something to copy. */
     fun onCopy() {
         val current = state.items ?: return
-        if (state.busy) return
+        if (state.busy || state.reloading) return
         val week = state.week
         act {
             if (current.isNotEmpty() && !state.confirmingCopy) {
@@ -195,7 +198,7 @@ class PlanViewModel(
             val copies = try {
                 plans.copyPreviousWeek(state.player, week, current.size)
             } catch (_: PlanChangedException) {
-                set { copy(items = null) }
+                set { copy(reloading = true) }
                 load()
                 throw CustomException(0, getString(Res.string.plan_changed), null)
             }
@@ -204,7 +207,8 @@ class PlanViewModel(
         }
     }
 
-    fun onWriteNote() = update { copy(noteDraft = note.orEmpty()) }
+    /** Not while another week loads: the note on screen is the previous week's. */
+    fun onWriteNote() = update { if (reloading) this else copy(noteDraft = note.orEmpty()) }
 
     fun onDismissNote() = update { copy(noteDraft = null) }
 

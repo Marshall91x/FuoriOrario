@@ -14,10 +14,14 @@ class FakePlayRepository(vararg plays: Play) : PlayRepository {
     /** Next write fails like a network error. */
     var failNext = false
 
+    /** The load waits for it, while it's set: the screen stays loading. */
+    var loadGate: CompletableDeferred<Unit>? = null
+
     /** Writes wait for it, while it's set: the screen stays mid-save. */
     var gate: CompletableDeferred<Unit>? = null
 
     override suspend fun plays(): List<Play> {
+        loadGate?.await()
         if (failLoad) {
             failLoad = false
             throw IOException("offline")

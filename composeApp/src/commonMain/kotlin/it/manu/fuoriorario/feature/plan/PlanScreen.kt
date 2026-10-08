@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -82,6 +83,7 @@ import it.manu.fuoriorario.core.designsystem.ExerciseFields
 import it.manu.fuoriorario.core.designsystem.Field
 import it.manu.fuoriorario.core.designsystem.GhostButton
 import it.manu.fuoriorario.core.designsystem.GhostStyle
+import it.manu.fuoriorario.core.designsystem.Loader
 import it.manu.fuoriorario.core.designsystem.LocalToast
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.PrimaryButton
@@ -182,17 +184,20 @@ fun PlanStateContent(state: UseCaseMutableState<PlanScreenState>?, staff: Boolea
     when (state) {
         is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
         is UseCaseMutableState.ShowData -> PlanContent(state.items, staff, actions)
-        // Only while "Riprova" reloads: the header is there from the start, the exercises fill in.
-        UseCaseMutableState.Loading, null -> Unit
+        UseCaseMutableState.Loading, null -> Loader()
     }
 }
 
-/** Nothing below the header until the week's exercises arrive. Only the player checks, only staff edit. */
+/**
+ * While another week loads, the previous one stays dimmed under the loader, and can't be checked or edited.
+ * Only the player checks, only staff edit.
+ */
 @Composable
 fun PlanContent(state: PlanScreenState, staff: Boolean, actions: PlanActions) {
     val c = FuoriOrarioTheme.colors
     val thisWeek = weekOf(state.today)
     val items = state.items
+    val dim = if (state.reloading) 0.4f else 1f
 
     Panel {
         Column {
@@ -204,8 +209,10 @@ fun PlanContent(state: PlanScreenState, staff: Boolean, actions: PlanActions) {
             Text(state.player.displayName.uppercase(), style = MaterialTheme.typography.titleLarge)
         }
         WeekNav(state.week, thisWeek, actions.onWeek)
-        items?.let { Completion(progress(it, state.checks)) }
-        state.note?.let { StaffNote(it) }
+        Column(Modifier.alpha(dim), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            items?.let { Completion(progress(it, state.checks)) }
+            state.note?.let { StaffNote(it) }
+        }
         if (staff) {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -231,26 +238,29 @@ fun PlanContent(state: PlanScreenState, staff: Boolean, actions: PlanActions) {
     }
 
     items?.let { list ->
-        Panel {
-            Text(stringResource(Res.string.plan_items), style = MaterialTheme.typography.titleMedium)
-            if (list.isEmpty()) {
-                val empty = if (staff) Res.string.plan_empty_staff else Res.string.plan_empty_player
-                Text(stringResource(empty), color = c.muted)
-            } else {
-                Column {
-                    list.forEachIndexed { i, item ->
-                        if (i > 0) HorizontalDivider(color = c.line)
-                        ItemRow(
-                            item,
-                            state.checks,
-                            dayIndex(state.today).takeIf { state.week == thisWeek },
-                            onToggle = if (staff) null else actions.onToggle,
-                            onEdit = if (staff) ({ actions.onEdit(item) }) else null,
-                            Modifier.padding(top = if (i > 0) 14.dp else 4.dp, bottom = 14.dp)
-                        )
+        Box {
+            Panel(Modifier.alpha(dim)) {
+                Text(stringResource(Res.string.plan_items), style = MaterialTheme.typography.titleMedium)
+                if (list.isEmpty()) {
+                    val empty = if (staff) Res.string.plan_empty_staff else Res.string.plan_empty_player
+                    Text(stringResource(empty), color = c.muted)
+                } else {
+                    Column {
+                        list.forEachIndexed { i, item ->
+                            if (i > 0) HorizontalDivider(color = c.line)
+                            ItemRow(
+                                item,
+                                state.checks,
+                                dayIndex(state.today).takeIf { state.week == thisWeek },
+                                onToggle = if (staff || state.reloading) null else actions.onToggle,
+                                onEdit = if (staff && !state.reloading) ({ actions.onEdit(item) }) else null,
+                                Modifier.padding(top = if (i > 0) 14.dp else 4.dp, bottom = 14.dp)
+                            )
+                        }
                     }
                 }
             }
+            if (state.reloading) Loader(Modifier.matchParentSize())
         }
     }
 

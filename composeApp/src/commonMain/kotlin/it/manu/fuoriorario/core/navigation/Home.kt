@@ -62,6 +62,7 @@ import fuoriorario.composeapp.generated.resources.tab_team
 import fuoriorario.composeapp.generated.resources.team_overview
 import fuoriorario.composeapp.generated.resources.team_settings
 import it.manu.fuoriorario.core.designsystem.LoadFailed
+import it.manu.fuoriorario.core.designsystem.Loader
 import it.manu.fuoriorario.core.designsystem.LocalToast
 import it.manu.fuoriorario.core.designsystem.Page
 import it.manu.fuoriorario.core.designsystem.Panel
@@ -156,14 +157,16 @@ fun Home(
                                         )
                                         when (section) {
                                             TeamSection.OVERVIEW -> when {
-                                                players?.isFailure == true -> LoadFailed(onRetryPlayers)
-                                                players?.getOrNull()?.isEmpty() == true -> NoPlayers()
+                                                players == null -> Loader()
+                                                players.isFailure -> LoadFailed(onRetryPlayers)
+                                                players.getOrThrow().isEmpty() -> NoPlayers()
                                                 // A roster change loads the numbers again.
-                                                else -> players?.getOrNull()?.let { list ->
-                                                    key(list) {
-                                                        ScreenViewModels {
-                                                            TeamOverviewScreen(list, onOpened = { open(Tab.SHOT_LOG) })
-                                                        }
+                                                else -> key(players.getOrThrow()) {
+                                                    ScreenViewModels {
+                                                        TeamOverviewScreen(
+                                                            players.getOrThrow(),
+                                                            onOpened = { open(Tab.SHOT_LOG) }
+                                                        )
                                                     }
                                                 }
                                             }
@@ -188,8 +191,9 @@ fun Home(
                                             }
                                         }
                                     }
-                                    players?.isFailure == true -> LoadFailed(onRetryPlayers)
-                                    players?.getOrNull()?.isEmpty() == true -> NoPlayers()
+                                    players == null -> Loader()
+                                    players.isFailure -> LoadFailed(onRetryPlayers)
+                                    players.getOrThrow().isEmpty() -> NoPlayers()
                                 }
                             }
                         }

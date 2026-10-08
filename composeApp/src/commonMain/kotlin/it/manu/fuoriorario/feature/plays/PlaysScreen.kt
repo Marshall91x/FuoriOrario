@@ -67,6 +67,7 @@ import fuoriorario.composeapp.generated.resources.play_zone_offense
 import fuoriorario.composeapp.generated.resources.plays_empty
 import it.manu.fuoriorario.core.designsystem.Chip
 import it.manu.fuoriorario.core.designsystem.GhostButton
+import it.manu.fuoriorario.core.designsystem.Loader
 import it.manu.fuoriorario.core.designsystem.LocalToast
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.PrimaryButton
@@ -170,12 +171,11 @@ fun PlaysStateContent(state: UseCaseMutableState<PlaysScreenState>?, staff: Bool
     when (state) {
         is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
         is UseCaseMutableState.ShowData -> PlaysContent(state.items, staff, actions)
-        // Never: the plays fill in a screen that is there from the start.
-        UseCaseMutableState.Loading, null -> Unit
+        UseCaseMutableState.Loading, null -> Loader()
     }
 }
 
-/** The editor if open, else the play in the viewer, else the list. Nothing until the plays arrive. */
+/** The editor if open, else the play in the viewer, else the list. */
 @Composable
 fun PlaysContent(state: PlaysScreenState, staff: Boolean, actions: PlaysActions) {
     val open = state.open

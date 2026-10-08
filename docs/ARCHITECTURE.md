@@ -35,7 +35,7 @@ composeApp/src/
       error/               # ErrorManager, handler, AppErrorManager
       session/             # sessione supabase-kt, sessione scaduta, SelectedPlayer
       navigation/          # rotte e barra schede per ruolo
-      designsystem/        # Toast, BottomSheet, Stepper, Pill, SegmentedControl
+      designsystem/        # Toast, BottomSheet, Stepper, Pill, SegmentedControl, Loader
       theme/               # token colore/tipografia del prototipo
       Supabase.kt Dates.kt # client Supabase, Week/Season, utilità date
     domain/                # modelli puri + calcoli (Zones, Stats, Progress, Play) — senza dipendenze
@@ -203,6 +203,7 @@ Le RLS sono la vera barriera: la UI nasconde, il database impedisce. Coperte da 
   Le schermate di una scheda della home stanno dentro `ScreenViewModels` (`core/navigation/Home.kt`): i loro ViewModel vivono solo mentre la schermata è visibile, come il vecchio `remember`. La voce di navigazione della scheda li terrebbe in vita anche durante un cambio di scheda.
 - Il ViewModel manda i testi dei toast (salvato, eliminato, errore di un'azione) su un `Channel`. La schermata li raccoglie con un `LaunchedEffect` e li mostra con `LocalToast`.
   Le schermate che scrivono estendono `ScreenModel` (`core/viewmodel`), sopra `ComposeViewModel`: ha il `Channel` dei toast, `act` per le azioni (flag `busy` e toast d'errore), `set` e `update` per lo stato.
+- Finché il primo caricamento non finisce (e durante "Riprova") la schermata mostra il loader (`Loader` in `core/designsystem`): `ScreenModel` parte da `Loading`, non da dati vuoti (#73). Un ricaricamento dentro una schermata già piena, come il cambio di settimana nel Piano, tiene i dati vecchi a schermo, attenuati sotto il loader, e non li fa toccare.
 - Errore nel caricamento → schermata d'errore intera; "Riprova" solo per errori di rete.
 - Errore in un'azione (`defaultLaunchForChannels`) → toast, la schermata resta coi dati. Rete: "Salvataggio non riuscito. Riprova tra poco.", il foglio resta aperto con i dati.
 - Handler in ordine (`AppErrorManager`): sessione scaduta → permesso negato → rete → generico.
@@ -224,7 +225,7 @@ Le migrazioni si applicano in produzione con `supabase db push` dal job di rilas
 | Livello | Dove | Cosa | In CI |
 |---|---|---|---|
 | Unit | `commonTest` | ViewModel (con `TestDispatcherProvider` e repository finti) · `domain/`: percentuali, somma zone, periodi/stagione, classe zona, completamento, settimane, movimenti e interpolazione degli schemi | ✓ |
-| UI | `commonTest` con `runAppTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) · staff modifica e ripristina i riferimenti, la mappa si ricolora · staff vede il quadro squadra e apre il diario di un giocatore · giocatore apre uno schema e va al passo successivo · nello schema e nell'editor la barra sparisce, "indietro" la riporta | iOS Simulator + Wasm (browser headless). Android in locale |
+| UI | `commonTest` con `runAppTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) · staff modifica e ripristina i riferimenti, la mappa si ricolora · staff vede il quadro squadra e apre il diario di un giocatore · giocatore apre uno schema e va al passo successivo · gli schemi mostrano il loader finché non arrivano · nello schema e nell'editor la barra sparisce, "indietro" la riporta | iOS Simulator + Wasm (browser headless). Android in locale |
 | DB | `supabase/tests` (pgTAP) | RLS: giocatore non legge/scrive dati altrui, solo staff gestisce rosa/piani/riferimenti, solo giocatore spunta | ✓ (Supabase locale in CI) |
 
 Architettura: Konsist + `verify()` dei moduli Koin in `androidUnitTest`.

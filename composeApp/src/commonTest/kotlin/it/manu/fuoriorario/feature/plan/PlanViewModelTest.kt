@@ -22,6 +22,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -84,13 +85,32 @@ class PlanViewModelTest {
         advanceUntilIdle()
         vm.onWeek(nextWeek)
 
-        assertNull(vm.data.items)
-        assertNull(vm.data.note)
+        // The old week stays on screen, marked, until the new one arrives.
+        assertEquals(listOf(mikan), vm.data.items)
+        assertEquals("Spingi", vm.data.note)
+        assertTrue(vm.data.reloading)
         advanceUntilIdle()
 
         assertEquals(nextWeek, vm.data.week)
         assertEquals(listOf(liberi), vm.data.items)
         assertEquals(emptySet(), vm.data.checks)
+        assertNull(vm.data.note)
+        assertFalse(vm.data.reloading)
+    }
+
+    @Test
+    fun week_loading_copyAndNoteWaitForIt() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.onWeek(nextWeek)
+
+        // The exercises and note on screen are the previous week's.
+        vm.onCopy()
+        vm.onWriteNote()
+        advanceUntilIdle()
+
+        assertFalse(vm.data.confirmingCopy)
+        assertNull(vm.data.noteDraft)
     }
 
     @Test

@@ -52,6 +52,13 @@ class PlaysViewModelTest {
     private val PlaysViewModel.data get() = uiState.value.data!!
 
     @Test
+    fun load_isLoadingUntilThePlaysArrive() = runTest(dispatcher) {
+        val vm = vm()
+
+        assertIs<UseCaseMutableState.Loading>(vm.uiState.value.state)
+    }
+
+    @Test
     fun load_showsThePlays() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()
