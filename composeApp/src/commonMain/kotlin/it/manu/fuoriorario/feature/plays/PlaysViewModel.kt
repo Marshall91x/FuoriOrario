@@ -232,8 +232,11 @@ class PlaysViewModel(
 
     private fun change(edit: Play.() -> Play) = updateDraft { changed(play.edit()) }
 
-    private fun editStep(edit: (PlayDraft, Step) -> Step) =
-        updateDraft { changed(play.copy(steps = play.steps.with(index, edit(this, step)))) }
+    /** A hold or drag that leaves the step as it was isn't a change: the first tap of a confirmation stays. */
+    private fun editStep(edit: (PlayDraft, Step) -> Step) = updateDraft {
+        val edited = edit(this, step)
+        if (edited == step) this else changed(play.copy(steps = play.steps.with(index, edited)))
+    }
 
     private suspend fun set(change: PlaysScreenState.() -> PlaysScreenState) = emitSuccess(state.change())
 

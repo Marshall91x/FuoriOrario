@@ -152,6 +152,19 @@ class PlaysViewModelTest {
     }
 
     @Test
+    fun holdAwayFromEveryAttacker_keepsTheConfirmation() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.onOpen(box)
+        vm.onEdit()
+        vm.onTitleChanged("Box 2")
+        vm.onLeave()
+        vm.onHold(Point(250f, 210f))
+
+        assertTrue(vm.data.draft!!.confirmingExit)
+    }
+
+    @Test
     fun remove_asksForASecondTap() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()

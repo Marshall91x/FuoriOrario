@@ -100,7 +100,7 @@ fun PlayEditor(draft: PlayDraft, busy: Boolean, actions: PlaysActions) {
 
     // The gesture below lives across recompositions: it reads the draft on screen through these.
     val current by rememberUpdatedState(draft)
-    val on by rememberUpdatedState(actions)
+    val latest by rememberUpdatedState(actions)
 
     /** The piece or handle under the finger. */
     var lifted by remember { mutableStateOf<String?>(null) }
@@ -224,7 +224,7 @@ fun PlayEditor(draft: PlayDraft, busy: Boolean, actions: PlaysActions) {
                             released -> Unit
                             // Held still: the ball to the attacker under the finger, if any.
                             moved == null -> {
-                                on.onHold(at)
+                                latest.onHold(at)
                                 do {
                                     val event = awaitPointerEvent()
                                     event.changes.forEach { it.consume() }
@@ -234,10 +234,10 @@ fun PlayEditor(draft: PlayDraft, busy: Boolean, actions: PlaysActions) {
                                 moved.consume()
                                 lifted = target
                                 try {
-                                    on.onPieceMoved(target, moved.position.court(size.width))
+                                    latest.onPieceMoved(target, moved.position.court(size.width))
                                     drag(moved.id) { change ->
                                         change.consume()
-                                        on.onPieceMoved(target, change.position.court(size.width))
+                                        latest.onPieceMoved(target, change.position.court(size.width))
                                     }
                                 } finally {
                                     lifted = null
