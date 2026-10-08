@@ -99,4 +99,23 @@ Per firmare in locale, le stesse chiavi (con `ANDROID_KEYSTORE_PATH` al posto di
 1. Settings → Pages → Source: **GitHub Actions**.
 2. Settings → Environments → `github-pages` → Deployment branches and tags: aggiungi la regola tag `v*` (di default è ammesso solo il branch di default).
 
+### Supabase di produzione (una tantum)
+
+1. Crea il progetto su supabase.com nella regione **Central EU (Frankfurt)**.
+2. Su [Resend](https://resend.com) verifica il dominio del mittente e crea una API key.
+3. In `supabase/config.toml` decommenta il blocco `[remotes.production]` e metti in `project_id` il ref del progetto (la parte prima di `.supabase.co` nell'URL).
+4. Collega il progetto e applica migrazioni e config (hook delle email fuori rosa, SMTP, `site_url`, limite di invio email):
+
+   ```sh
+   supabase link --project-ref <ref>
+   supabase db push                       # solo migrazioni: seed.sql è per lo sviluppo
+   RESEND_API_KEY=<api key> SMTP_SENDER_EMAIL=accesso@<dominio> supabase config diff
+   RESEND_API_KEY=<api key> SMTP_SENDER_EMAIL=accesso@<dominio> supabase config push
+   ```
+
+5. Copia `supabase/seed.production.example.sql` in `supabase/seed.production.sql` (non versionato), metti nome della squadra ed email dello staff, ed eseguilo una volta nel SQL Editor della dashboard. I giocatori li aggiunge lo staff da Rosa.
+6. In GitHub → Settings → Secrets and variables → Actions imposta `SUPABASE_URL` e `SUPABASE_ANON_KEY` del progetto cloud: le usa la build di rilascio.
+
+Prova: accedi con un'email dello staff e controlla che il codice arrivi da Resend; un'email fuori rosa deve essere rifiutata.
+
 Font Saira Condensed e Instrument Sans sotto licenza SIL OFL 1.1 (`licenses/`).

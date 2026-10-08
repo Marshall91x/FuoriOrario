@@ -206,15 +206,15 @@
     <string name="privacy_title">Informativa privacy</string>
     <string name="privacy_intro">Prima di iniziare, ecco come vengono usati i tuoi dati.</string>
     <string name="privacy_controller_title">Chi li tratta</string>
-    <string name="privacy_controller_body">Il titolare del trattamento è Emanuele Del Monte, che gestisce l'app per la squadra.</string>
+    <string name="privacy_controller_body">Il titolare del trattamento è Emanuele Del Monte, che gestisce l'app per la squadra. Per qualsiasi richiesta: anima91x@gmail.com.</string>
     <string name="privacy_data_title">Quali dati</string>
     <string name="privacy_data_body">Email e nome visualizzato (anche un soprannome); numero di maglia e ruolo in campo se li indichi; le sessioni di tiro, i piani settimanali e le spunte degli esercizi. Niente data di nascita, foto o altro.</string>
     <string name="privacy_purpose_title">Perché</string>
-    <string name="privacy_purpose_body">Solo per farti accedere e seguire il tuo lavoro individuale insieme allo staff della squadra. Niente pubblicità, profilazione o cessione a terzi.</string>
+    <string name="privacy_purpose_body">Solo per farti accedere e seguire il tuo lavoro individuale insieme allo staff della squadra, con il tuo consenso. Niente pubblicità, profilazione o cessione a terzi. I dati restano finché sei in squadra.</string>
     <string name="privacy_where_title">Dove</string>
-    <string name="privacy_where_body">Su Supabase, con server nell'Unione Europea. Li vedi tu e lo staff della tua squadra.</string>
-    <string name="privacy_delete_title">Cancellazione</string>
-    <string name="privacy_delete_body">Chiedila allo staff o al titolare e i tuoi dati vengono eliminati. Quando un membro viene tolto dalla squadra, tutti i suoi dati vengono eliminati.</string>
+    <string name="privacy_where_body">Su Supabase, con server a Francoforte (UE). Le email con il codice di accesso partono tramite Resend, che riceve solo il tuo indirizzo e il codice. I dati li vedi tu e lo staff della tua squadra.</string>
+    <string name="privacy_rights_title">I tuoi diritti</string>
+    <string name="privacy_rights_body">Puoi chiedere in qualsiasi momento di vedere, correggere o cancellare i tuoi dati: chiedilo allo staff o scrivi ad anima91x@gmail.com. Quando un membro viene tolto dalla squadra, i suoi dati e il suo account vengono eliminati. Puoi anche presentare reclamo al Garante per la protezione dei dati personali.</string>
     <string name="privacy_accept">Ho letto</string>
 
     <string name="plays_empty">Ancora nessuno schema.</string>

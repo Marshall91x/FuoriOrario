@@ -8,3 +8,4 @@ local.properties
 .kotlin/
 iosApp/build/
 xcuserdata/
+supabase/seed.production.sql

@@ -17,11 +17,11 @@ import fuoriorario.composeapp.generated.resources.privacy_controller_body
 import fuoriorario.composeapp.generated.resources.privacy_controller_title
 import fuoriorario.composeapp.generated.resources.privacy_data_body
 import fuoriorario.composeapp.generated.resources.privacy_data_title
-import fuoriorario.composeapp.generated.resources.privacy_delete_body
-import fuoriorario.composeapp.generated.resources.privacy_delete_title
 import fuoriorario.composeapp.generated.resources.privacy_intro
 import fuoriorario.composeapp.generated.resources.privacy_purpose_body
 import fuoriorario.composeapp.generated.resources.privacy_purpose_title
+import fuoriorario.composeapp.generated.resources.privacy_rights_body
+import fuoriorario.composeapp.generated.resources.privacy_rights_title
 import fuoriorario.composeapp.generated.resources.privacy_title
 import fuoriorario.composeapp.generated.resources.privacy_where_body
 import fuoriorario.composeapp.generated.resources.privacy_where_title
@@ -37,7 +37,7 @@ private val sections = listOf(
     Res.string.privacy_data_title to Res.string.privacy_data_body,
     Res.string.privacy_purpose_title to Res.string.privacy_purpose_body,
     Res.string.privacy_where_title to Res.string.privacy_where_body,
-    Res.string.privacy_delete_title to Res.string.privacy_delete_body
+    Res.string.privacy_rights_title to Res.string.privacy_rights_body
 )
 
 /** First-access privacy notice (ADR 0006). "Ho letto" records the acceptance; the session then moves on. */
