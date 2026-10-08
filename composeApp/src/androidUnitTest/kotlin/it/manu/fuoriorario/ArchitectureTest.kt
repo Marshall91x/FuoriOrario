@@ -15,7 +15,7 @@ class ArchitectureTest {
         production.classes().withNameEndingWith("ViewModel")
             .filterNot { it.name == "ComposeViewModel" }
             .assertTrue {
-                it.parents().any { p -> p.name.substringBefore("<") == "ComposeViewModel" } &&
+                it.parents(indirectParents = true).any { p -> p.name.substringBefore("<") == "ComposeViewModel" } &&
                     (it.resideInPackage("$ROOT.feature..") || it.name == "MainViewModel" && it.resideInPackage(ROOT))
             }
     }
@@ -50,12 +50,11 @@ class ArchitectureTest {
 
         /** Packages still waiting for their MVVM issue: remove each line when it closes. */
         val NOT_MIGRATED = listOf(
-            "ui.plan", // #52
             "ui.plays", // #53
             "ui.roster", // #54
             "ui.team", // #55
             "ui.settings", // #56
-            "data" // repositories, #51–#54
+            "data" // repositories, #53–#54
         )
     }
 }
