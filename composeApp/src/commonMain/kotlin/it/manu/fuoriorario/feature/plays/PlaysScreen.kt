@@ -251,7 +251,8 @@ private fun Chips(play: Play) {
 
 /**
  * One play: the court at a step with the moves that led there, its note, ◀ / ▶ and "Riproduci". ▶ and "Riproduci"
- * animate into the next step, "Riproduci" on to the last; ◀ jumps back, and ◀ / ▶ stop it. Staff get [onEdit].
+ * animate into the next step, "Riproduci" on to the last (from the first, if already there); ◀ jumps back, and
+ * ◀ / ▶ stop it. Staff get [onEdit].
  */
 @Composable
 private fun PlayViewer(play: Play, onEdit: (() -> Unit)?, onBack: () -> Unit) {
@@ -278,10 +279,11 @@ private fun PlayViewer(play: Play, onEdit: (() -> Unit)?, onBack: () -> Unit) {
         }
     }
 
-    /** Plays to the last step. */
+    /** Plays to the last step, starting over from the first if already there. */
     fun play() {
         go {}
         val job = scope.launch(start = CoroutineStart.LAZY) {
+            if (index == last) index = 0
             while (index < last) forward()
         }
         playing = job
@@ -337,7 +339,7 @@ private fun PlayViewer(play: Play, onEdit: (() -> Unit)?, onBack: () -> Unit) {
             stringResource(Res.string.play_play),
             ::play,
             Modifier.fillMaxWidth().testTag("play_toggle"),
-            enabled = playing == null && index < last
+            enabled = playing == null && last > 0
         )
     }
 }
