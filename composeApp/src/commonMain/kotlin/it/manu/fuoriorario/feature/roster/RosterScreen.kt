@@ -18,6 +18,8 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -88,7 +90,8 @@ fun RosterScreen(onChanged: (Member) -> Unit, vm: RosterViewModel = koinViewMode
     val uiState = vm.uiState.collectAsStateWithLifecycle()
     val toast = LocalToast.current
     LaunchedEffect(vm) { vm.toasts.collect { launch { toast.show(it) } } }
-    LaunchedEffect(vm) { vm.changes.collect(onChanged) }
+    val changed by rememberUpdatedState(onChanged)
+    LaunchedEffect(vm) { vm.changes.collect { changed(it) } }
     RosterStateContent(
         uiState.value.state,
         RosterActions(
