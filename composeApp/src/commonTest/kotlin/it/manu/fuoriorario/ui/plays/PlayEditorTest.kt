@@ -26,13 +26,13 @@ import it.manu.fuoriorario.domain.Point
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.startingStep
 import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.feature.shots.FakeShotRepository
 import it.manu.fuoriorario.testing.TestApp
 import it.manu.fuoriorario.testing.awaitNode
 import it.manu.fuoriorario.testing.awaitText
 import it.manu.fuoriorario.testing.runAppTest
 import it.manu.fuoriorario.ui.plan.FakePlanRepository
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
-import it.manu.fuoriorario.ui.shots.FakeShotRepository
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.data
+package it.manu.fuoriorario.feature.shots.data
 
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.ShotSession

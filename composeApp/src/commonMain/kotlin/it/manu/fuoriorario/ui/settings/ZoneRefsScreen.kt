@@ -36,11 +36,11 @@ import it.manu.fuoriorario.core.designsystem.PrimaryButton
 import it.manu.fuoriorario.core.designsystem.launchWrite
 import it.manu.fuoriorario.core.designsystem.show
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
-import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.domain.DEFAULT_ZONE_REFS
 import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.domain.parseZoneRef
-import it.manu.fuoriorario.ui.shots.zoneName
+import it.manu.fuoriorario.feature.shots.data.ShotRepository
+import it.manu.fuoriorario.feature.shots.zoneName
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString

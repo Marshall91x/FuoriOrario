@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.shots
+package it.manu.fuoriorario.feature.shots
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,10 +30,8 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,8 +47,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.cancel
 import fuoriorario.composeapp.generated.resources.close
@@ -71,10 +71,8 @@ import fuoriorario.composeapp.generated.resources.session_more
 import fuoriorario.composeapp.generated.resources.session_new
 import fuoriorario.composeapp.generated.resources.session_note
 import fuoriorario.composeapp.generated.resources.session_save
-import fuoriorario.composeapp.generated.resources.session_saved
 import fuoriorario.composeapp.generated.resources.shots_delete
 import fuoriorario.composeapp.generated.resources.shots_delete_confirm
-import fuoriorario.composeapp.generated.resources.shots_deleted
 import fuoriorario.composeapp.generated.resources.shots_empty
 import fuoriorario.composeapp.generated.resources.shots_log
 import fuoriorario.composeapp.generated.resources.shots_title
@@ -95,20 +93,18 @@ import fuoriorario.composeapp.generated.resources.zone_tl
 import it.manu.fuoriorario.core.designsystem.Field
 import it.manu.fuoriorario.core.designsystem.GhostButton
 import it.manu.fuoriorario.core.designsystem.GhostStyle
-import it.manu.fuoriorario.core.designsystem.LoadFailed
 import it.manu.fuoriorario.core.designsystem.LocalToast
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.PrimaryButton
 import it.manu.fuoriorario.core.designsystem.SegmentedControl
-import it.manu.fuoriorario.core.designsystem.launchWrite
 import it.manu.fuoriorario.core.designsystem.short
 import it.manu.fuoriorario.core.designsystem.show
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
-import it.manu.fuoriorario.core.today
-import it.manu.fuoriorario.data.ShotRepository
+import it.manu.fuoriorario.core.viewmodel.UseCaseMutableState
+import it.manu.fuoriorario.domain.DEFAULT_ZONE_REFS
 import it.manu.fuoriorario.domain.Member
-import it.manu.fuoriorario.domain.NOTE_MAX
 import it.manu.fuoriorario.domain.Period
+import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.SessionError
 import it.manu.fuoriorario.domain.ShotSession
 import it.manu.fuoriorario.domain.Shots
@@ -116,22 +112,18 @@ import it.manu.fuoriorario.domain.Stats
 import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.domain.fieldGoal
 import it.manu.fuoriorario.domain.freeThrows
-import it.manu.fuoriorario.domain.newSession
-import it.manu.fuoriorario.domain.sessionError
 import it.manu.fuoriorario.domain.stats
 import it.manu.fuoriorario.domain.trend
 import it.manu.fuoriorario.domain.zoneTotals
 import kotlin.time.Instant
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 internal val zoneName = mapOf(
     Zone.PIT to Res.string.zone_pit,
@@ -151,65 +143,62 @@ private val Zone.tag get() = name.lowercase()
 
 /**
  * [player]'s Diario di tiro (PRD F3), theirs or followed by staff: header with "Registra sessione", period and its stats,
- * the period's shot map, then its sessions newest first. [period] is kept by the caller, across players. Each "Elimina" asks for a second tap.
+ * the period's shot map, then its sessions newest first. [period] is kept by the caller, across players.
  */
 @Composable
-fun ShotLogScreen(shots: ShotRepository, player: Member, period: Period, onPeriod: (Period) -> Unit) {
-    val c = FuoriOrarioTheme.colors
+fun ShotLogScreen(
+    player: Member,
+    period: Period,
+    onPeriod: (Period) -> Unit,
+    vm: ShotLogViewModel = koinViewModel { parametersOf(player) }
+) {
+    val uiState = vm.uiState.collectAsStateWithLifecycle()
     val toast = LocalToast.current
-    val scope = rememberCoroutineScope()
-    var sessions by remember { mutableStateOf<List<ShotSession>?>(null) }
-    var refs by remember { mutableStateOf<Map<Zone, Int>?>(null) }
-    var loadFailed by remember { mutableStateOf(false) }
-    var attempt by remember { mutableIntStateOf(0) }
-    var logging by remember { mutableStateOf(false) }
-    var confirmingDelete by remember { mutableStateOf<ShotSession?>(null) }
-    val today = remember { today() }
-    val inPeriod = sessions?.let { period.filter(it, today) }
+    LaunchedEffect(vm) { vm.toasts.collect { launch { toast.show(it) } } }
+    ShotLogStateContent(
+        uiState.value.state,
+        period,
+        ShotLogActions(
+            onPeriod = onPeriod,
+            onLog = vm::onLog,
+            onDismissLog = vm::onDismissLog,
+            onDateChanged = vm::onDateChanged,
+            onZoneChanged = vm::onZoneChanged,
+            onNoteChanged = vm::onNoteChanged,
+            onSave = vm::onSave,
+            onDelete = vm::onDelete
+        )
+    )
+}
 
-    /** A save or delete is in flight. */
-    var busy by remember { mutableStateOf(false) }
-    LaunchedEffect(attempt) {
-        loadFailed = false
-        try {
-            coroutineScope {
-                val teamRefs = async { shots.zoneRefs() }
-                sessions = shots.sessions(player)
-                refs = teamRefs.await()
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            loadFailed = true
-        }
-    }
+/** What the Diario di tiro does, from the screen down to the sheet. */
+class ShotLogActions(
+    val onPeriod: (Period) -> Unit = {},
+    val onLog: () -> Unit = {},
+    val onDismissLog: () -> Unit = {},
+    val onDateChanged: (LocalDate) -> Unit = {},
+    val onZoneChanged: (Zone, Shots) -> Unit = { _, _ -> },
+    val onNoteChanged: (String) -> Unit = {},
+    val onSave: () -> Unit = {},
+    val onDelete: (ShotSession) -> Unit = {}
+)
 
-    fun save(session: ShotSession) {
-        if (busy) return
-        busy = true
-        scope.launchWrite(toast, onDone = { busy = false }) {
-            val saved = shots.add(session.copy(memberId = player.id))
-            // Stable sort: the new one goes first among sessions of the same day.
-            sessions = (listOf(saved) + sessions.orEmpty()).sortedByDescending { it.date }
-            logging = false
-            launch { toast.show(getString(Res.string.session_saved)) }
-        }
+@Composable
+fun ShotLogStateContent(state: UseCaseMutableState<ShotLogScreenState>?, period: Period, actions: ShotLogActions) {
+    when (state) {
+        is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
+        is UseCaseMutableState.ShowData -> ShotLogContent(state.items, period, actions)
+        // Never: the header is there from the start, the sessions fill in.
+        UseCaseMutableState.Loading, null -> Unit
     }
+}
 
-    fun delete(session: ShotSession) {
-        if (busy) return
-        if (confirmingDelete != session) {
-            confirmingDelete = session
-            return
-        }
-        confirmingDelete = null
-        busy = true
-        scope.launchWrite(toast, onDone = { busy = false }) {
-            shots.delete(session)
-            sessions = sessions.orEmpty().filter { it.id != session.id }
-            launch { toast.show(getString(Res.string.shots_deleted)) }
-        }
-    }
+/** Each "Elimina" asks for a second tap. Nothing below the header until the sessions arrive. */
+@Composable
+fun ShotLogContent(state: ShotLogScreenState, period: Period, actions: ShotLogActions) {
+    val c = FuoriOrarioTheme.colors
+    val player = state.player
+    val inPeriod = state.sessions?.let { period.filter(it, state.today) }
 
     Panel {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -222,26 +211,20 @@ fun ShotLogScreen(shots: ShotRepository, player: Member, period: Period, onPerio
                 )
                 Text(player.displayName.uppercase(), style = MaterialTheme.typography.titleLarge)
             }
-            PrimaryButton(stringResource(Res.string.shots_log), {
-                confirmingDelete = null
-                logging = true
-            })
+            PrimaryButton(stringResource(Res.string.shots_log), actions.onLog)
         }
         val periodLabel = stringResource(Res.string.period)
         SegmentedControl(
             periodName,
             period,
-            onPeriod,
+            actions.onPeriod,
             tag = { "period_${it.name.lowercase()}" },
             Modifier.semantics { contentDescription = periodLabel }
         )
         inPeriod?.let { StatsGrid(stats(it)) }
     }
 
-    if (loadFailed) {
-        LoadFailed { attempt++ }
-    }
-    inPeriod?.let { list -> refs?.let { Panel { ShotMap(zoneTotals(list), it) } } }
+    inPeriod?.let { list -> state.refs?.let { Panel { ShotMap(zoneTotals(list), it) } } }
     inPeriod?.let { Panel { TrendChart(trend(it)) } }
     inPeriod?.let { list ->
         Panel {
@@ -252,14 +235,35 @@ fun ShotLogScreen(shots: ShotRepository, player: Member, period: Period, onPerio
                 Column {
                     list.forEachIndexed { i, session ->
                         if (i > 0) HorizontalDivider(color = c.line)
-                        SessionRow(session, confirmingDelete == session) { delete(session) }
+                        SessionRow(session, state.confirmingDelete == session) { actions.onDelete(session) }
                     }
                 }
             }
         }
     }
 
-    if (logging) LogSheet(player.displayName, busy, onDismiss = { logging = false }, onSave = ::save)
+    state.draft?.let { LogSheet(player.displayName, it, state.today, state.busy, actions) }
+}
+
+@Preview
+@Composable
+private fun ShotLogContentPreview() = FuoriOrarioTheme {
+    val today = LocalDate(2026, 10, 8)
+    Column {
+        ShotLogContent(
+            ShotLogScreenState(
+                Member("Luca B.", Role.PLAYER, jerseyNumber = "7", position = "Guardia"),
+                today,
+                sessions = listOf(
+                    ShotSession(today, mapOf(Zone.PIT to Shots(6, 10), Zone.TL to Shots(7, 10)), "Gambe stanche"),
+                    ShotSession(LocalDate(2026, 10, 5), mapOf(Zone.CEN to Shots(3, 8)))
+                ),
+                refs = DEFAULT_ZONE_REFS
+            ),
+            Period.DAYS_30,
+            ShotLogActions()
+        )
+    }
 }
 
 private val periodName = mapOf(
@@ -355,25 +359,14 @@ private fun SessionRow(session: ShotSession, confirming: Boolean, onDelete: () -
 
 /**
  * Prototype `openLog`: date (today by default, never in the future), a stepper pair per zone, optional note.
- * The screen saves, so a failure leaves the sheet open as typed.
+ * The ViewModel saves, so a failure leaves the sheet open as typed.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LogSheet(name: String, busy: Boolean, onDismiss: () -> Unit, onSave: (ShotSession) -> Unit) {
+private fun LogSheet(name: String, draft: SessionDraft, today: LocalDate, busy: Boolean, actions: ShotLogActions) {
     val c = FuoriOrarioTheme.colors
-    val today = remember { today() }
-    var date by remember { mutableStateOf(today) }
-    var zones by remember { mutableStateOf(Zone.entries.associateWith { Shots() }) }
-    var note by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf<SessionError?>(null) }
-
-    fun save() {
-        error = sessionError(zones)
-        if (error == null) onSave(newSession(date, zones, note))
-    }
-
     ModalBottomSheet(
-        onDismiss,
+        actions.onDismissLog,
         containerColor = c.surface,
         shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp),
         dragHandle = null
@@ -391,24 +384,24 @@ private fun LogSheet(name: String, busy: Boolean, onDismiss: () -> Unit, onSave:
                     )
                     Text(name.uppercase(), style = MaterialTheme.typography.titleLarge)
                 }
-                GhostButton(stringResource(Res.string.close), onDismiss)
+                GhostButton(stringResource(Res.string.close), actions.onDismissLog)
             }
-            DateField(date, today) { date = it }
+            DateField(draft.date, today, actions.onDateChanged)
             Text(stringResource(Res.string.session_hint), color = c.muted, style = MaterialTheme.typography.bodyMedium)
             Column {
                 Zone.entries.forEach { zone ->
                     HorizontalDivider(color = c.line)
-                    ZoneRow(zone, zones.getValue(zone)) { zones = zones + (zone to it) }
+                    ZoneRow(zone, draft.zones.getValue(zone)) { actions.onZoneChanged(zone, it) }
                 }
             }
             Field(
                 label = stringResource(Res.string.session_note),
-                value = note,
-                onValueChange = { note = it.take(NOTE_MAX) },
+                value = draft.note,
+                onValueChange = actions.onNoteChanged,
                 tag = "session_note",
                 singleLine = false
             )
-            error?.let {
+            draft.error?.let {
                 val text = when (it) {
                     is SessionError.MadeOverAttempted ->
                         stringResource(Res.string.session_error_made, stringResource(zoneName.getValue(it.zone)))
@@ -416,7 +409,12 @@ private fun LogSheet(name: String, busy: Boolean, onDismiss: () -> Unit, onSave:
                 }
                 Text(text, color = c.accent, style = MaterialTheme.typography.bodyMedium)
             }
-            PrimaryButton(stringResource(Res.string.session_save), ::save, Modifier.fillMaxWidth(), enabled = !busy)
+            PrimaryButton(
+                stringResource(Res.string.session_save),
+                actions.onSave,
+                Modifier.fillMaxWidth(),
+                enabled = !busy
+            )
         }
     }
 }

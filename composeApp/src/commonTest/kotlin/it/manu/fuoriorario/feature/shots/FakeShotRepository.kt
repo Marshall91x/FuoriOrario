@@ -1,11 +1,12 @@
-package it.manu.fuoriorario.ui.shots
+package it.manu.fuoriorario.feature.shots
 
-import it.manu.fuoriorario.data.ShotRepository
 import it.manu.fuoriorario.domain.DEFAULT_ZONE_REFS
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.ShotSession
 import it.manu.fuoriorario.domain.Zone
+import it.manu.fuoriorario.feature.shots.data.ShotRepository
 import kotlinx.datetime.LocalDate
+import kotlinx.io.IOException
 
 class FakeShotRepository(vararg sessions: ShotSession) : ShotRepository {
     val sessions = sessions.toMutableList()
@@ -18,8 +19,16 @@ class FakeShotRepository(vararg sessions: ShotSession) : ShotRepository {
     /** Next team load fails like a network error. */
     var failTeam = false
 
-    override suspend fun sessions(member: Member) =
-        sessions.filter { it.memberId == member.id }.sortedByDescending { it.date }
+    /** Next player's load fails without network, so the screen offers "Riprova". */
+    var failLoad = false
+
+    override suspend fun sessions(member: Member): List<ShotSession> {
+        if (failLoad) {
+            failLoad = false
+            throw IOException("offline")
+        }
+        return sessions.filter { it.memberId == member.id }.sortedByDescending { it.date }
+    }
 
     override suspend fun teamSessions(since: LocalDate): List<ShotSession> {
         if (failTeam) {

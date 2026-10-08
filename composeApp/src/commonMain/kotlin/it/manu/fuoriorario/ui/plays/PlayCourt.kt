@@ -38,8 +38,8 @@ import it.manu.fuoriorario.domain.Move
 import it.manu.fuoriorario.domain.MoveKind
 import it.manu.fuoriorario.domain.Point
 import it.manu.fuoriorario.domain.isDefender
-import it.manu.fuoriorario.ui.shots.arcPath
-import it.manu.fuoriorario.ui.shots.drawLines
+import it.manu.fuoriorario.feature.shots.arcPath
+import it.manu.fuoriorario.feature.shots.drawLines
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos

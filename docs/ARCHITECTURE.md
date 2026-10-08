@@ -200,6 +200,8 @@ Le RLS sono la vera barriera: la UI nasconde, il database impedisce. Coperte da 
 ## Gestione errori e dati
 
 - Nessuna cache: ogni schermata carica all'apertura (`defaultLaunch` nel ViewModel); pull-to-refresh.
+  Le schermate di una scheda della home stanno dentro `ScreenViewModels` (`core/navigation/Home.kt`): i loro ViewModel vivono solo mentre la schermata è visibile, come il vecchio `remember`. La voce di navigazione della scheda li terrebbe in vita anche durante un cambio di scheda.
+- Il ViewModel manda i testi dei toast (salvato, eliminato, errore di un'azione) su un `Channel`. La schermata li raccoglie con un `LaunchedEffect` e li mostra con `LocalToast`.
 - Errore nel caricamento → schermata d'errore intera; "Riprova" solo per errori di rete.
 - Errore in un'azione (`defaultLaunchForChannels`) → toast, la schermata resta coi dati. Rete: "Salvataggio non riuscito. Riprova tra poco.", il foglio resta aperto con i dati.
 - Handler in ordine (`AppErrorManager`): sessione scaduta → permesso negato → rete → generico.
