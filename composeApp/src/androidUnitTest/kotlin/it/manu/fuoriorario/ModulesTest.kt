@@ -1,5 +1,6 @@
 package it.manu.fuoriorario
 
+import androidx.lifecycle.SavedStateHandle
 import it.manu.fuoriorario.di.appModule
 import it.manu.fuoriorario.di.dataModule
 import org.junit.Test
@@ -12,6 +13,7 @@ class ModulesTest {
     @OptIn(KoinExperimentalAPI::class)
     @Test
     fun everyDefinitionResolves() {
-        module { includes(appModule, dataModule) }.verify()
+        // SavedStateHandle comes from the screen, not from a definition.
+        module { includes(appModule, dataModule) }.verify(extraTypes = listOf(SavedStateHandle::class))
     }
 }

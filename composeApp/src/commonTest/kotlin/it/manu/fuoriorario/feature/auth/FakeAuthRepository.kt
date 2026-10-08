@@ -1,6 +1,7 @@
 package it.manu.fuoriorario.feature.auth
 
 import it.manu.fuoriorario.core.session.Session
+import it.manu.fuoriorario.core.session.SessionExpiry
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.feature.auth.data.AuthRepository
@@ -10,7 +11,9 @@ import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /** [roster], when given, is where [refresh] reloads the signed-in member from. */
-class FakeAuthRepository(signedIn: Member? = null, private val roster: FakeRosterRepository? = null) : AuthRepository {
+class FakeAuthRepository(signedIn: Member? = null, private val roster: FakeRosterRepository? = null) :
+    AuthRepository,
+    SessionExpiry {
     private val accounts = mapOf("giocatore@example.com" to Member("Luca B.", Role.PLAYER))
     override val session = MutableStateFlow<Session>(signedIn?.let { Session.SignedIn(it) } ?: Session.SignedOut)
 
@@ -48,6 +51,10 @@ class FakeAuthRepository(signedIn: Member? = null, private val roster: FakeRoste
 
     override suspend fun signOut() {
         session.value = Session.SignedOut
+    }
+
+    override fun expire() {
+        session.value = Session.Expired
     }
 
     private fun failIfAsked() {

@@ -9,6 +9,7 @@ import it.manu.fuoriorario.core.error.NetworkErrorHandler
 import it.manu.fuoriorario.core.error.PermissionDeniedErrorHandler
 import it.manu.fuoriorario.core.error.SessionExpiredErrorHandler
 import it.manu.fuoriorario.core.session.SelectedPlayer
+import it.manu.fuoriorario.core.session.SessionExpiry
 import it.manu.fuoriorario.core.viewmodel.DefaultDispatcherProvider
 import it.manu.fuoriorario.core.viewmodel.DispatcherProvider
 import it.manu.fuoriorario.data.PlanRepository
@@ -25,6 +26,7 @@ import it.manu.fuoriorario.feature.auth.data.AuthRepository
 import it.manu.fuoriorario.feature.auth.data.SupabaseAuthRepository
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
+import org.koin.dsl.binds
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 
@@ -40,7 +42,8 @@ val appModule = module {
                 PermissionDeniedErrorHandler(),
                 NetworkErrorHandler(),
                 FallbackHandler()
-            )
+            ),
+            get()
         )
     }
     singleOf(::SelectedPlayer)
@@ -53,7 +56,7 @@ val appModule = module {
 /** Supabase and the device's own storage (only the staff's picked player). */
 val dataModule = module {
     single<Settings> { Settings() }
-    single<AuthRepository> { SupabaseAuthRepository() }
+    single { SupabaseAuthRepository() } binds arrayOf(AuthRepository::class, SessionExpiry::class)
     single<RosterRepository> { SupabaseRosterRepository() }
     single<ShotRepository> { SupabaseShotRepository() }
     single<PlanRepository> { SupabasePlanRepository() }

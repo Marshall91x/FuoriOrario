@@ -1,5 +1,6 @@
 package it.manu.fuoriorario.feature.auth
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.login_error_code
@@ -13,7 +14,6 @@ import it.manu.fuoriorario.core.viewmodel.UseCaseMutableState
 import it.manu.fuoriorario.feature.auth.data.AuthRepository
 import it.manu.fuoriorario.feature.auth.data.InvalidCodeException
 import it.manu.fuoriorario.feature.auth.data.NotInTeamException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 
@@ -33,12 +33,16 @@ data class LoginScreenState(
 }
 
 /** Email → 6-digit code. Signing in is the whole outcome: the session moves the app on (MainViewModel). */
-class LoginViewModel(private val auth: AuthRepository, dispatchers: DispatcherProvider, errorManager: ErrorManager) :
-    ComposeViewModel<LoginScreenState>(
-        defaultState = LoginScreenState().let { UiState(UseCaseMutableState.ShowData(it), it) },
-        dispatcherProvider = dispatchers,
-        errorManager = errorManager
-    ) {
+class LoginViewModel(
+    private val auth: AuthRepository,
+    private val saved: SavedStateHandle,
+    private val dispatchers: DispatcherProvider,
+    errorManager: ErrorManager
+) : ComposeViewModel<LoginScreenState>(
+    defaultState = saved.draft().let { UiState(UseCaseMutableState.ShowData(it), it) },
+    dispatcherProvider = dispatchers,
+    errorManager = errorManager
+) {
     private val state get() = uiState.value.data ?: LoginScreenState()
 
     fun onEmailChanged(email: String) = update { copy(email = email) }
@@ -76,10 +80,27 @@ class LoginViewModel(private val auth: AuthRepository, dispatchers: DispatcherPr
 
     private suspend fun fail(error: StringResource) = set { copy(busy = false, error = error) }
 
-    private suspend fun set(change: LoginScreenState.() -> LoginScreenState) = emitSuccess(state.change())
+    private suspend fun set(change: LoginScreenState.() -> LoginScreenState) {
+        val new = state.change()
+        saved[EMAIL] = new.email
+        saved[CODE] = new.code
+        saved[CODE_SENT] = new.codeSent
+        emitSuccess(new)
+    }
 
     /** Unconfined runs it before returning: a keystroke lands before the next one, as with a `remember`. */
     private fun update(change: LoginScreenState.() -> LoginScreenState) {
-        viewModelScope.launch(Dispatchers.Unconfined) { set(change) }
+        viewModelScope.launch(dispatchers.unconfined()) { set(change) }
     }
 }
+
+private const val EMAIL = "email"
+private const val CODE = "code"
+private const val CODE_SENT = "code_sent"
+
+/** The form as typed: Android may kill the app while the user reads the code in their mail. */
+private fun SavedStateHandle.draft() = LoginScreenState(
+    email = get<String>(EMAIL).orEmpty(),
+    code = get<String>(CODE).orEmpty(),
+    codeSent = get<Boolean>(CODE_SENT) ?: false
+)

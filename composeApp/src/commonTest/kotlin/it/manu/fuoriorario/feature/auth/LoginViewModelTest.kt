@@ -1,5 +1,6 @@
 package it.manu.fuoriorario.feature.auth
 
+import androidx.lifecycle.SavedStateHandle
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.login_error_code
 import fuoriorario.composeapp.generated.resources.login_error_generic
@@ -23,7 +24,9 @@ import kotlinx.coroutines.test.runTest
 class LoginViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val auth = FakeAuthRepository()
-    private val vm = LoginViewModel(auth, TestDispatcherProvider(dispatcher), AppErrorManager(emptyList()))
+    private val saved = SavedStateHandle()
+    private val vm = vm()
+
     private val state get() = vm.uiState.value.data!!
 
     @Test
@@ -120,6 +123,21 @@ class LoginViewModelTest {
         assertNull(state.error)
         assertEquals("giocatore@example.com", state.email)
     }
+
+    @Test
+    fun draftSurvivesProcessDeath() = runTest(dispatcher) {
+        codeSent()
+        vm.onCodeChanged("123")
+
+        val restored = vm().uiState.value.data!!
+
+        assertEquals("giocatore@example.com", restored.email)
+        assertEquals("123", restored.code)
+        assertTrue(restored.codeSent)
+    }
+
+    /** A new ViewModel on the same [saved]: what Android rebuilds after killing the process. */
+    private fun vm() = LoginViewModel(auth, saved, TestDispatcherProvider(dispatcher), AppErrorManager(emptyList()) {})
 
     private fun TestScope.codeSent() {
         vm.onEmailChanged("giocatore@example.com")

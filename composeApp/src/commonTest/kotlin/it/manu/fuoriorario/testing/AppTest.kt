@@ -18,6 +18,7 @@ import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.allStringArrayResources
 import fuoriorario.composeapp.generated.resources.allStringResources
 import it.manu.fuoriorario.App
+import it.manu.fuoriorario.core.session.SessionExpiry
 import it.manu.fuoriorario.core.viewmodel.DispatcherProvider
 import it.manu.fuoriorario.data.PlanRepository
 import it.manu.fuoriorario.data.PlayRepository
@@ -45,7 +46,7 @@ import org.koin.dsl.module
  */
 @Composable
 fun TestApp(
-    auth: AuthRepository = FakeAuthRepository(),
+    auth: FakeAuthRepository = FakeAuthRepository(),
     roster: RosterRepository = FakeRosterRepository(),
     shots: ShotRepository = FakeShotRepository(),
     prefs: Settings = MapSettings(),
@@ -59,7 +60,8 @@ fun TestApp(
                 module {
                     // A fake answers at once: on the caller's thread the screen has the result when the test looks.
                     single<DispatcherProvider> { UnconfinedDispatcherProvider }
-                    single { auth }
+                    single<AuthRepository> { auth }
+                    single<SessionExpiry> { auth }
                     single { roster }
                     single { shots }
                     single { prefs }

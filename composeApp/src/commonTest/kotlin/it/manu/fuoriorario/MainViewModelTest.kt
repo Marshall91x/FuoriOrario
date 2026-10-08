@@ -36,7 +36,7 @@ class MainViewModelTest {
             roster,
             SelectedPlayer(settings),
             TestDispatcherProvider(dispatcher),
-            AppErrorManager(emptyList())
+            AppErrorManager(emptyList()) {}
         )
 
     private val MainViewModel.state get() = uiState.value.data!!

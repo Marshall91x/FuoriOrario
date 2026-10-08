@@ -12,24 +12,33 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
 import it.manu.fuoriorario.core.session.Session
-import it.manu.fuoriorario.core.session.markExpired
+import it.manu.fuoriorario.core.session.SessionExpiry
+import it.manu.fuoriorario.core.session.sessionEnded
 import it.manu.fuoriorario.core.supabase
 import it.manu.fuoriorario.domain.Member
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class SupabaseAuthRepository(private val client: SupabaseClient = supabase) : AuthRepository {
+class SupabaseAuthRepository(private val client: SupabaseClient = supabase) :
+    AuthRepository,
+    SessionExpiry {
     /** Bumped to reload the member after it changes. */
     private val reload = MutableStateFlow(0)
 
-    /** Set by [signOut]: any other end of the session is an expiry. */
+    /** Set by [signOut]: any other cleared session is an expiry. */
     private var signOutRequested = false
+
+    /** For [expire], called outside any coroutine. Lives as long as the repository: one per process. */
+    private val scope: CoroutineScope = MainScope()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override val session: Flow<Session> = combine(client.auth.sessionStatus, reload) { status, _ ->
@@ -47,10 +56,10 @@ class SupabaseAuthRepository(private val client: SupabaseClient = supabase) : Au
                     Session.SignedOut
                 }
             }
-            is SessionStatus.NotAuthenticated -> Session.SignedOut
+            is SessionStatus.NotAuthenticated -> sessionEnded(status.isSignOut, signOutRequested)
             else -> Session.Loading
         }
-    }.markExpired { signOutRequested }
+    }
 
     // ponytail: retries forever while offline (app is online-only, ADR 0004); add an error state if users get stuck.
     private suspend fun loadMember(userId: String): Member? {
@@ -101,5 +110,10 @@ class SupabaseAuthRepository(private val client: SupabaseClient = supabase) : Au
             // Offline logout still forgets the session on this device.
             client.auth.clearSession()
         }
+    }
+
+    /** Like a refused refresh: supabase-kt clears the session, [session] becomes [Session.Expired]. */
+    override fun expire() {
+        scope.launch { client.auth.clearSession() }
     }
 }

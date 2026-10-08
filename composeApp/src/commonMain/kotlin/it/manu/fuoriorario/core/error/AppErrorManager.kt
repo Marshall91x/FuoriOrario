@@ -11,6 +11,7 @@ import fuoriorario.composeapp.generated.resources.session_expired
 import io.github.jan.supabase.exceptions.RestException
 import it.manu.fuoriorario.core.designsystem.GhostButton
 import it.manu.fuoriorario.core.designsystem.Panel
+import it.manu.fuoriorario.core.session.SessionExpiry
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
 import it.manu.fuoriorario.core.viewmodel.isNetworkException
 import org.jetbrains.compose.resources.stringResource
@@ -18,8 +19,19 @@ import org.jetbrains.compose.resources.stringResource
 /**
  * The first of [handlers] that claims a failure draws it. The order is the contract: session expired, permission
  * denied, network, then [FallbackHandler] (ARCHITECTURE "Gestione errori").
+ * A refused session also ends: [sessionExpiry] takes the app back to login, the error screen is what shows meanwhile.
  */
-class AppErrorManager(override val handlers: List<ErrorHandler>) : ErrorManager
+class AppErrorManager(override val handlers: List<ErrorHandler>, private val sessionExpiry: SessionExpiry) :
+    ErrorManager {
+    override fun handle(error: Exception) = expireIfRefused(super.handle(error))
+
+    override fun handle(error: Exception, retryFunction: () -> Unit) =
+        expireIfRefused(super.handle(error, retryFunction))
+
+    private fun expireIfRefused(handler: ErrorHandler) = handler.also {
+        if (it is SessionExpiredErrorHandler) sessionExpiry.expire()
+    }
+}
 
 /** RLS refused the write: shouldn't happen if the UI respects roles (ARCHITECTURE "Gestione errori"). */
 class PermissionDeniedException : Exception()

@@ -19,7 +19,7 @@ import kotlinx.coroutines.test.runTest
 class PrivacyViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val auth = FakeAuthRepository(Member("Luca B.", Role.PLAYER))
-    private val vm = PrivacyViewModel(auth, TestDispatcherProvider(dispatcher), AppErrorManager(emptyList()))
+    private val vm = PrivacyViewModel(auth, TestDispatcherProvider(dispatcher), AppErrorManager(emptyList()) {})
     private val state get() = vm.uiState.value.data!!
 
     @Test
