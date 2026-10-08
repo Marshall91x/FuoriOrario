@@ -48,6 +48,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,6 +57,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import fuoriorario.composeapp.generated.resources.Res
+import fuoriorario.composeapp.generated.resources.in_progress
 import fuoriorario.composeapp.generated.resources.load_failed
 import fuoriorario.composeapp.generated.resources.months_short
 import fuoriorario.composeapp.generated.resources.retry
@@ -315,7 +318,11 @@ fun LoadFailed(onRetry: () -> Unit) {
 @Composable
 fun LoadingOverlay() {
     Dialog({}, DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)) {
-        CircularProgressIndicator(Modifier.testTag("loading_overlay"), color = FuoriOrarioTheme.colors.accent)
+        val label = stringResource(Res.string.in_progress)
+        CircularProgressIndicator(
+            Modifier.testTag("loading_overlay").semantics { contentDescription = label },
+            color = FuoriOrarioTheme.colors.accent
+        )
     }
 }
 

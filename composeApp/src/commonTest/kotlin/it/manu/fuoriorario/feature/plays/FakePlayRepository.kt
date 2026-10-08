@@ -26,21 +26,21 @@ class FakePlayRepository(vararg plays: Play) : PlayRepository {
     }
 
     override suspend fun add(play: Play): Play {
-        failIfAsked()
+        beforeWrite()
         return play.copy(id = "play${plays.size}").also { plays += it }
     }
 
     override suspend fun update(play: Play) {
-        failIfAsked()
+        beforeWrite()
         plays[plays.indexOfFirst { it.id == play.id }] = play
     }
 
     override suspend fun remove(play: Play) {
-        failIfAsked()
+        beforeWrite()
         plays.removeAll { it.id == play.id }
     }
 
-    private suspend fun failIfAsked() {
+    private suspend fun beforeWrite() {
         gate?.await()
         if (failNext) {
             failNext = false
