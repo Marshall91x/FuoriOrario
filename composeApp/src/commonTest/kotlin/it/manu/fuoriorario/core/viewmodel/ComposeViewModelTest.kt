@@ -11,6 +11,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.io.IOException
 
@@ -50,7 +51,7 @@ class ComposeViewModelTest {
             advanceUntilIdle()
         }
 
-        retry()
+        assertNotNull(retry())
     }
 
     @Test
@@ -61,6 +62,7 @@ class ComposeViewModelTest {
 
         val retry = retry()
         retry()
+        runCurrent() // the first retry is now loading
         retry()
         advanceUntilIdle()
 

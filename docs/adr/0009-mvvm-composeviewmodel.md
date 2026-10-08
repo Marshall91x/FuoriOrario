@@ -12,7 +12,7 @@ Lo standard dei progetti aziendali Android è quello di [gestione-commessa-kerne
   1. `XScreen(vm)`: raccoglie lo stato e collega gli eventi.
   2. `XStateContent(state)`: fa un `when` su `UseCaseMutableState` (Loading / ShowData / Error).
   3. `XContent(...)`: è senza stato e riceve solo parametri e lambda.
-- **`ComposeViewModel` copiato in `commonMain`**, non usato come dipendenza. Si copiano `core/viewmodel/` (`ComposeViewModel`, `UiState`, `UseCaseMutableState`, `DispatcherProvider`) e `core/error/` (`ErrorManager`, `ErrorHandler`, `ErrorHandlerWithRetry`, `FallbackHandler`). La base è il lifecycle ViewModel multipiattaforma di JetBrains. L'API pubblica resta identica a sinetwork; cambia solo ciò che è Android:
+- **`ComposeViewModel` copiato in `commonMain`**, non usato come dipendenza. Si copiano `core/viewmodel/` (`ComposeViewModel`, `UiState`, `UseCaseMutableState`, `DispatcherProvider`) e `core/error/` (`ErrorManager`, `ErrorHandler`, `ErrorHandlerWithRetry`, `FallbackHandler`). La base è il lifecycle ViewModel multipiattaforma di JetBrains. L'API pubblica resta identica a sinetwork; cambia solo ciò che è Android, più le correzioni elencate qui sotto:
   - `ErrorManager` senza `Context`: i testi arrivano da Compose Resources, nell'`ErrorHandler` `@Composable` per i caricamenti e in `ErrorManager.checkError(e)` per le azioni (al posto di `checkError(e, errorManager.context)`);
   - `DispatcherProvider.io()` usa `Dispatchers.Default` su wasm, dove `Dispatchers.IO` non esiste;
   - `e::class.simpleName` al posto di `e::class.java`;
