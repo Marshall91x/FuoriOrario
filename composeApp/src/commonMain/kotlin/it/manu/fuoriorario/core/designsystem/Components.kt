@@ -55,16 +55,9 @@ import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.load_failed
 import fuoriorario.composeapp.generated.resources.months_short
 import fuoriorario.composeapp.generated.resources.retry
-import fuoriorario.composeapp.generated.resources.save_denied
-import fuoriorario.composeapp.generated.resources.save_failed
-import it.manu.fuoriorario.core.error.PermissionDeniedException
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -328,27 +321,6 @@ fun ToastHost(state: SnackbarHostState, modifier: Modifier = Modifier) {
             color = c.bg,
             style = MaterialTheme.typography.bodyMedium
         )
-    }
-}
-
-/** Launches a write; a failure toasts its cause and leaves the form as typed, for a retry. */
-fun CoroutineScope.launchWrite(
-    toast: SnackbarHostState,
-    onDone: () -> Unit = {},
-    action: suspend CoroutineScope.() -> Unit
-) = launch {
-    try {
-        action()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        val message = when (e) {
-            is PermissionDeniedException -> Res.string.save_denied
-            else -> Res.string.save_failed
-        }
-        launch { toast.show(getString(message)) }
-    } finally {
-        onDone()
     }
 }
 

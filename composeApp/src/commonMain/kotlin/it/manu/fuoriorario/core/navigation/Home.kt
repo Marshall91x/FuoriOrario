@@ -77,21 +77,18 @@ import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.feature.plan.PlanScreen
-import it.manu.fuoriorario.feature.plan.data.PlanRepository
 import it.manu.fuoriorario.feature.plays.PlaysScreen
 import it.manu.fuoriorario.feature.roster.RosterScreen
+import it.manu.fuoriorario.feature.settings.LibraryScreen
+import it.manu.fuoriorario.feature.settings.ZoneRefsScreen
 import it.manu.fuoriorario.feature.shots.ShotLogScreen
-import it.manu.fuoriorario.feature.shots.data.ShotRepository
 import it.manu.fuoriorario.feature.team.TeamOverviewScreen
-import it.manu.fuoriorario.ui.settings.LibraryScreen
-import it.manu.fuoriorario.ui.settings.ZoneRefsScreen
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 
 /** Bottom bar sections; [name] is the route. */
 private enum class Tab(val label: StringResource, val icon: DrawableResource, val staffOnly: Boolean = false) {
@@ -120,10 +117,7 @@ fun Home(
     players: Result<List<Member>>?,
     onPick: (Member) -> Unit,
     onRetryPlayers: () -> Unit,
-    onRosterChanged: (Member) -> Unit,
-    // Until their screens get a ViewModel (#56).
-    shots: ShotRepository = koinInject(),
-    plans: PlanRepository = koinInject()
+    onRosterChanged: (Member) -> Unit
 ) {
     val tabs = Tab.entries.filter { !it.staffOnly || member.role == Role.STAFF }
     val nav = rememberNavController()
@@ -189,9 +183,9 @@ fun Home(
                                                 }
                                             }
                                             TeamSection.ROSTER -> ScreenViewModels { RosterScreen(onRosterChanged) }
-                                            TeamSection.SETTINGS -> {
-                                                LibraryScreen(plans)
-                                                ZoneRefsScreen(shots)
+                                            TeamSection.SETTINGS -> ScreenViewModels {
+                                                LibraryScreen()
+                                                ZoneRefsScreen()
                                             }
                                         }
                                     }

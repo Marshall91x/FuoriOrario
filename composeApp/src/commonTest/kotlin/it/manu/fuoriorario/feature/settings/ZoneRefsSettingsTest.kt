@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.settings
+package it.manu.fuoriorario.feature.settings
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
