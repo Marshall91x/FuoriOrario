@@ -17,7 +17,7 @@ class ModulesTest {
     fun everyDefinitionResolves() {
         // SavedStateHandle, the followed player and the plan's week come from the screen, not from a definition.
         module { includes(appModule, dataModule) }.verify(
-            extraTypes = listOf(SavedStateHandle::class, Member::class, LocalDate::class)
+            extraTypes = listOf(SavedStateHandle::class, Member::class, LocalDate::class, List::class)
         )
     }
 }

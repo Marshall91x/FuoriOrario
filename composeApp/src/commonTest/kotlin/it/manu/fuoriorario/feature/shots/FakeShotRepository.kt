@@ -33,7 +33,7 @@ class FakeShotRepository(vararg sessions: ShotSession) : ShotRepository {
     override suspend fun teamSessions(since: LocalDate): List<ShotSession> {
         if (failTeam) {
             failTeam = false
-            error("offline")
+            throw IOException("offline")
         }
         return sessions.filter { it.date >= since }
     }
