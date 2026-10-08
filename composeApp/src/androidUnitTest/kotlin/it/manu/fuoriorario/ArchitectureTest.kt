@@ -50,7 +50,6 @@ class ArchitectureTest {
 
         /** Packages still waiting for their MVVM issue: remove each line when it closes. */
         val NOT_MIGRATED = listOf(
-            "ui.team", // #55
             "ui.settings" // #56
         )
     }

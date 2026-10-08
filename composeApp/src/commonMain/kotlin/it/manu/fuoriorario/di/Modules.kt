@@ -28,6 +28,7 @@ import it.manu.fuoriorario.feature.roster.data.SupabaseRosterRepository
 import it.manu.fuoriorario.feature.shots.ShotLogViewModel
 import it.manu.fuoriorario.feature.shots.data.ShotRepository
 import it.manu.fuoriorario.feature.shots.data.SupabaseShotRepository
+import it.manu.fuoriorario.feature.team.TeamOverviewViewModel
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.binds
@@ -61,6 +62,8 @@ val appModule = module {
     viewModelOf(::PlanViewModel)
     viewModelOf(::PlaysViewModel)
     viewModelOf(::RosterViewModel)
+    // The players come from the screen: koinViewModel { parametersOf(players) }.
+    viewModelOf(::TeamOverviewViewModel)
 }
 
 /** Supabase and the device's own storage (only the staff's picked player). */

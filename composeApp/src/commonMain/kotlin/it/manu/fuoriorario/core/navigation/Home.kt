@@ -82,9 +82,9 @@ import it.manu.fuoriorario.feature.plays.PlaysScreen
 import it.manu.fuoriorario.feature.roster.RosterScreen
 import it.manu.fuoriorario.feature.shots.ShotLogScreen
 import it.manu.fuoriorario.feature.shots.data.ShotRepository
+import it.manu.fuoriorario.feature.team.TeamOverviewScreen
 import it.manu.fuoriorario.ui.settings.LibraryScreen
 import it.manu.fuoriorario.ui.settings.ZoneRefsScreen
-import it.manu.fuoriorario.ui.team.TeamOverviewScreen
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
@@ -121,7 +121,7 @@ fun Home(
     onPick: (Member) -> Unit,
     onRetryPlayers: () -> Unit,
     onRosterChanged: (Member) -> Unit,
-    // Until their screens get a ViewModel (#55, #56).
+    // Until their screens get a ViewModel (#56).
     shots: ShotRepository = koinInject(),
     plans: PlanRepository = koinInject()
 ) {
@@ -179,10 +179,12 @@ fun Home(
                                             TeamSection.OVERVIEW -> when {
                                                 players?.isFailure == true -> LoadFailed(onRetryPlayers)
                                                 players?.getOrNull()?.isEmpty() == true -> NoPlayers()
+                                                // A roster change loads the numbers again.
                                                 else -> players?.getOrNull()?.let { list ->
-                                                    TeamOverviewScreen(list, shots, plans) {
-                                                        onPick(it)
-                                                        open(Tab.SHOT_LOG)
+                                                    key(list) {
+                                                        ScreenViewModels {
+                                                            TeamOverviewScreen(list, onOpened = { open(Tab.SHOT_LOG) })
+                                                        }
                                                     }
                                                 }
                                             }

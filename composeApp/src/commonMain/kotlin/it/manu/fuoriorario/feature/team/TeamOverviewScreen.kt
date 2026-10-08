@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.team
+package it.manu.fuoriorario.feature.team
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,21 +18,17 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.overview_free_30
 import fuoriorario.composeapp.generated.resources.overview_hint
@@ -42,25 +38,18 @@ import fuoriorario.composeapp.generated.resources.overview_shots_7
 import fuoriorario.composeapp.generated.resources.overview_three_30
 import fuoriorario.composeapp.generated.resources.overview_title
 import fuoriorario.composeapp.generated.resources.overview_week
-import it.manu.fuoriorario.core.designsystem.LoadFailed
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
-import it.manu.fuoriorario.core.today
+import it.manu.fuoriorario.core.viewmodel.UseCaseMutableState
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.OverviewRow
-import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.PlanLevel
-import it.manu.fuoriorario.domain.overviewRow
+import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.planLevel
-import it.manu.fuoriorario.domain.progress
-import it.manu.fuoriorario.domain.weekOf
-import it.manu.fuoriorario.feature.plan.data.PlanRepository
-import it.manu.fuoriorario.feature.shots.data.ShotRepository
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /** Under this the table scrolls sideways instead of squeezing the numbers. */
 private val TABLE_MIN_WIDTH = 400.dp
@@ -68,47 +57,36 @@ private val NUMBER_WIDTH = 64.dp
 private val PLAN_WIDTH = 72.dp
 
 /**
- * Quadro squadra (PRD F6): a row per player of [players], in their order, with this week's plan and recent shots.
- * Tapping a row runs [onOpen] for that player.
+ * Quadro squadra (PRD F6): a row per player, in the roster's order, with this week's plan and recent shots.
+ * [players] come from the roster, already loaded. Tapping a row makes staff follow that player, then runs [onOpened].
  */
 @Composable
-fun TeamOverviewScreen(players: List<Member>, shots: ShotRepository, plans: PlanRepository, onOpen: (Member) -> Unit) {
-    val c = FuoriOrarioTheme.colors
-    var rows by remember { mutableStateOf<List<OverviewRow>?>(null) }
-    var loadFailed by remember { mutableStateOf(false) }
-    var attempt by remember { mutableIntStateOf(0) }
-    LaunchedEffect(players, attempt) {
-        loadFailed = false
-        try {
-            val today = today()
-            // Two requests for the whole team, however many players.
-            rows = coroutineScope {
-                val week = async { plans.teamWeek(weekOf(today)) }
-                val sessions = async { shots.teamSessions(Period.DAYS_30.start(today)) }
-                val (items, checks) = week.await()
-                val byPlayer = sessions.await().groupBy { it.memberId }
-                players.map { player ->
-                    overviewRow(
-                        progress(
-                            items.filter {
-                                it.memberId == player.id
-                            },
-                            checks
-                        ),
-                        byPlayer[player.id].orEmpty(),
-                        today
-                    )
-                }
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            // No numbers from before next to the error.
-            rows = null
-            loadFailed = true
-        }
+fun TeamOverviewScreen(
+    players: List<Member>,
+    onOpened: () -> Unit,
+    vm: TeamOverviewViewModel = koinViewModel { parametersOf(players) }
+) {
+    val uiState = vm.uiState.collectAsStateWithLifecycle()
+    TeamOverviewStateContent(uiState.value.state) {
+        vm.onOpen(it)
+        onOpened()
     }
+}
 
+@Composable
+fun TeamOverviewStateContent(state: UseCaseMutableState<TeamOverviewScreenState>?, onOpen: (Member) -> Unit) {
+    when (state) {
+        // No numbers from before next to the error.
+        is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
+        is UseCaseMutableState.ShowData -> TeamOverviewContent(state.items, onOpen)
+        UseCaseMutableState.Loading, null -> Unit
+    }
+}
+
+/** The title at once, the table once loaded. */
+@Composable
+fun TeamOverviewContent(state: TeamOverviewScreenState, onOpen: (Member) -> Unit) {
+    val c = FuoriOrarioTheme.colors
     Panel {
         Column {
             Text(
@@ -119,10 +97,7 @@ fun TeamOverviewScreen(players: List<Member>, shots: ShotRepository, plans: Plan
             Text(stringResource(Res.string.overview_title).uppercase(), style = MaterialTheme.typography.titleLarge)
         }
         Text(stringResource(Res.string.overview_hint), color = c.muted, style = MaterialTheme.typography.bodyMedium)
-        rows?.let { Table(players.zip(it), onOpen) }
-    }
-    if (loadFailed) {
-        LoadFailed { attempt++ }
+        state.rows?.let { Table(it, onOpen) }
     }
 }
 
@@ -225,5 +200,21 @@ private fun PlanPill(percent: Int?) {
         fontSize = 15.sp,
         fontWeight = FontWeight.Medium,
         textAlign = TextAlign.Center
+    )
+}
+
+@Preview
+@Composable
+private fun TeamOverviewContentPreview() = FuoriOrarioTheme {
+    TeamOverviewContent(
+        TeamOverviewScreenState(
+            listOf(
+                Member("Luca B.", Role.PLAYER, jerseyNumber = "7", position = "Guardia", id = "l") to
+                    OverviewRow(plan = 80, attempted7 = 40, freeThrows30 = 75, three30 = 34),
+                Member("Anna", Role.PLAYER, id = "a") to
+                    OverviewRow(plan = null, attempted7 = 0, freeThrows30 = null, three30 = null)
+            )
+        ),
+        onOpen = {}
     )
 }
