@@ -105,7 +105,8 @@ fun LoginScreen(auth: AuthRepository) {
                 onValueChange = { new -> code = new.filter(Char::isDigit).take(CODE_LENGTH) },
                 tag = "code",
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.NumberPassword,
+                    // Not NumberPassword: Android would offer to save the one-time code as a password.
+                    keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Done
                 ),
                 onDone = verify,
