@@ -18,7 +18,8 @@ Lo standard dei progetti aziendali Android è quello di [gestione-commessa-kerne
   - `e::class.simpleName` al posto di `e::class.java`;
   - riconoscimento degli errori di rete da Ktor (`HttpRequestException`) e `kotlinx.io.IOException`, al posto di `okio.IOException`;
   - `checkError` (il testo del toast di un'azione fallita) non mostra mai `e.message`, che da Supabase arriva tecnico e in inglese: dà "La sessione è scaduta…" per un 401, "Non hai i permessi…" per `PermissionDeniedException` e "Salvataggio non riuscito…" per il resto, come l'app faceva già;
-  - `println` al posto di `SILog`.
+  - `println` al posto di `SILog`;
+  - "Riprova" dei caricamenti (#60): resta dopo qualsiasi numero di errori di rete, mentre sinetwork lo toglieva dopo `maxRetry` tentativi (il parametro di `defaultLaunchWithRetry` resta, ma non è usato). Un nuovo "Riprova" cancella il caricamento in corso invece di avviarne un altro in parallelo. Questa correzione non è in sinetwork.
 - **Errori.** I caricamenti usano `defaultLaunch`: in caso di errore, schermata intera con "Riprova" se l'errore è di rete. Le azioni (salva, spunta, elimina) usano `defaultLaunchForChannels`: l'errore arriva come toast (`LocalToast`) e lo stato resta `ShowData`. `AppErrorManager` valuta gli handler in questo ordine:
   1. `SessionExpiredErrorHandler` (401), senza riprova. Un 401, in un caricamento o in un'azione, fa chiamare ad `AppErrorManager` anche `SessionExpiry`, che cancella la sessione locale e riporta al login con l'avviso;
   2. `PermissionDeniedErrorHandler`;

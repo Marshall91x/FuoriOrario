@@ -9,13 +9,15 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 // Copied from sinetwork (utils/ComposeViewModel.kt): same public API. Adapted as ADR 0009 says: no Context
-// (ErrorManager.checkError replaces checkError(e, context)), `::class.simpleName`, network errors are kotlinx.io.IOException.
+// (ErrorManager.checkError replaces checkError(e, context)), `::class.simpleName`, network errors are kotlinx.io.IOException,
+// "Riprova" never runs out and replaces the load in flight (#60).
 
 abstract class ComposeViewModel<T>(
     defaultState: UiState<T> = UiState(),
@@ -52,6 +54,7 @@ abstract class ComposeViewModel<T>(
         )
     }
 
+    /** [maxRetry] is kept for sinetwork's API but unused: "Riprova" never runs out (#60). */
     fun defaultLaunchWithRetry(
         dispatcher: CoroutineDispatcher = dispatcherProvider.io(),
         emitError: Boolean = true,
@@ -62,7 +65,6 @@ abstract class ComposeViewModel<T>(
         defaultLaunchInternal(
             dispatcher = dispatcher,
             emitError = emitError,
-            maxRetry = maxRetry,
             block = block,
             retryFunction = retryFunction
         )
@@ -108,25 +110,22 @@ abstract class ComposeViewModel<T>(
     internal fun defaultLaunchInternal(
         dispatcher: CoroutineDispatcher = dispatcherProvider.io(),
         emitError: Boolean = true,
-        maxRetry: Int = 3,
         retryFunction: ((() -> Unit)?) = null,
         block: suspend CoroutineScope.() -> Unit
     ) {
-        var attempt = 0
+        var job: Job? = null
 
+        // A retry replaces the load still running, it doesn't run alongside it (ADR 0009, #60).
         fun internalLaunch() {
-            viewModelScope.launch(dispatcher + coroutineExceptionHandler) {
+            job?.cancel()
+            job = viewModelScope.launch(dispatcher + coroutineExceptionHandler) {
                 try {
                     block()
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     if (emitError) {
-                        if (isNetworkError(e, maxRetry = maxRetry, retryAttempt = attempt) {
-                                attempt++
-                                internalLaunch()
-                            }
-                        ) {
+                        if (isNetworkError(e) { internalLaunch() }) {
                             return@launch
                         }
                         retryFunction?.let { function ->
@@ -144,22 +143,15 @@ abstract class ComposeViewModel<T>(
             println("Error: exception: ${exception::class.simpleName} $exception")
         }
 
-    private suspend fun isNetworkError(e: Exception, maxRetry: Int, retryAttempt: Int, block: () -> Unit): Boolean {
+    private suspend fun isNetworkError(e: Exception, block: () -> Unit): Boolean {
         if (e.isNetworkException()) {
-            if (retryAttempt < maxRetry) {
-                emitError(
-                    errorManager.handle(
-                        error = e,
-                        retryFunction = block
-                    )
+            // "Riprova" stays however many times it failed: sinetwork dropped it after maxRetry (ADR 0009, #60).
+            emitError(
+                errorManager.handle(
+                    error = e,
+                    retryFunction = block
                 )
-            } else {
-                emitError(
-                    errorManager.handle(
-                        error = e
-                    )
-                )
-            }
+            )
             return true
         } else {
             return false
