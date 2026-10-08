@@ -51,5 +51,5 @@ Lo standard dei progetti aziendali Android è quello di [gestione-commessa-kerne
 ## Conseguenze
 - Se sinetwork diventerà multipiattaforma, basterà sostituire la copia e cambiare gli import.
 - Una correzione a `ComposeViewModel` in sinetwork va riportata qui a mano.
-- La migrazione è incrementale (issue #50–#56). Fino alla fine convivono il vecchio `ui/` e il nuovo `feature/`, e Konsist esclude i package non ancora migrati.
+- La migrazione è incrementale (issue #50–#56, conclusa con #56). Fino alla fine convivono il vecchio `ui/` e il nuovo `feature/`, e Konsist esclude i package non ancora migrati.
 - Il rework precede la v0.1.0 (#21).

@@ -23,14 +23,12 @@ class ArchitectureTest {
     @Test
     fun screensLiveInAFeature() {
         production.files.withNameEndingWith("Screen")
-            .filterNot { it.packagee?.name.notMigrated() }
             .assertTrue { it.hasPackage("$ROOT.feature..") }
     }
 
     @Test
     fun noPackageByLayerButDomain() {
         production.packages
-            .filterNot { it.name.notMigrated() }
             .assertFalse { it.name.removePrefix("$ROOT.").substringBefore('.') in LAYERS }
     }
 
@@ -41,16 +39,9 @@ class ArchitectureTest {
             .assertFalse { file -> file.imports.any { i -> NOT_IN_DOMAIN.any(i.name::startsWith) } }
     }
 
-    private fun String?.notMigrated() = this != null && NOT_MIGRATED.any { startsWith("$ROOT.$it") }
-
     private companion object {
         const val ROOT = "it.manu.fuoriorario"
         val LAYERS = setOf("ui", "data", "viewmodel")
         val NOT_IN_DOMAIN = listOf("androidx.compose", "org.jetbrains.compose", "io.github.jan.supabase", "org.koin")
-
-        /** Packages still waiting for their MVVM issue: remove each line when it closes. */
-        val NOT_MIGRATED = listOf(
-            "ui.settings" // #56
-        )
     }
 }

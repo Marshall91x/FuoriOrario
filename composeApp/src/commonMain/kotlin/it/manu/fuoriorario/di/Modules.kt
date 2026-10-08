@@ -25,6 +25,8 @@ import it.manu.fuoriorario.feature.plays.data.SupabasePlayRepository
 import it.manu.fuoriorario.feature.roster.RosterViewModel
 import it.manu.fuoriorario.feature.roster.data.RosterRepository
 import it.manu.fuoriorario.feature.roster.data.SupabaseRosterRepository
+import it.manu.fuoriorario.feature.settings.LibraryViewModel
+import it.manu.fuoriorario.feature.settings.ZoneRefsViewModel
 import it.manu.fuoriorario.feature.shots.ShotLogViewModel
 import it.manu.fuoriorario.feature.shots.data.ShotRepository
 import it.manu.fuoriorario.feature.shots.data.SupabaseShotRepository
@@ -64,6 +66,8 @@ val appModule = module {
     viewModelOf(::RosterViewModel)
     // The players come from the screen: koinViewModel { parametersOf(players) }.
     viewModelOf(::TeamOverviewViewModel)
+    viewModelOf(::LibraryViewModel)
+    viewModelOf(::ZoneRefsViewModel)
 }
 
 /** Supabase and the device's own storage (only the staff's picked player). */

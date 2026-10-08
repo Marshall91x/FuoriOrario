@@ -1,7 +1,5 @@
 # Fuori Orario — Architettura
 
-> **Migrazione in corso** verso MVVM ([adr/0009](adr/0009-mvvm-composeviewmodel.md)): questo documento descrive lo stato di arrivo. Avanzamento nelle issue #50–#56; togliere questa nota alla chiusura dell'ultima.
-
 Decisioni motivate in [adr/](adr/). Termini in [CONTEXT.md](../CONTEXT.md). Limiti noti in [NOTE.md](NOTE.md).
 
 ## Stack

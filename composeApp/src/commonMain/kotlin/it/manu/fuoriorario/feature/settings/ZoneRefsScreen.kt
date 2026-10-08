@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.settings
+package it.manu.fuoriorario.feature.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,84 +9,70 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.refs_default
 import fuoriorario.composeapp.generated.resources.refs_error
 import fuoriorario.composeapp.generated.resources.refs_hint
 import fuoriorario.composeapp.generated.resources.refs_restore
 import fuoriorario.composeapp.generated.resources.refs_save
-import fuoriorario.composeapp.generated.resources.refs_saved
 import fuoriorario.composeapp.generated.resources.refs_title
 import it.manu.fuoriorario.core.designsystem.Field
 import it.manu.fuoriorario.core.designsystem.GhostButton
-import it.manu.fuoriorario.core.designsystem.LoadFailed
 import it.manu.fuoriorario.core.designsystem.LocalToast
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.PrimaryButton
-import it.manu.fuoriorario.core.designsystem.launchWrite
 import it.manu.fuoriorario.core.designsystem.show
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
+import it.manu.fuoriorario.core.viewmodel.UseCaseMutableState
 import it.manu.fuoriorario.domain.DEFAULT_ZONE_REFS
 import it.manu.fuoriorario.domain.Zone
-import it.manu.fuoriorario.domain.parseZoneRef
-import it.manu.fuoriorario.feature.shots.data.ShotRepository
 import it.manu.fuoriorario.feature.shots.zoneName
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Staff's Riferimenti (PRD F5): the expected percentage per zone, two per row, each with its default below.
  * Restore only fills in the defaults: nothing is stored until Salva, which colours every player's map.
  */
 @Composable
-fun ZoneRefsScreen(shots: ShotRepository) {
-    val c = FuoriOrarioTheme.colors
+fun ZoneRefsScreen(vm: ZoneRefsViewModel = koinViewModel()) {
+    val uiState = vm.uiState.collectAsStateWithLifecycle()
     val toast = LocalToast.current
-    val scope = rememberCoroutineScope()
+    LaunchedEffect(vm) { vm.toasts.collect { launch { toast.show(it) } } }
+    ZoneRefsStateContent(
+        uiState.value.state,
+        ZoneRefsActions(onRefChanged = vm::onRefChanged, onSave = vm::onSave, onRestore = vm::onRestore)
+    )
+}
 
-    /** The fields as typed, null while loading. */
-    var draft by remember { mutableStateOf<Map<Zone, String>?>(null) }
-    var loadFailed by remember { mutableStateOf(false) }
-    var attempt by remember { mutableIntStateOf(0) }
-    var invalid by remember { mutableStateOf(false) }
-    var busy by remember { mutableStateOf(false) }
-    LaunchedEffect(attempt) {
-        loadFailed = false
-        try {
-            draft = shots.zoneRefs().mapValues { it.value.toString() }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            loadFailed = true
-        }
+/** What the riferimenti do: edit a field, save, restore the defaults. */
+class ZoneRefsActions(
+    val onRefChanged: (Zone, String) -> Unit = { _, _ -> },
+    val onSave: () -> Unit = {},
+    val onRestore: () -> Unit = {}
+)
+
+@Composable
+fun ZoneRefsStateContent(state: UseCaseMutableState<ZoneRefsScreenState>?, actions: ZoneRefsActions) {
+    when (state) {
+        is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
+        is UseCaseMutableState.ShowData -> ZoneRefsContent(state.items, actions)
+        UseCaseMutableState.Loading, null -> Unit
     }
+}
 
-    if (loadFailed) LoadFailed { attempt++ }
-    val fields = draft ?: return
-
-    fun save() {
-        val refs = fields.mapValues { parseZoneRef(it.value) }
-        invalid = refs.values.any { it == null }
-        if (invalid || busy) return
-        busy = true
-        scope.launchWrite(toast, onDone = { busy = false }) {
-            shots.setZoneRefs(refs.mapValues { it.value!! })
-            launch { toast.show(getString(Res.string.refs_saved)) }
-        }
-    }
-
+/** Nothing until the riferimenti arrive. */
+@Composable
+fun ZoneRefsContent(state: ZoneRefsScreenState, actions: ZoneRefsActions) {
+    val c = FuoriOrarioTheme.colors
+    val fields = state.draft ?: return
     Panel {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(Res.string.refs_title).uppercase(), style = MaterialTheme.typography.titleLarge)
@@ -99,7 +85,7 @@ fun ZoneRefsScreen(shots: ShotRepository) {
                         Field(
                             stringResource(zoneName.getValue(zone)),
                             fields.getValue(zone),
-                            { draft = fields + (zone to it) },
+                            { actions.onRefChanged(zone, it) },
                             "ref_${zone.name.lowercase()}",
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                         )
@@ -112,7 +98,7 @@ fun ZoneRefsScreen(shots: ShotRepository) {
                 }
             }
         }
-        if (invalid) {
+        if (state.invalid) {
             Text(stringResource(Res.string.refs_error), color = c.accent, style = MaterialTheme.typography.bodyMedium)
         }
         Row(
@@ -120,11 +106,16 @@ fun ZoneRefsScreen(shots: ShotRepository) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            PrimaryButton(stringResource(Res.string.refs_save), ::save, enabled = !busy)
-            GhostButton(stringResource(Res.string.refs_restore), {
-                draft = DEFAULT_ZONE_REFS.mapValues { it.value.toString() }
-                invalid = false
-            })
+            PrimaryButton(stringResource(Res.string.refs_save), actions.onSave, enabled = !state.busy)
+            GhostButton(stringResource(Res.string.refs_restore), actions.onRestore)
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ZoneRefsContentPreview() = FuoriOrarioTheme {
+    Column {
+        ZoneRefsContent(ZoneRefsScreenState(DEFAULT_ZONE_REFS.mapValues { it.value.toString() }), ZoneRefsActions())
     }
 }
