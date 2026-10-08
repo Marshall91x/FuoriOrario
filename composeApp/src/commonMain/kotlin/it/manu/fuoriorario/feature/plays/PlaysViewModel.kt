@@ -74,6 +74,9 @@ data class PlaysScreenState(
     val busy: Boolean = false
 ) {
     val open get() = plays?.find { it.id == openId }
+
+    /** A play or the editor is open: a second-level screen, without the tab bar. */
+    val secondLevel get() = openId != null || draft != null
 }
 
 /** Schemi (PRD F5): the team's plays, and staff's editor with save and remove. */

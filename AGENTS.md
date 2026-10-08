@@ -14,7 +14,7 @@ Prima di toccare il codice leggi [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), i
   1. `XScreen(vm)` raccoglie lo stato e collega le lambda.
   2. `XStateContent(state)` fa un `when` su `UseCaseMutableState`.
   3. `XContent(...)` è senza stato, e lì vanno le `@Preview`.
-- Una schermata di secondo livello (aperta con un tasto da una scheda) nasconde la barra in basso e gestisce il back di sistema con `BackHandler` (ARCHITECTURE "Schermate e navigazione").
+- Una schermata di secondo livello (aperta con un tasto da una scheda) nasconde la barra in basso e gestisce il back di sistema con `BackHandler`; lo dice a `Home` con `onSecondLevel`, come `PlaysScreen` (ARCHITECTURE "Schermate e navigazione").
 - Nessun `LaunchedEffect` per caricare o salvare dati: lo fa il ViewModel.
 - Nessun repository creato in un composable: lo inietta Koin nel ViewModel.
 - Nel ViewModel vanno i dati e le bozze dei form (`data class` nello `ScreenState`, metodi `onXChanged`). In `remember` va solo lo stato visivo: gesto in corso, animazione, scroll, foglio aperto o chiuso.

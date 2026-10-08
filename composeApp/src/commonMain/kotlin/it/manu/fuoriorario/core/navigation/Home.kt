@@ -133,7 +133,9 @@ fun Home(
 
     CompositionLocalProvider(LocalToast provides toast) {
         Column(Modifier.fillMaxSize()) {
-            Box(Modifier.weight(1f)) {
+            // Without the bar the screen keeps clear of the system's bottom edge itself.
+            val bottomInset = WindowInsets.safeDrawing.exclude(WindowInsets.ime).only(WindowInsetsSides.Bottom)
+            Box(Modifier.weight(1f).then(if (secondLevel) Modifier.windowInsetsPadding(bottomInset) else Modifier)) {
                 // Tabs switch at once, like the prototype: a crossfade would show both screens at the same time.
                 NavHost(
                     nav,

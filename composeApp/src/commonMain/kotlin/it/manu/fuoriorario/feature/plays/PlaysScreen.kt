@@ -110,7 +110,7 @@ fun PlaysScreen(staff: Boolean, onSecondLevel: (Boolean) -> Unit = {}, vm: Plays
     val uiState = vm.uiState.collectAsStateWithLifecycle()
     val toast = LocalToast.current
     LaunchedEffect(vm) { vm.toasts.collect { launch { toast.show(it) } } }
-    val secondLevel = uiState.value.data?.let { it.open != null || it.draft != null } == true
+    val secondLevel = uiState.value.data?.secondLevel == true
     LaunchedEffect(secondLevel) { onSecondLevel(secondLevel) }
     DisposableEffect(Unit) { onDispose { onSecondLevel(false) } }
     PlaysStateContent(
@@ -261,7 +261,7 @@ private fun Chips(play: Play) {
 @Composable
 private fun PlayViewer(play: Play, onEdit: (() -> Unit)?, onBack: () -> Unit) {
     val c = FuoriOrarioTheme.colors
-    // ponytail: deprecated, as in PlayEditor.
+    // ponytail: deprecated, NavigationEventHandler when its compose artifact is among our dependencies (as in PlayEditor).
     @Suppress("DEPRECATION")
     BackHandler(onBack = onBack)
 
