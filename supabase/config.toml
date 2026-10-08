@@ -426,7 +426,7 @@ enabled = true
 # Production (Supabase cloud, Frankfurt). `supabase config push` applies these overrides on top of the
 # settings above when the linked project ref matches `project_id`. Uncomment once the cloud project
 # exists and put its ref (not a secret) in `project_id`: an empty or env() ref breaks `supabase start`.
-# Without this block, `config push` would send the local site_url and the 2-emails-per-hour limit.
+# Without this block, `config push` would send the local site_url, email limits and resend interval.
 # [remotes.production]
 # project_id = "<project ref>"
 #
@@ -436,6 +436,9 @@ enabled = true
 #
 # [remotes.production.auth.rate_limit]
 # email_sent = 100
+#
+# [remotes.production.auth.email]
+# max_frequency = "60s"
 #
 # # OTP emails go through Resend (sending domain verified there); the API key is the SMTP password.
 # [remotes.production.auth.email.smtp]

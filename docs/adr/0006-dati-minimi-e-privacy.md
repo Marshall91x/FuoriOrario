@@ -7,8 +7,8 @@ Utenti reali, inclusi minorenni dai 14 anni (età del consenso digitale in Itali
 
 ## Decisione
 - Dati raccolti: email e nome visualizzato (obbligatori, anche soprannome); numero e ruolo in campo facoltativi; sessioni di tiro, piani, spunte. Niente data di nascita, foto o altro.
-- Supabase in regione UE (Francoforte). Le email con il codice OTP passano da Resend (SMTP), che riceve solo indirizzo e codice.
-- Informativa di una pagina al primo accesso con accettazione registrata (`privacy_ack_at`): chi tratta, quali dati, perché, dove, come chiedere la cancellazione.
+- Supabase in regione UE (Francoforte). Le email con il codice OTP passano da Resend (SMTP), che riceve solo indirizzo e codice (dominio in regione UE).
+- Informativa di una pagina al primo accesso con accettazione registrata (`privacy_ack_at`): chi tratta e come contattarlo (anima91x@gmail.com, pubblico nel repo come il nome), quali dati, perché e su che base (consenso), per quanto (finché si è in squadra), dove, diritti di accesso, rettifica e cancellazione, reclamo al Garante.
 - Cancellazione su richiesta via email, eseguita a mano; togliere un membro elimina i suoi dati (cascade) **e il suo account** (`auth.users`): non resta nessuna email di chi non è più in squadra. Se lo staff lo riaggiunge, al primo accesso riparte da un account nuovo, informativa compresa.
 
 ## Rimandato a M8

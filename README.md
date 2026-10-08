@@ -102,9 +102,9 @@ Per firmare in locale, le stesse chiavi (con `ANDROID_KEYSTORE_PATH` al posto di
 ### Supabase di produzione (una tantum)
 
 1. Crea il progetto su supabase.com nella regione **Central EU (Frankfurt)**.
-2. Su [Resend](https://resend.com) verifica il dominio del mittente e crea una API key.
+2. Su [Resend](https://resend.com) aggiungi il dominio del mittente nella regione **EU (Ireland)**, verificalo e crea una API key.
 3. In `supabase/config.toml` decommenta il blocco `[remotes.production]` e metti in `project_id` il ref del progetto (la parte prima di `.supabase.co` nell'URL).
-4. Collega il progetto e applica migrazioni e config (hook delle email fuori rosa, SMTP, `site_url`, limite di invio email):
+4. Collega il progetto e applica migrazioni e config (hook delle email fuori rosa, SMTP, `site_url`, limiti di invio email):
 
    ```sh
    supabase link --project-ref <ref>
