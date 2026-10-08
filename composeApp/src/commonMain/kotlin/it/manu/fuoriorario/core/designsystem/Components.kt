@@ -52,7 +52,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fuoriorario.composeapp.generated.resources.Res
-import fuoriorario.composeapp.generated.resources.last_staff
 import fuoriorario.composeapp.generated.resources.load_failed
 import fuoriorario.composeapp.generated.resources.months_short
 import fuoriorario.composeapp.generated.resources.retry
@@ -60,7 +59,6 @@ import fuoriorario.composeapp.generated.resources.save_denied
 import fuoriorario.composeapp.generated.resources.save_failed
 import it.manu.fuoriorario.core.error.PermissionDeniedException
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
-import it.manu.fuoriorario.data.LastStaffException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -345,7 +343,6 @@ fun CoroutineScope.launchWrite(
         throw e
     } catch (e: Exception) {
         val message = when (e) {
-            is LastStaffException -> Res.string.last_staff
             is PermissionDeniedException -> Res.string.save_denied
             else -> Res.string.save_failed
         }

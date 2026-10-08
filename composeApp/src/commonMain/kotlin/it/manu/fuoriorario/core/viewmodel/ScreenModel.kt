@@ -31,7 +31,9 @@ abstract class ScreenModel<T>(
 
     protected val state get() = uiState.value.data!!
 
-    protected suspend fun toast(message: StringResource) = toastChannel.send(getString(message))
+    protected suspend fun toast(message: StringResource) = toast(getString(message))
+
+    protected suspend fun toast(message: String) = toastChannel.send(message)
 
     /** A write: a failure toasts and leaves everything on screen as it was, sheets included. */
     protected fun act(block: suspend () -> Unit) {

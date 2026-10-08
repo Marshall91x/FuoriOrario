@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.roster
+package it.manu.fuoriorario.feature.roster
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasText

@@ -21,12 +21,12 @@ import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.feature.auth.FakeAuthRepository
 import it.manu.fuoriorario.feature.plan.FakePlanRepository
+import it.manu.fuoriorario.feature.roster.FakeRosterRepository
 import it.manu.fuoriorario.feature.shots.FakeShotRepository
 import it.manu.fuoriorario.testing.TestApp
 import it.manu.fuoriorario.testing.awaitNode
 import it.manu.fuoriorario.testing.awaitText
 import it.manu.fuoriorario.testing.runAppTest
-import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import kotlin.test.Test
 
 private const val ACK = "2026-10-01T10:00:00Z"

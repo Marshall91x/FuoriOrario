@@ -1,7 +1,9 @@
-package it.manu.fuoriorario.data
+package it.manu.fuoriorario.feature.roster.data
 
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.PostgrestRequestBuilder
+import it.manu.fuoriorario.core.error.mapErrors
+import it.manu.fuoriorario.core.error.requireRow
 import it.manu.fuoriorario.core.supabase
 import it.manu.fuoriorario.domain.Member
 

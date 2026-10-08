@@ -1,9 +1,9 @@
 package it.manu.fuoriorario.feature.plays.data
 
 import io.github.jan.supabase.postgrest.from
+import it.manu.fuoriorario.core.error.mapErrors
+import it.manu.fuoriorario.core.error.requireRow
 import it.manu.fuoriorario.core.supabase
-import it.manu.fuoriorario.data.mapErrors
-import it.manu.fuoriorario.data.requireRow
 import it.manu.fuoriorario.domain.Play
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
