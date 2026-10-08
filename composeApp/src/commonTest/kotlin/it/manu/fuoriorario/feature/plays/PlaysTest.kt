@@ -1,6 +1,7 @@
 package it.manu.fuoriorario.feature.plays
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
@@ -111,8 +112,16 @@ class PlaysTest {
         onNodeWithTag("play_toggle").performScrollTo().performClick()
         awaitText("Passo 4 di 4")
         awaitText("Passaggio a 5 sul taglio.")
-        // Nothing left to play.
+        // #71: at the end it plays again from step 1, the first frame already moving into step 2. The clock stands
+        // still to catch it there.
+        mainClock.autoAdvance = false
+        onNodeWithTag("play_toggle").assertIsEnabled().performClick()
+        mainClock.advanceTimeByFrame()
+        onNodeWithText("Passo 2 di 4").assertExists()
+        onNodeWithText("5 sale e porta il blocco sulla destra di 1.").assertExists()
         onNodeWithTag("play_toggle").assertIsNotEnabled()
+        mainClock.autoAdvance = true
+        awaitText("Passo 4 di 4")
 
         onNodeWithTag("plays_back").performScrollTo().performClick()
         awaitText("Box")
