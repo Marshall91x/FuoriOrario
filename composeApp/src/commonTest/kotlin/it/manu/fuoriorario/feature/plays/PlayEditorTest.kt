@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.plays
+package it.manu.fuoriorario.feature.plays
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ComposeUiTest

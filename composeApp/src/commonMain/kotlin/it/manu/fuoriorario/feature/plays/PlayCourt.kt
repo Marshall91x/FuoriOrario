@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.ui.plays
+package it.manu.fuoriorario.feature.plays
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio

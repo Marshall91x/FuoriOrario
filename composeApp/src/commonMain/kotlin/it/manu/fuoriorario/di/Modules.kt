@@ -12,9 +12,7 @@ import it.manu.fuoriorario.core.session.SelectedPlayer
 import it.manu.fuoriorario.core.session.SessionExpiry
 import it.manu.fuoriorario.core.viewmodel.DefaultDispatcherProvider
 import it.manu.fuoriorario.core.viewmodel.DispatcherProvider
-import it.manu.fuoriorario.data.PlayRepository
 import it.manu.fuoriorario.data.RosterRepository
-import it.manu.fuoriorario.data.SupabasePlayRepository
 import it.manu.fuoriorario.data.SupabaseRosterRepository
 import it.manu.fuoriorario.feature.auth.LoginViewModel
 import it.manu.fuoriorario.feature.auth.PrivacyViewModel
@@ -23,6 +21,9 @@ import it.manu.fuoriorario.feature.auth.data.SupabaseAuthRepository
 import it.manu.fuoriorario.feature.plan.PlanViewModel
 import it.manu.fuoriorario.feature.plan.data.PlanRepository
 import it.manu.fuoriorario.feature.plan.data.SupabasePlanRepository
+import it.manu.fuoriorario.feature.plays.PlaysViewModel
+import it.manu.fuoriorario.feature.plays.data.PlayRepository
+import it.manu.fuoriorario.feature.plays.data.SupabasePlayRepository
 import it.manu.fuoriorario.feature.shots.ShotLogViewModel
 import it.manu.fuoriorario.feature.shots.data.ShotRepository
 import it.manu.fuoriorario.feature.shots.data.SupabaseShotRepository
@@ -57,6 +58,7 @@ val appModule = module {
     viewModelOf(::ShotLogViewModel)
     // The player and the first week come from the screen: koinViewModel { parametersOf(player, week) }.
     viewModelOf(::PlanViewModel)
+    viewModelOf(::PlaysViewModel)
 }
 
 /** Supabase and the device's own storage (only the staff's picked player). */

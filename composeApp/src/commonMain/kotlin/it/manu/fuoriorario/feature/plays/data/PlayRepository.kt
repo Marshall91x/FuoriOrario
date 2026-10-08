@@ -1,4 +1,4 @@
-package it.manu.fuoriorario.data
+package it.manu.fuoriorario.feature.plays.data
 
 import it.manu.fuoriorario.domain.Play
 
