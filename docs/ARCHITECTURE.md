@@ -1,5 +1,7 @@
 # Fuori Orario — Architettura
 
+> **Migrazione in corso** verso MVVM ([adr/0009](adr/0009-mvvm-composeviewmodel.md)): questo documento descrive lo stato di arrivo. Avanzamento nelle issue #50–#56; togliere questa nota alla chiusura dell'ultima.
+
 Decisioni motivate in [adr/](adr/). Termini in [CONTEXT.md](../CONTEXT.md). Limiti noti in [NOTE.md](NOTE.md).
 
 ## Stack
@@ -10,9 +12,10 @@ Decisioni motivate in [adr/](adr/). Termini in [CONTEXT.md](../CONTEXT.md). Limi
 | Target | Android, iOS (arm64, simulatorArm64), Web `wasmJs` |
 | Backend | Supabase (Postgres, Auth, RLS), regione UE |
 | Client backend | `supabase-kt` (auth + postgrest), Ktor engine: OkHttp (Android), Darwin (iOS), Js (Wasm) |
-| DI | Koin |
+| DI | Koin + `koin-compose-viewmodel` |
 | Navigazione | Navigation Compose multiplatform |
-| Stato | ViewModel + `StateFlow` |
+| Stato | MVVM: `ComposeViewModel` (copiato da sinetwork, vedi [adr/0009](adr/0009-mvvm-composeviewmodel.md)) su lifecycle ViewModel multipiattaforma |
+| Token | JWT gestito da `supabase-kt` (Bearer + refresh automatico); nessun interceptor custom |
 | Date | `kotlinx-datetime`, fuso `Europe/Rome` |
 | Config | BuildKonfig: `SUPABASE_URL`, `SUPABASE_ANON_KEY`; Gradle: `APP_VERSION`, `ANDROID_KEYSTORE_*`/`ANDROID_KEY_*` (firma). Tutto da `local.properties` / variabili CI |
 | Grafica | `Canvas` di Compose per mappa e grafico (nessuna libreria di chart) |
@@ -26,22 +29,29 @@ Un solo modulo `composeApp`. Package `it.manu.fuoriorario`, organizzato per funz
 ```
 composeApp/src/
   commonMain/kotlin/it/manu/fuoriorario/
-    App.kt                 # tema + Koin, header, login → informativa → home
-    core/                  # SupabaseClient, Week/Season, utilità date
-    domain/                # modelli puri + calcoli (Zones, Stats, Progress) — senza dipendenze
-    data/                  # interfacce repository + implementazioni Supabase
-    ui/theme/              # token colore/tipografia del prototipo
-    ui/components/         # Toast, BottomSheet, Stepper, Pill, SegmentedControl
-    ui/auth/               # login OTP, informativa
-    ui/home/               # barra schede per ruolo + NavHost
-    ui/shots/              # diario di tiro, mappa, grafico, registra sessione
-    ui/plan/               # piano settimanale, editor esercizio, nota
-    ui/roster/             # rosa (staff)
-    ui/team/               # quadro squadra (staff)
-    ui/settings/           # libreria + riferimenti (staff)
-    ui/plays/              # schemi: elenco, visualizzatore, editor (staff), campo
+    App.kt                 # tema + Koin + NavHost, guidato da MainViewModel
+    MainViewModel.kt       # sessione, membro, informativa, instradamento login → informativa → home
+    di/                    # moduli Koin
+    core/
+      viewmodel/           # ComposeViewModel, UiState, UseCaseMutableState, DispatcherProvider (da sinetwork)
+      error/               # ErrorManager, handler, AppErrorManager
+      session/             # sessione supabase-kt, sessione scaduta, SelectedPlayer
+      navigation/          # rotte e barra schede per ruolo
+      designsystem/        # Toast, BottomSheet, Stepper, Pill, SegmentedControl
+      theme/               # token colore/tipografia del prototipo
+      Supabase.kt Dates.kt # client Supabase, Week/Season, utilità date
+    domain/                # modelli puri + calcoli (Zones, Stats, Progress, Play) — senza dipendenze
+    feature/
+      auth/                # login OTP, informativa       + data/AuthRepository
+      shots/               # diario di tiro, mappa, grafico, registra sessione + data/ShotRepository
+      plan/                # piano settimanale, editor esercizio, nota + data/PlanRepository
+      plays/               # schemi: elenco, visualizzatore, editor (staff), campo + data/PlayRepository
+      roster/              # rosa (staff)                + data/RosterRepository
+      team/                # quadro squadra (staff)
+      settings/            # libreria + riferimenti (staff)
   commonMain/composeResources/   # strings.xml (IT), font
-  commonTest/              # unit test domain + UI test (runComposeUiTest) con repository finti
+  commonTest/              # unit test domain + ViewModel, UI test (runAppTest) con modulo Koin di fake
+  androidUnitTest/         # Konsist (regole di architettura) + verify() dei moduli Koin
   androidMain/ iosMain/ wasmJsMain/   # entry point + engine Ktor
 iosApp/                    # progetto Xcode del wizard
 supabase/
@@ -50,9 +60,11 @@ supabase/
   tests/                   # test pgTAP delle RLS
 ```
 
-Regole:
-- `domain/` non importa nulla di Compose né di Supabase: è il codice testato dagli unit test.
-- Un'interfaccia per repository **solo** perché esistono due implementazioni (Supabase + finta per i test UI).
+Una feature contiene `XScreen.kt` + `XViewModel.kt` per schermata e `data/` con interfaccia del repository e implementazione Supabase. Un repository sta nella feature che possiede le tabelle; le altre feature (es. `team`, `settings`) lo importano da lì.
+
+Regole (operative e verificate da Konsist: vedi [AGENTS.md](../AGENTS.md)):
+- `domain/` non importa nulla di Compose, Supabase né Koin: è il codice testato dagli unit test.
+- Un'interfaccia per repository **solo** perché esistono due implementazioni (Supabase + finta per i test).
 - Tutto il resto senza astrazioni aggiuntive.
 
 ## Schermate e navigazione
@@ -187,10 +199,13 @@ Le RLS sono la vera barriera: la UI nasconde, il database impedisce. Coperte da 
 
 ## Gestione errori e dati
 
-- Nessuna cache: ogni schermata carica all'apertura; pull-to-refresh.
-- Errore di rete in salvataggio → toast "Salvataggio non riuscito. Riprova tra poco.", il foglio resta aperto con i dati.
+- Nessuna cache: ogni schermata carica all'apertura (`defaultLaunch` nel ViewModel); pull-to-refresh.
+- Errore nel caricamento → schermata d'errore intera; "Riprova" solo per errori di rete.
+- Errore in un'azione (`defaultLaunchForChannels`) → toast, la schermata resta coi dati. Rete: "Salvataggio non riuscito. Riprova tra poco.", il foglio resta aperto con i dati.
+- Handler in ordine (`AppErrorManager`): sessione scaduta → permesso negato → rete → generico.
+- Sessione scaduta o revocata (refresh fallito, osservato da `auth.sessionStatus`) → login con avviso.
 - Errore di permesso (RLS) → toast dedicato; non dovrebbe accadere se la UI rispetta i ruoli. Update e delete filtrati dalla RLS non danno errore: il client chiede la riga indietro e, se non arriva, lo tratta come permesso negato.
-- Ultimo staff (`FO001`) → toast "Serve almeno un membro dello staff nella squadra."
+- Errori di dominio (es. ultimo staff `FO001` → "Serve almeno un membro dello staff nella squadra.") gestiti dallo stato della schermata.
 
 ## Ambienti
 
@@ -205,9 +220,11 @@ Le migrazioni si applicano in produzione con `supabase db push` dal job di rilas
 
 | Livello | Dove | Cosa | In CI |
 |---|---|---|---|
-| Unit | `commonTest` | `domain/`: percentuali, somma zone, periodi/stagione, classe zona, completamento, settimane, movimenti e interpolazione degli schemi | ✓ |
+| Unit | `commonTest` | ViewModel (con `TestDispatcherProvider` e repository finti) · `domain/`: percentuali, somma zone, periodi/stagione, classe zona, completamento, settimane, movimenti e interpolazione degli schemi | ✓ |
 | UI | `commonTest` con `runAppTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) · staff modifica e ripristina i riferimenti, la mappa si ricolora · staff vede il quadro squadra e apre il diario di un giocatore · giocatore apre uno schema e va al passo successivo | iOS Simulator + Wasm (browser headless). Android in locale |
 | DB | `supabase/tests` (pgTAP) | RLS: giocatore non legge/scrive dati altrui, solo staff gestisce rosa/piani/riferimenti, solo giocatore spunta | ✓ (Supabase locale in CI) |
+
+Architettura: Konsist + `verify()` dei moduli Koin in `androidUnitTest`.
 
 I test UI partono con `runAppTest` (non `runComposeUiTest`): carica prima tutte le stringhe, perché su Wasm ogni stringa letta la prima volta arriva in modo asincrono e per qualche frame l'etichetta è vuota.
 
