@@ -424,29 +424,29 @@ enabled = true
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
 
 # Production (Supabase cloud, Frankfurt). `supabase config push` applies these overrides on top of the
-# settings above when the linked project ref matches `project_id`. Uncomment once the cloud project
-# exists and put its ref (not a secret) in `project_id`: an empty or env() ref breaks `supabase start`.
+# settings above when the linked project ref matches `project_id` (not a secret). It must be a literal:
+# an empty or env() ref breaks `supabase start`.
 # Without this block, `config push` would send the local site_url, email limits and resend interval.
-# [remotes.production]
-# project_id = "<project ref>"
-#
-# [remotes.production.auth]
-# site_url = "https://marshall91x.github.io/FuoriOrario/"
-# additional_redirect_urls = []
-#
-# [remotes.production.auth.rate_limit]
-# email_sent = 100
-#
-# [remotes.production.auth.email]
-# max_frequency = "60s"
-#
-# # OTP emails go through a dedicated Gmail account (no domain needed, ~500 emails/day): the SMTP password
-# # is a Google app password, and the sender is the account itself.
-# [remotes.production.auth.email.smtp]
-# enabled = true
-# host = "smtp.gmail.com"
-# port = 465
-# user = "env(SMTP_USER)"
-# pass = "env(SMTP_PASSWORD)"
-# admin_email = "env(SMTP_USER)"
-# sender_name = "Fuori Orario"
+[remotes.production]
+project_id = "bwrxcpyrxbimacbwjhhr"
+
+[remotes.production.auth]
+site_url = "https://marshall91x.github.io/FuoriOrario/"
+additional_redirect_urls = []
+
+[remotes.production.auth.rate_limit]
+email_sent = 100
+
+[remotes.production.auth.email]
+max_frequency = "60s"
+
+# OTP emails go through a dedicated Gmail account (no domain needed, ~500 emails/day): the SMTP password
+# is a Google app password, and the sender is the account itself.
+[remotes.production.auth.email.smtp]
+enabled = true
+host = "smtp.gmail.com"
+port = 465
+user = "env(SMTP_USER)"
+pass = "env(SMTP_PASSWORD)"
+admin_email = "env(SMTP_USER)"
+sender_name = "Fuori Orario"
