@@ -52,6 +52,7 @@ fun ZoneRefsScreen(vm: ZoneRefsViewModel = koinViewModel()) {
     )
 }
 
+/** What the riferimenti do: edit a field, save, restore the defaults. */
 class ZoneRefsActions(
     val onRefChanged: (Zone, String) -> Unit = { _, _ -> },
     val onSave: () -> Unit = {},

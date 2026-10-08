@@ -73,8 +73,8 @@ class LibraryViewModel(private val plans: PlanRepository, dispatchers: Dispatche
     /** The first tap asks to confirm, the second deletes the exercise in the sheet. */
     fun onRemove() {
         val exercise = state.editing ?: return
-        if (state.busy) return
         if (!state.confirmingRemoval) return update { copy(confirmingRemoval = true) }
+        if (state.busy) return
         act {
             plans.removeFromLibrary(exercise)
             set { copy(library = library?.filter { it.id != exercise.id }, editing = null) }
