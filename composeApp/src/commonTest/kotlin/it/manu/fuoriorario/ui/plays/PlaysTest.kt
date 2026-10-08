@@ -8,7 +8,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import com.russhwolf.settings.MapSettings
-import it.manu.fuoriorario.App
 import it.manu.fuoriorario.domain.CourtSize
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Play
@@ -16,10 +15,11 @@ import it.manu.fuoriorario.domain.PlayCategory
 import it.manu.fuoriorario.domain.Point
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.Step
-import it.manu.fuoriorario.ui.auth.FakeAuthRepository
-import it.manu.fuoriorario.ui.auth.awaitNode
-import it.manu.fuoriorario.ui.auth.awaitText
-import it.manu.fuoriorario.ui.auth.runAppTest
+import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.testing.TestApp
+import it.manu.fuoriorario.testing.awaitNode
+import it.manu.fuoriorario.testing.awaitText
+import it.manu.fuoriorario.testing.runAppTest
 import it.manu.fuoriorario.ui.plan.FakePlanRepository
 import it.manu.fuoriorario.ui.roster.FakeRosterRepository
 import it.manu.fuoriorario.ui.shots.FakeShotRepository
@@ -83,7 +83,7 @@ class PlaysTest {
     @Test
     fun playerOpensThePlayAndStepsThrough() = runAppTest {
         setContent {
-            App(
+            TestApp(
                 FakeAuthRepository(luca),
                 FakeRosterRepository(luca),
                 FakeShotRepository(),
@@ -121,7 +121,7 @@ class PlaysTest {
     @Test
     fun staffSeeThePlaysToo() = runAppTest {
         setContent {
-            App(
+            TestApp(
                 FakeAuthRepository(coach),
                 FakeRosterRepository(coach),
                 FakeShotRepository(),

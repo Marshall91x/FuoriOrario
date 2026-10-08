@@ -1,5 +1,7 @@
 package it.manu.fuoriorario
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,12 +28,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,7 +42,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.russhwolf.settings.Settings
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.brand_first
 import fuoriorario.composeapp.generated.resources.brand_second
@@ -51,122 +53,116 @@ import fuoriorario.composeapp.generated.resources.ic_chevron_down
 import fuoriorario.composeapp.generated.resources.sign_out
 import fuoriorario.composeapp.generated.resources.subtitle_player
 import fuoriorario.composeapp.generated.resources.subtitle_staff
-import it.manu.fuoriorario.data.AuthRepository
-import it.manu.fuoriorario.data.PlanRepository
-import it.manu.fuoriorario.data.PlayRepository
-import it.manu.fuoriorario.data.RosterRepository
-import it.manu.fuoriorario.data.Session
-import it.manu.fuoriorario.data.ShotRepository
-import it.manu.fuoriorario.data.SupabaseAuthRepository
-import it.manu.fuoriorario.data.SupabasePlanRepository
-import it.manu.fuoriorario.data.SupabasePlayRepository
-import it.manu.fuoriorario.data.SupabaseRosterRepository
-import it.manu.fuoriorario.data.SupabaseShotRepository
+import it.manu.fuoriorario.core.designsystem.GhostButton
+import it.manu.fuoriorario.core.designsystem.GhostStyle
+import it.manu.fuoriorario.core.designsystem.Page
+import it.manu.fuoriorario.core.navigation.Home
+import it.manu.fuoriorario.core.navigation.Route
+import it.manu.fuoriorario.core.session.Session
+import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
+import it.manu.fuoriorario.core.viewmodel.UseCaseMutableState
+import it.manu.fuoriorario.di.appKoin
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
-import it.manu.fuoriorario.domain.rosterOrder
-import it.manu.fuoriorario.ui.auth.LoginScreen
-import it.manu.fuoriorario.ui.auth.PrivacyScreen
-import it.manu.fuoriorario.ui.components.GhostButton
-import it.manu.fuoriorario.ui.components.GhostStyle
-import it.manu.fuoriorario.ui.components.Page
-import it.manu.fuoriorario.ui.home.Home
-import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.launch
+import it.manu.fuoriorario.feature.auth.LoginScreen
+import it.manu.fuoriorario.feature.auth.PrivacyScreen
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.KoinIsolatedContext
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.KoinApplication
 
 @Composable
-fun App(
-    auth: AuthRepository = remember { SupabaseAuthRepository() },
-    roster: RosterRepository = remember { SupabaseRosterRepository() },
-    shots: ShotRepository = remember { SupabaseShotRepository() },
-    /** The device's own storage: only the staff's picked player. */
-    prefs: Settings = remember { Settings() },
-    plans: PlanRepository = remember { SupabasePlanRepository() },
-    plays: PlayRepository = remember { SupabasePlayRepository() }
+fun App(koin: KoinApplication = appKoin) {
+    KoinIsolatedContext(koin) {
+        FuoriOrarioTheme { MainScreen() }
+    }
+}
+
+@Composable
+private fun MainScreen(vm: MainViewModel = koinViewModel()) {
+    val uiState = vm.uiState.collectAsStateWithLifecycle()
+    MainStateContent(uiState.value.state, vm::onPick, vm::onSignOut, vm::onRetryPlayers, vm::onRosterChanged)
+}
+
+@Composable
+private fun MainStateContent(
+    state: UseCaseMutableState<MainScreenState>?,
+    onPick: (Member) -> Unit,
+    onSignOut: () -> Unit,
+    onRetryPlayers: () -> Unit,
+    onRosterChanged: (Member) -> Unit
 ) {
-    FuoriOrarioTheme {
-        val c = FuoriOrarioTheme.colors
-        val session by auth.session.collectAsState(Session.Loading)
-        val member = (session as? Session.SignedIn)?.member
-        val scope = rememberCoroutineScope()
-        val staff = member?.role == Role.STAFF
+    when (state) {
+        is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
+        is UseCaseMutableState.ShowData -> MainContent(state.items, onPick, onSignOut, onRetryPlayers, onRosterChanged)
+        // Restoring the saved session: the header alone, as before the rework.
+        UseCaseMutableState.Loading, null -> MainContent(
+            MainScreenState(),
+            onPick,
+            onSignOut,
+            onRetryPlayers,
+            onRosterChanged
+        )
+    }
+}
 
-        // Staff's player menu (#12): the team's players, null while loading. Kept here so the pick survives tab changes,
-        // and in [prefs] so it survives restarts.
-        var players by remember(member?.id) { mutableStateOf<Result<List<Member>>?>(null) }
-        var playersLoad by remember { mutableIntStateOf(0) }
-        var pickedId by remember(member?.id) { mutableStateOf(prefs.getStringOrNull(PICKED_PLAYER)) }
-        LaunchedEffect(member?.id, staff, playersLoad) {
-            if (!staff) return@LaunchedEffect
-            players = try {
-                Result.success(roster.members().filter { it.role == Role.PLAYER }.rosterOrder())
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
+/** Header, then the destination the session picks: each one keeps its ViewModels until the session leaves it. */
+@Composable
+private fun MainContent(
+    state: MainScreenState,
+    onPick: (Member) -> Unit,
+    onSignOut: () -> Unit,
+    onRetryPlayers: () -> Unit,
+    onRosterChanged: (Member) -> Unit
+) {
+    val c = FuoriOrarioTheme.colors
+    val member = state.member
+    val staff = member?.role == Role.STAFF
+    val nav = rememberNavController()
+    LaunchedEffect(state.route) {
+        if (nav.currentDestination?.route != state.route.name) {
+            nav.navigate(state.route.name) { popUpTo(nav.graph.id) { inclusive = true } }
         }
-        fun pick(player: Member) {
-            pickedId = player.id
-            prefs.putString(PICKED_PLAYER, player.id!!)
-        }
-        val followed = if (staff) {
-            players?.getOrNull()?.let { list -> list.find { it.id == pickedId } ?: list.firstOrNull() }
-        } else {
-            member
-        }
+    }
 
-        // Bottom inset is left to each screen: the home's tab bar runs to the bottom edge.
-        Column(
-            Modifier
-                .fillMaxSize()
-                .background(c.bg)
-                .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
-                )
-        ) {
-            // Stays put while the content scrolls, like the prototype's sticky `.top`.
-            Header(
-                member,
-                players?.getOrNull().takeIf { staff }.orEmpty(),
-                followed,
-                onPick = ::pick,
-                onSignOut = { scope.launch { auth.signOut() } },
-                Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).widthIn(max = 560.dp)
+    // Bottom inset is left to each screen: the home's tab bar runs to the bottom edge.
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(c.bg)
+            .windowInsetsPadding(
+                WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
             )
-            if (member?.privacyAckAt != null) {
-                Home(
-                    member,
-                    roster,
-                    shots,
-                    plans,
-                    plays,
-                    followed,
-                    players,
-                    onPick = ::pick,
-                    onRetryPlayers = { playersLoad++ },
-                    onRosterChanged = {
-                        if (it.id == member.id) auth.refresh()
-                        playersLoad++
-                    }
-                )
-            } else {
-                Page(Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))) {
-                    when (session) {
-                        Session.Loading -> Unit
-                        Session.SignedOut -> LoginScreen(auth)
-                        is Session.SignedIn -> PrivacyScreen(auth)
-                    }
-                }
+    ) {
+        // Stays put while the content scrolls, like the prototype's sticky `.top`.
+        Header(
+            member,
+            state.players?.getOrNull().takeIf { staff }.orEmpty(),
+            state.followed,
+            onPick = onPick,
+            onSignOut = onSignOut,
+            Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).widthIn(max = 560.dp)
+        )
+        val bottomInset = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+        NavHost(
+            nav,
+            startDestination = Route.LOADING.name,
+            modifier = Modifier.weight(1f),
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None }
+        ) {
+            composable(Route.LOADING.name) { Page(bottomInset) {} }
+            composable(Route.LOGIN.name) {
+                Page(bottomInset) { LoginScreen(expired = state.session == Session.Expired) }
+            }
+            composable(Route.PRIVACY.name) { Page(bottomInset) { PrivacyScreen() } }
+            composable(Route.HOME.name) {
+                member?.let { Home(it, state.followed, state.players, onPick, onRetryPlayers, onRosterChanged) }
             }
         }
     }
 }
-
-private const val PICKED_PLAYER = "picked_player"
 
 /** Prototype `.top`: brand + subtitle; when signed in, the `.who` row with logout and the name, or for staff with [players] the menu. */
 @Composable

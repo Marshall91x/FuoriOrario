@@ -1,12 +1,10 @@
 package it.manu.fuoriorario.data
 
+import it.manu.fuoriorario.core.error.PermissionDeniedException
 import it.manu.fuoriorario.domain.Member
 
 /** The email is already in the team. */
 class EmailTakenException : Exception()
-
-/** RLS refused the write: shouldn't happen if the UI respects roles (ARCHITECTURE "Gestione errori"). */
-class PermissionDeniedException : Exception()
 
 /** The change would leave the team without staff. */
 class LastStaffException : Exception()

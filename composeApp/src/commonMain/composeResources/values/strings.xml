@@ -13,6 +13,8 @@
     <string name="save_denied">Non hai i permessi per salvare. Chiedi allo staff.</string>
     <string name="load_failed">Caricamento non riuscito.</string>
     <string name="retry">Riprova</string>
+    <string name="error_permission">Non hai i permessi per vedere questi dati.</string>
+    <string name="session_expired">La sessione è scaduta: accedi di nuovo.</string>
 
     <string name="roster_title">Rosa</string>
     <string name="roster_empty_title">Inserisci la rosa</string>

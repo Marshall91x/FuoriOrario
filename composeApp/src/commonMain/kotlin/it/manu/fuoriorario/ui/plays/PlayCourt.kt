@@ -28,6 +28,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.play_court_description
+import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
 import it.manu.fuoriorario.domain.COURT_HEIGHT
 import it.manu.fuoriorario.domain.COURT_MARGIN
 import it.manu.fuoriorario.domain.COURT_WIDTH
@@ -39,7 +40,6 @@ import it.manu.fuoriorario.domain.Point
 import it.manu.fuoriorario.domain.isDefender
 import it.manu.fuoriorario.ui.shots.arcPath
 import it.manu.fuoriorario.ui.shots.drawLines
-import it.manu.fuoriorario.ui.theme.FuoriOrarioTheme
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos

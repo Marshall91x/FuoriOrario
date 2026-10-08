@@ -2,6 +2,7 @@ package it.manu.fuoriorario.data
 
 import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import io.github.jan.supabase.postgrest.result.PostgrestResult
+import it.manu.fuoriorario.core.error.PermissionDeniedException
 import kotlinx.serialization.json.JsonObject
 
 /** Runs a write, turning RLS refusals into [PermissionDeniedException] and the codes in [codes] into their exception. */
