@@ -49,7 +49,6 @@ class ShotLogViewModel(
     private val dispatchers: DispatcherProvider,
     errorManager: ErrorManager
 ) : ScreenModel<ShotLogScreenState>(
-    // The header is there before the sessions: they fill in when loaded.
     ShotLogScreenState(player, today()),
     dispatchers,
     errorManager,

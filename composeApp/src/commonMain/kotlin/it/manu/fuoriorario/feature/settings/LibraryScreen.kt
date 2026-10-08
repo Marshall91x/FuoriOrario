@@ -39,6 +39,7 @@ import it.manu.fuoriorario.core.designsystem.ExerciseErrorText
 import it.manu.fuoriorario.core.designsystem.ExerciseFields
 import it.manu.fuoriorario.core.designsystem.GhostButton
 import it.manu.fuoriorario.core.designsystem.GhostStyle
+import it.manu.fuoriorario.core.designsystem.Loader
 import it.manu.fuoriorario.core.designsystem.LocalToast
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.PrimaryButton
@@ -91,7 +92,7 @@ fun LibraryStateContent(state: UseCaseMutableState<LibraryScreenState>?, actions
     when (state) {
         is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
         is UseCaseMutableState.ShowData -> LibraryContent(state.items, actions)
-        UseCaseMutableState.Loading, null -> Unit
+        UseCaseMutableState.Loading, null -> Loader()
     }
 }
 

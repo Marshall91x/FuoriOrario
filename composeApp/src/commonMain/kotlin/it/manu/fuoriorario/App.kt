@@ -55,6 +55,7 @@ import fuoriorario.composeapp.generated.resources.subtitle_player
 import fuoriorario.composeapp.generated.resources.subtitle_staff
 import it.manu.fuoriorario.core.designsystem.GhostButton
 import it.manu.fuoriorario.core.designsystem.GhostStyle
+import it.manu.fuoriorario.core.designsystem.Loader
 import it.manu.fuoriorario.core.designsystem.Page
 import it.manu.fuoriorario.core.navigation.Home
 import it.manu.fuoriorario.core.navigation.Route
@@ -96,7 +97,7 @@ private fun MainStateContent(
     when (state) {
         is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
         is UseCaseMutableState.ShowData -> MainContent(state.items, onPick, onSignOut, onRetryPlayers, onRosterChanged)
-        // Restoring the saved session: the header alone, as before the rework.
+        // Restoring the saved session: the header and the loader.
         UseCaseMutableState.Loading, null -> MainContent(
             MainScreenState(),
             onPick,
@@ -152,7 +153,7 @@ private fun MainContent(
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None }
         ) {
-            composable(Route.LOADING.name) { Page(bottomInset) {} }
+            composable(Route.LOADING.name) { Page(bottomInset) { Loader() } }
             composable(Route.LOGIN.name) {
                 Page(bottomInset) { LoginScreen(expired = state.session == Session.Expired) }
             }

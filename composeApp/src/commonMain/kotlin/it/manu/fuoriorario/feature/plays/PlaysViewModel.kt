@@ -85,7 +85,6 @@ class PlaysViewModel(
     private val dispatchers: DispatcherProvider,
     errorManager: ErrorManager
 ) : ScreenModel<PlaysScreenState>(
-    // Nothing on screen until the plays arrive, as before: they fill in when loaded.
     PlaysScreenState(),
     dispatchers,
     errorManager,

@@ -3,6 +3,7 @@ package it.manu.fuoriorario.feature.plays
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -26,6 +27,7 @@ import it.manu.fuoriorario.testing.awaitNode
 import it.manu.fuoriorario.testing.awaitText
 import it.manu.fuoriorario.testing.runAppTest
 import kotlin.test.Test
+import kotlinx.coroutines.CompletableDeferred
 
 private const val ACK = "2026-10-01T10:00:00Z"
 
@@ -81,6 +83,29 @@ class PlaysTest {
         steps = listOf(Step(start + ("X1" to Point(250f, 300f)), "1")),
         id = "box"
     )
+
+    @Test
+    fun theLoaderShowsUntilThePlaysArrive() = runAppTest {
+        val gate = CompletableDeferred<Unit>()
+        setContent {
+            TestApp(
+                FakeAuthRepository(luca),
+                FakeRosterRepository(luca),
+                FakeShotRepository(),
+                MapSettings(),
+                FakePlanRepository(),
+                FakePlayRepository(seed).apply { loadGate = gate }
+            )
+        }
+
+        awaitText("Schemi")
+        onNodeWithText("Schemi").performClick()
+        awaitNode(hasTestTag("loader"))
+
+        gate.complete(Unit)
+        awaitText("Pick and roll centrale")
+        awaitNode(hasTestTag("loader"), count = 0)
+    }
 
     @Test
     fun aPlayOpenHasNoTabBarAndTheSystemBackLeavesIt() = runAppTest {

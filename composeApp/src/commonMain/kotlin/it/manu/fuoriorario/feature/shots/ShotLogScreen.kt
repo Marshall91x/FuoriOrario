@@ -93,6 +93,7 @@ import fuoriorario.composeapp.generated.resources.zone_tl
 import it.manu.fuoriorario.core.designsystem.Field
 import it.manu.fuoriorario.core.designsystem.GhostButton
 import it.manu.fuoriorario.core.designsystem.GhostStyle
+import it.manu.fuoriorario.core.designsystem.Loader
 import it.manu.fuoriorario.core.designsystem.LocalToast
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.PrimaryButton
@@ -188,12 +189,11 @@ fun ShotLogStateContent(state: UseCaseMutableState<ShotLogScreenState>?, period:
     when (state) {
         is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
         is UseCaseMutableState.ShowData -> ShotLogContent(state.items, period, actions)
-        // Never: the header is there from the start, the sessions fill in.
-        UseCaseMutableState.Loading, null -> Unit
+        UseCaseMutableState.Loading, null -> Loader()
     }
 }
 
-/** Each "Elimina" asks for a second tap. Nothing below the header until the sessions arrive. */
+/** Each "Elimina" asks for a second tap. */
 @Composable
 fun ShotLogContent(state: ShotLogScreenState, period: Period, actions: ShotLogActions) {
     val c = FuoriOrarioTheme.colors

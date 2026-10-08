@@ -24,6 +24,7 @@ import fuoriorario.composeapp.generated.resources.refs_save
 import fuoriorario.composeapp.generated.resources.refs_title
 import it.manu.fuoriorario.core.designsystem.Field
 import it.manu.fuoriorario.core.designsystem.GhostButton
+import it.manu.fuoriorario.core.designsystem.Loader
 import it.manu.fuoriorario.core.designsystem.LocalToast
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.PrimaryButton
@@ -64,7 +65,7 @@ fun ZoneRefsStateContent(state: UseCaseMutableState<ZoneRefsScreenState>?, actio
     when (state) {
         is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
         is UseCaseMutableState.ShowData -> ZoneRefsContent(state.items, actions)
-        UseCaseMutableState.Loading, null -> Unit
+        UseCaseMutableState.Loading, null -> Loader()
     }
 }
 

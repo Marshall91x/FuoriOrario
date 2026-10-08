@@ -12,6 +12,7 @@
     <string name="save_failed">Salvataggio non riuscito. Riprova tra poco.</string>
     <string name="save_denied">Non hai i permessi per salvare. Chiedi allo staff.</string>
     <string name="load_failed">Caricamento non riuscito.</string>
+    <string name="loading">Caricamento</string>
     <string name="in_progress">Operazione in corso</string>
     <string name="retry">Riprova</string>
     <string name="error_permission">Non hai i permessi per vedere questi dati.</string>

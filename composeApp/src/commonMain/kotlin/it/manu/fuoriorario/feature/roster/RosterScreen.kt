@@ -56,6 +56,7 @@ import fuoriorario.composeapp.generated.resources.staff_title
 import it.manu.fuoriorario.core.designsystem.Field
 import it.manu.fuoriorario.core.designsystem.GhostButton
 import it.manu.fuoriorario.core.designsystem.GhostStyle
+import it.manu.fuoriorario.core.designsystem.Loader
 import it.manu.fuoriorario.core.designsystem.LocalToast
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.PrimaryButton
@@ -122,7 +123,7 @@ fun RosterStateContent(state: UseCaseMutableState<RosterScreenState>?, actions: 
     when (state) {
         is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
         is UseCaseMutableState.ShowData -> RosterContent(state.items, actions)
-        UseCaseMutableState.Loading, null -> Unit
+        UseCaseMutableState.Loading, null -> Loader()
     }
 }
 

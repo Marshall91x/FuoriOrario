@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -59,6 +60,7 @@ import androidx.compose.ui.window.DialogProperties
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.in_progress
 import fuoriorario.composeapp.generated.resources.load_failed
+import fuoriorario.composeapp.generated.resources.loading
 import fuoriorario.composeapp.generated.resources.months_short
 import fuoriorario.composeapp.generated.resources.retry
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
@@ -311,6 +313,21 @@ fun LoadFailed(onRetry: () -> Unit) {
     Panel(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(stringResource(Res.string.load_failed), color = FuoriOrarioTheme.colors.muted)
         GhostButton(stringResource(Res.string.retry), onRetry)
+    }
+}
+
+/**
+ * A load in flight: in place of what hasn't arrived yet, or over what is being loaded again (Piano's week).
+ * Every load shows this one.
+ */
+@Composable
+fun Loader(modifier: Modifier = Modifier) {
+    val label = stringResource(Res.string.loading)
+    Box(modifier.fillMaxWidth().heightIn(min = 96.dp), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator(
+            Modifier.testTag("loader").semantics { contentDescription = label },
+            color = FuoriOrarioTheme.colors.accent
+        )
     }
 }
 

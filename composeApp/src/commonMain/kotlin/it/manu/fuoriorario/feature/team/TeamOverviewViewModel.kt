@@ -30,8 +30,8 @@ class TeamOverviewViewModel(
     dispatchers: DispatcherProvider,
     errorManager: ErrorManager
 ) : ComposeViewModel<TeamOverviewScreenState>(
-    // The title is there before the numbers.
-    defaultState = TeamOverviewScreenState().let { UiState(UseCaseMutableState.ShowData(it), it) },
+    // The loader until the numbers arrive, as every screen (ScreenModel).
+    defaultState = UiState(UseCaseMutableState.Loading, TeamOverviewScreenState()),
     dispatcherProvider = dispatchers,
     errorManager = errorManager
 ) {
