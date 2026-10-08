@@ -1,6 +1,5 @@
 package it.manu.fuoriorario.feature.plan
 
-import androidx.lifecycle.viewModelScope
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.exercise_added
 import fuoriorario.composeapp.generated.resources.exercise_library_failed
@@ -12,11 +11,9 @@ import fuoriorario.composeapp.generated.resources.plan_copied
 import fuoriorario.composeapp.generated.resources.plan_copy_empty
 import it.manu.fuoriorario.core.error.ErrorManager
 import it.manu.fuoriorario.core.today
-import it.manu.fuoriorario.core.viewmodel.ComposeViewModel
 import it.manu.fuoriorario.core.viewmodel.CustomException
 import it.manu.fuoriorario.core.viewmodel.DispatcherProvider
-import it.manu.fuoriorario.core.viewmodel.UiState
-import it.manu.fuoriorario.core.viewmodel.UseCaseMutableState
+import it.manu.fuoriorario.core.viewmodel.ScreenModel
 import it.manu.fuoriorario.domain.Category
 import it.manu.fuoriorario.domain.LibraryExercise
 import it.manu.fuoriorario.domain.Member
@@ -29,14 +26,10 @@ import it.manu.fuoriorario.domain.planItemError
 import it.manu.fuoriorario.feature.plan.data.PlanChangedException
 import it.manu.fuoriorario.feature.plan.data.PlanRepository
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 
 /**
@@ -77,18 +70,14 @@ class PlanViewModel(
     private val plans: PlanRepository,
     private val dispatchers: DispatcherProvider,
     errorManager: ErrorManager
-) : ComposeViewModel<PlanScreenState>(
+) : ScreenModel<PlanScreenState>(
     // The header is there before the exercises: they fill in when loaded.
-    defaultState = PlanScreenState(player, week, today()).let { UiState(UseCaseMutableState.ShowData(it), it) },
-    dispatcherProvider = dispatchers,
-    errorManager = errorManager
+    PlanScreenState(player, week, today()),
+    dispatchers,
+    errorManager,
+    busy = { copy(busy = it) }
 ) {
-    private val state get() = uiState.value.data!!
-    private val toastChannel = Channel<String>(Channel.BUFFERED)
     private var loading: Job? = null
-
-    /** Messages for the toast: saved, removed, or why an action failed. */
-    val toasts = toastChannel.receiveAsFlow()
 
     init {
         load()
@@ -248,31 +237,7 @@ class PlanViewModel(
         }
     }
 
-    /** A write: a failure toasts and leaves everything on screen as it was, sheets included. */
-    private fun act(block: suspend () -> Unit) {
-        update { copy(busy = true) }
-        defaultLaunchForChannels(dispatchers.main(), errorFunction = {
-            set { copy(busy = false) }
-            it.userMessage?.let { message -> toastChannel.send(message) }
-        }) {
-            block()
-            set { copy(busy = false) }
-        }
-    }
-
-    private suspend fun toast(message: StringResource) = toastChannel.send(getString(message))
-
-    /** A write ending after a failed load leaves its error screen alone. */
-    private suspend fun set(change: PlanScreenState.() -> PlanScreenState) {
-        if (uiState.value.state !is UseCaseMutableState.Error) emitSuccess(state.change())
-    }
-
     private fun updateExercise(change: ExerciseDraft.() -> ExerciseDraft) = update {
         copy(exercise = exercise?.change())
-    }
-
-    /** Unconfined runs it before returning: a keystroke lands before the next one, as with a `remember`. */
-    private fun update(change: PlanScreenState.() -> PlanScreenState) {
-        viewModelScope.launch(dispatchers.unconfined()) { set(change) }
     }
 }

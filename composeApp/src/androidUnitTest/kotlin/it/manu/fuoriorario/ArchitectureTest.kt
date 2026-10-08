@@ -15,7 +15,7 @@ class ArchitectureTest {
         production.classes().withNameEndingWith("ViewModel")
             .filterNot { it.name == "ComposeViewModel" }
             .assertTrue {
-                it.parents().any { p -> p.name.substringBefore("<") == "ComposeViewModel" } &&
+                it.parents(indirectParents = true).any { p -> p.name.substringBefore("<") == "ComposeViewModel" } &&
                     (it.resideInPackage("$ROOT.feature..") || it.name == "MainViewModel" && it.resideInPackage(ROOT))
             }
     }
