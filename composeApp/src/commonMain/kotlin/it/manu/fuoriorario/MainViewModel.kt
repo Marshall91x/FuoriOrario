@@ -11,6 +11,7 @@ import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.rosterOrder
 import it.manu.fuoriorario.feature.auth.data.AuthRepository
+import it.manu.fuoriorario.feature.games.data.GameDraftStore
 import it.manu.fuoriorario.feature.roster.data.RosterRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,11 +31,13 @@ import kotlinx.coroutines.flow.update
 /**
  * [players]: staff only, the team's players for the header menu; null while loading.
  * [followed]: whose Diario di tiro and Piano to show, the player themselves or the one staff picked.
+ * [confirmingSignOut]: "Esci" took its first tap, with a game in progress on the device.
  */
 data class MainScreenState(
     val session: Session = Session.Loading,
     val players: Result<List<Member>>? = null,
-    val followed: Member? = null
+    val followed: Member? = null,
+    val confirmingSignOut: Boolean = false
 ) {
     val member get() = session.member
 
@@ -51,17 +54,24 @@ class MainViewModel(
     private val auth: AuthRepository,
     private val roster: RosterRepository,
     private val selectedPlayer: SelectedPlayer,
+    private val drafts: GameDraftStore,
     dispatchers: DispatcherProvider,
     errorManager: ErrorManager
 ) : ComposeViewModel<MainScreenState>(dispatcherProvider = dispatchers, errorManager = errorManager) {
     private val playersReload = MutableStateFlow(0)
+    private val confirmingSignOut = MutableStateFlow(false)
 
     init {
         defaultLaunch {
             // One subscription: each one would load the member again.
             val session = auth.session.shareIn(this, SharingStarted.Eagerly, replay = 1)
-            combine(session, session.players(), selectedPlayer.id) { s, players, picked ->
-                MainScreenState(s, players, followed(s, players, picked))
+            combine(session, session.players(), selectedPlayer.id, confirmingSignOut) {
+                    s,
+                    players,
+                    picked,
+                    confirming
+                ->
+                MainScreenState(s, players, followed(s, players, picked), confirming)
             }.collect { emitSuccess(it) }
         }
     }
@@ -79,7 +89,14 @@ class MainViewModel(
         onRetryPlayers()
     }
 
+    /** With a game in progress the first tap only warns; signing out forgets it, for the next account (ADR 0010). */
     fun onSignOut() {
+        if (drafts.draft.value != null && !confirmingSignOut.value) {
+            confirmingSignOut.value = true
+            return
+        }
+        drafts.save(null)
+        confirmingSignOut.value = false
         // Nothing to say if it fails: the session is forgotten on this device anyway.
         defaultLaunchForChannels(errorFunction = {}) { auth.signOut() }
     }

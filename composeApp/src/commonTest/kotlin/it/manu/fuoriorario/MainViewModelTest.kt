@@ -5,20 +5,24 @@ import it.manu.fuoriorario.core.error.AppErrorManager
 import it.manu.fuoriorario.core.navigation.Route
 import it.manu.fuoriorario.core.session.SelectedPlayer
 import it.manu.fuoriorario.core.session.Session
+import it.manu.fuoriorario.domain.GameDraft
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.feature.games.data.GameDraftStore
 import it.manu.fuoriorario.feature.roster.FakeRosterRepository
 import it.manu.fuoriorario.feature.roster.data.RosterRepository
 import it.manu.fuoriorario.testing.TestDispatcherProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
 
 private const val ACK = "2026-10-01T10:00:00Z"
 
@@ -29,12 +33,14 @@ class MainViewModelTest {
     private val luca = Member("Luca B.", Role.PLAYER, ACK, id = "luca", jerseyNumber = "7")
     private val anna = Member("Anna", Role.PLAYER, ACK, id = "anna", jerseyNumber = "4")
     private val settings = MapSettings()
+    private val drafts = GameDraftStore(settings)
 
     private fun vm(auth: FakeAuthRepository, roster: RosterRepository = FakeRosterRepository(coach, luca, anna)) =
         MainViewModel(
             auth,
             roster,
             SelectedPlayer(settings),
+            drafts,
             TestDispatcherProvider(dispatcher),
             AppErrorManager(emptyList()) {}
         )
@@ -160,5 +166,23 @@ class MainViewModelTest {
         advanceUntilIdle()
 
         assertEquals(Route.LOGIN, vm.state.route)
+    }
+
+    @Test
+    fun signOut_withAGameInProgress_asksFirstThenForgetsIt() = runTest(dispatcher) {
+        drafts.save(GameDraft("g1", LocalDate(2026, 10, 10), "Virtus", home = true))
+        val vm = vm(FakeAuthRepository(coach))
+        advanceUntilIdle()
+
+        vm.onSignOut()
+        advanceUntilIdle()
+        assertEquals(Route.HOME, vm.state.route)
+        assertTrue(vm.state.confirmingSignOut)
+
+        vm.onSignOut()
+        advanceUntilIdle()
+        assertEquals(Route.LOGIN, vm.state.route)
+        assertFalse(vm.state.confirmingSignOut)
+        assertNull(GameDraftStore(settings).draft.value)
     }
 }

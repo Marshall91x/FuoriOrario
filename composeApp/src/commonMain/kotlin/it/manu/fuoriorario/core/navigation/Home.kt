@@ -48,6 +48,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import fuoriorario.composeapp.generated.resources.Res
+import fuoriorario.composeapp.generated.resources.ic_tab_games
 import fuoriorario.composeapp.generated.resources.ic_tab_plan
 import fuoriorario.composeapp.generated.resources.ic_tab_plays
 import fuoriorario.composeapp.generated.resources.ic_tab_shot_log
@@ -55,6 +56,7 @@ import fuoriorario.composeapp.generated.resources.ic_tab_team
 import fuoriorario.composeapp.generated.resources.roster_empty_hint
 import fuoriorario.composeapp.generated.resources.roster_empty_title
 import fuoriorario.composeapp.generated.resources.roster_title
+import fuoriorario.composeapp.generated.resources.tab_games
 import fuoriorario.composeapp.generated.resources.tab_plan
 import fuoriorario.composeapp.generated.resources.tab_plays
 import fuoriorario.composeapp.generated.resources.tab_shot_log
@@ -74,6 +76,7 @@ import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.weekOf
+import it.manu.fuoriorario.feature.games.GamesScreen
 import it.manu.fuoriorario.feature.plan.PlanScreen
 import it.manu.fuoriorario.feature.plays.PlaysScreen
 import it.manu.fuoriorario.feature.roster.RosterScreen
@@ -91,6 +94,7 @@ private enum class Tab(val label: StringResource, val icon: DrawableResource, va
     SHOT_LOG(Res.string.tab_shot_log, Res.drawable.ic_tab_shot_log),
     PLAN(Res.string.tab_plan, Res.drawable.ic_tab_plan),
     PLAYS(Res.string.tab_plays, Res.drawable.ic_tab_plays),
+    GAMES(Res.string.tab_games, Res.drawable.ic_tab_games),
     TEAM(Res.string.tab_team, Res.drawable.ic_tab_team, staffOnly = true)
 }
 
@@ -129,7 +133,7 @@ fun Home(
         restoreState = true
     }
 
-    // A second-level screen (a play open, its editor) has no bar: back leaves it.
+    // A second-level screen (a play open, its editor, a new game, Live) has no bar: back leaves it.
     var secondLevel by remember { mutableStateOf(false) }
 
     CompositionLocalProvider(LocalToast provides toast) {
@@ -179,6 +183,9 @@ fun Home(
                                     }
                                     tab == Tab.PLAYS -> ScreenViewModels {
                                         PlaysScreen(member.role == Role.STAFF, onSecondLevel = { secondLevel = it })
+                                    }
+                                    tab == Tab.GAMES -> ScreenViewModels {
+                                        GamesScreen(member.role == Role.STAFF, onSecondLevel = { secondLevel = it })
                                     }
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {
