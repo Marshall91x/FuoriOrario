@@ -48,3 +48,11 @@ Linguaggio comune del progetto. UI e documentazione in italiano, codice in ingle
 | Blocco | `screen` | Attaccante che in quel passo porta un blocco: il suo movimento finisce con ⊥; se è fermo, ha solo la ⊥ girata verso la palla. |
 | Editor (degli schemi) | `PlayEditor` | Dove lo staff crea, modifica ed elimina uno schema dal telefono. Parte dalla disposizione di default (1 in punta, 2–3 ali, 4–5 post; con difesa ogni Xn tra n e il canestro). Il dito prende la pedina o la maniglia più vicina, se è a portata (altrimenti la pagina scorre); tenere premuto un attaccante gli dà la palla. "+ Passo" copia il passo corrente. Si salva tutto lo schema in una volta; uscire con modifiche (anche con il tasto indietro) o eliminare chiede il doppio tocco. Il campo si sceglie solo alla creazione. |
 | Maniglia | `handles` | Pallino a metà di un movimento: trascinandolo il movimento si curva passando di lì; riportato al centro torna dritto. Spostando gli estremi o eliminando un passo, la curva continua a passare dalla maniglia. |
+| Partita | `Game` | Una gara della squadra registrata dallo staff: data, avversario, casa/trasferta, nota facoltativa, convocati, eventi. Si salva tutta a fine partita e poi si può solo eliminare. |
+| Convocati | `callUps` | I membri della rosa scelti per una partita. Nessun minimo né massimo. |
+| Evento | `GameEvent` | Una cosa successa in partita, con giocatore, quarto e ordine: `TIRO` (zona, segnato/sbagliato), `LIBERO` (segnato/sbagliato), `RIM`, `AST`, `PP`, `REC`, `FAL`, `AVV` (punti dell'avversario, 1/2/3, senza giocatore). |
+| Quarto | `Quarter` | 1–4, più `OT` (SUPP) che raccoglie tutti i supplementari. |
+| Live | `GameLive` | Schermata dello staff a bordo campo: si tocca un convocato (resta selezionato), poi la zona o l'azione. "Annulla ultimo" ed elenco eventi eliminabili. |
+| Partita in corso | `GameDraft` | La partita non ancora salvata, tenuta sul dispositivo a ogni tocco. Una per dispositivo; si cancella al logout. |
+| Tabellino | `BoxScore` | Riga per convocato: PT, T2, T3, TL (segnati/tentati), RIM, AST, PP, REC, FAL. Il giocatore vede solo la propria. |
+| Parziali | `quarterScores` | Punti delle due squadre per quarto. |
