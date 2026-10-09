@@ -25,7 +25,10 @@ class PrivacyTest {
 
         awaitText("Ho letto")
         // Compose resources keep a backslash before an apostrophe: strings.xml must not escape it.
-        awaitText("Su Supabase, con server nell'Unione Europea. Li vedi tu e lo staff della tua squadra.")
+        awaitText(
+            "Il titolare del trattamento è Emanuele Del Monte, che gestisce l'app per la squadra. " +
+                "Per qualsiasi richiesta: anima91x@gmail.com."
+        )
         assertTrue(onAllNodes(hasText("+ Registra sessione")).fetchSemanticsNodes().isEmpty())
 
         onNodeWithText("Ho letto").performScrollTo().performClick()
