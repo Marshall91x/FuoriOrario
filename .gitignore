@@ -1,0 +1,11 @@
+.DS_Store
+.idea/
+.gradle/
+build/
+local.properties
+*.keystore
+*.jks
+.kotlin/
+iosApp/build/
+xcuserdata/
+supabase/seed.production.sql
