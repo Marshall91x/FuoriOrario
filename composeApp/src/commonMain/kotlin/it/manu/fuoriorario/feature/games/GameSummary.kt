@@ -62,16 +62,17 @@ import it.manu.fuoriorario.feature.shots.ShotMap
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 
-private val boxColumns = listOf(
-    Res.string.game_box_points,
-    Res.string.game_box_twos,
-    Res.string.game_box_threes,
-    Res.string.game_box_free_throws,
-    Res.string.game_box_rebounds,
-    Res.string.game_box_assists,
-    Res.string.game_box_turnovers,
-    Res.string.game_box_steals,
-    Res.string.game_box_fouls
+// Keyed by the cells' test tag suffix.
+private val boxColumns = mapOf(
+    "points" to Res.string.game_box_points,
+    "twos" to Res.string.game_box_twos,
+    "threes" to Res.string.game_box_threes,
+    "free_throws" to Res.string.game_box_free_throws,
+    "rebounds" to Res.string.game_box_rebounds,
+    "assists" to Res.string.game_box_assists,
+    "turnovers" to Res.string.game_box_turnovers,
+    "steals" to Res.string.game_box_steals,
+    "fouls" to Res.string.game_box_fouls
 )
 
 private val NAME_WIDTH = 110.dp
@@ -135,7 +136,7 @@ private fun BoxScore(lines: List<BoxLine>, selected: String?, onRow: (String) ->
     Panel {
         Text(stringResource(Res.string.game_box).uppercase(), style = MaterialTheme.typography.titleMedium)
         Column(Modifier.horizontalScroll(rememberScrollState())) {
-            BoxRow(stringResource(Res.string.game_box_player), boxColumns.map { stringResource(it) }, c.muted)
+            BoxRow(stringResource(Res.string.game_box_player), boxColumns.values.map { stringResource(it) }, c.muted)
             lines.forEach { line ->
                 HorizontalDivider(Modifier.width(NAME_WIDTH + CELL_WIDTH * boxColumns.size), color = c.line)
                 BoxRow(
@@ -181,8 +182,8 @@ private fun BoxRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        cells.forEachIndexed { i, cell ->
-            val cellTag = if (i == 0) tag?.let { "${it}_points" } else null
+        cells.zip(boxColumns.keys).forEach { (cell, key) ->
+            val cellTag = tag?.let { "${it}_$key" }
             Text(
                 cell,
                 Modifier.width(CELL_WIDTH).then(cellTag?.let { Modifier.testTag(it) } ?: Modifier),

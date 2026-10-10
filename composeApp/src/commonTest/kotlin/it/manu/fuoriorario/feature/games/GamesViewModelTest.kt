@@ -124,6 +124,26 @@ class GamesViewModelTest {
     }
 
     @Test
+    fun stat_goesToTheSelectedPlayerInTheQuarterWhoStaysSelected() = runTest(dispatcher) {
+        val vm = live()
+        vm.onStat(GameEventType.REBOUND)
+        vm.onSelect("luca")
+        vm.onQuarter(Quarter.Q3)
+        vm.onStat(GameEventType.REBOUND)
+        vm.onStat(GameEventType.FOUL)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(
+                GameEvent(GameEventType.REBOUND, Quarter.Q3, "luca"),
+                GameEvent(GameEventType.FOUL, Quarter.Q3, "luca")
+            ),
+            vm.data.draft?.events
+        )
+        assertEquals("luca", vm.data.draft?.selected)
+    }
+
+    @Test
     fun shot_goesToTheSelectedPlayerInTheQuarterAndSurvivesARestart() = runTest(dispatcher) {
         val vm = live()
         vm.onShot(Zone.CEN, made = true)
