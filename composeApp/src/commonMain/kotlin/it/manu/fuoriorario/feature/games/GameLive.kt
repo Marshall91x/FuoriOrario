@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +45,7 @@ import fuoriorario.composeapp.generated.resources.game_free_throw
 import fuoriorario.composeapp.generated.resources.game_made
 import fuoriorario.composeapp.generated.resources.game_missed
 import fuoriorario.composeapp.generated.resources.game_no_events
+import fuoriorario.composeapp.generated.resources.game_opponent
 import fuoriorario.composeapp.generated.resources.game_opponent_points
 import fuoriorario.composeapp.generated.resources.game_overtime
 import fuoriorario.composeapp.generated.resources.game_pick
@@ -53,6 +56,8 @@ import fuoriorario.composeapp.generated.resources.game_q4
 import fuoriorario.composeapp.generated.resources.game_remove_event
 import fuoriorario.composeapp.generated.resources.game_undo
 import fuoriorario.composeapp.generated.resources.game_us
+import fuoriorario.composeapp.generated.resources.ic_check
+import fuoriorario.composeapp.generated.resources.ic_cross
 import it.manu.fuoriorario.core.designsystem.GhostButton
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.PrimaryButton
@@ -74,6 +79,7 @@ import it.manu.fuoriorario.domain.shotZones
 import it.manu.fuoriorario.feature.shots.Court
 import it.manu.fuoriorario.feature.shots.zoneName
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 internal val quarterName = mapOf(
@@ -145,10 +151,14 @@ internal fun GameLive(draft: GameDraft, busy: Boolean, actions: GamesActions) {
         }
         val freeThrow = stringResource(Res.string.game_free_throw)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            GhostButton("$freeThrow ✓", { actions.onFreeThrow(true) }, Modifier.testTag("free_made"), enabled = picked)
-            GhostButton("$freeThrow ✗", {
-                actions.onFreeThrow(false)
-            }, Modifier.testTag("free_missed"), enabled = picked)
+            listOf(true, false).forEach { made ->
+                GhostButton(
+                    freeThrow,
+                    { actions.onFreeThrow(made) },
+                    Modifier.testTag(if (made) "free_made" else "free_missed"),
+                    enabled = picked
+                ) { Mark(made) }
+            }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             statName.forEach { (type, name) ->
@@ -160,12 +170,15 @@ internal fun GameLive(draft: GameDraft, busy: Boolean, actions: GamesActions) {
                 )
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // "Avversario" once, then short buttons: "Avversario +3" didn't fit on one line.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(Res.string.game_opponent), color = c.muted)
             (1..3).forEach { points ->
+                val description = stringResource(Res.string.game_opponent_points, points)
                 GhostButton(
-                    stringResource(Res.string.game_opponent_points, points),
+                    "+$points",
                     { actions.onOpponentScored(points) },
-                    Modifier.testTag("opponent_$points")
+                    Modifier.testTag("opponent_$points").semantics { contentDescription = description }
                 )
             }
         }
@@ -230,21 +243,24 @@ private fun Events(events: List<GameEvent>, callUps: List<CallUp>, onRemove: (In
                 HorizontalDivider(color = c.line)
                 Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     val who = callUps.find { it.id == e.memberId }?.label
-                    Text(
-                        listOfNotNull(
-                            stringResource(quarterName.getValue(e.quarter)),
-                            who,
-                            eventText(e)
-                        ).joinToString(" · "),
-                        Modifier.weight(1f)
-                    )
-                    Text(
-                        "✕",
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            listOfNotNull(
+                                stringResource(quarterName.getValue(e.quarter)),
+                                who,
+                                eventText(e)
+                            ).joinToString(" · ")
+                        )
+                        e.made?.let { Mark(it) }
+                    }
+                    Icon(
+                        painterResource(Res.drawable.ic_cross),
+                        remove,
                         Modifier
                             .clickable(role = Role.Button) { onRemove(i) }
-                            .semantics { contentDescription = remove }
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
-                        color = c.muted
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                            .size(14.dp),
+                        tint = c.muted
                     )
                 }
             }
@@ -252,15 +268,21 @@ private fun Events(events: List<GameEvent>, callUps: List<CallUp>, onRemove: (In
     }
 }
 
+/** ✓ or ✗ as an icon, read as Segnato or Sbagliato. */
 @Composable
-private fun eventText(e: GameEvent): String {
-    val mark = if (e.made == true) "✓" else "✗"
-    return when (e.type) {
-        GameEventType.SHOT -> "${stringResource(zoneName.getValue(e.zone!!))} $mark"
-        GameEventType.FREE_THROW -> "${stringResource(Res.string.game_free_throw)} $mark"
-        GameEventType.OPPONENT -> stringResource(Res.string.game_opponent_points, e.value ?: 0)
-        else -> stringResource(statName.getValue(e.type))
-    }
+private fun Mark(made: Boolean) = Icon(
+    painterResource(if (made) Res.drawable.ic_check else Res.drawable.ic_cross),
+    stringResource(if (made) Res.string.game_made else Res.string.game_missed),
+    Modifier.padding(start = 6.dp).size(14.dp)
+)
+
+/** Without the ✓ or ✗ of shots and free throws: that is [Mark]. */
+@Composable
+private fun eventText(e: GameEvent): String = when (e.type) {
+    GameEventType.SHOT -> stringResource(zoneName.getValue(e.zone!!))
+    GameEventType.FREE_THROW -> stringResource(Res.string.game_free_throw)
+    GameEventType.OPPONENT -> stringResource(Res.string.game_opponent_points, e.value ?: 0)
+    else -> stringResource(statName.getValue(e.type))
 }
 
 @Preview
