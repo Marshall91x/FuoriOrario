@@ -59,6 +59,7 @@ import it.manu.fuoriorario.domain.CallUp
 import it.manu.fuoriorario.domain.Game
 import it.manu.fuoriorario.domain.GameDraft
 import it.manu.fuoriorario.domain.GameError
+import it.manu.fuoriorario.domain.GameEventType
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Quarter
 import it.manu.fuoriorario.domain.Role
@@ -105,6 +106,7 @@ fun GamesScreen(
             onQuarter = vm::onQuarter,
             onShot = vm::onShot,
             onFreeThrow = vm::onFreeThrow,
+            onStat = vm::onStat,
             onOpponentScored = vm::onOpponentScored,
             onUndo = vm::onUndo,
             onRemoveEvent = vm::onRemoveEvent,
@@ -136,6 +138,7 @@ class GamesActions(
     val onQuarter: (Quarter) -> Unit = {},
     val onShot: (Zone, Boolean) -> Unit = { _, _ -> },
     val onFreeThrow: (Boolean) -> Unit = {},
+    val onStat: (GameEventType) -> Unit = {},
     val onOpponentScored: (Int) -> Unit = {},
     val onUndo: () -> Unit = {},
     val onRemoveEvent: (Int) -> Unit = {},

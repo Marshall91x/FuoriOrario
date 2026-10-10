@@ -110,6 +110,16 @@ fun boxScore(callUps: List<CallUp>, events: List<GameEvent>): List<BoxLine> = ca
     )
 }
 
+const val FOUL_LIMIT = 5
+
+/** The convocati at [FOUL_LIMIT] fouls: their chip gets a badge, but they stay selectable to fix mistakes. */
+fun fouledOut(events: List<GameEvent>): Set<String> = events
+    .filter { it.type == GameEventType.FOUL }
+    .groupingBy { it.memberId!! }
+    .eachCount()
+    .filterValues { it >= FOUL_LIMIT }
+    .keys
+
 /** A `games` row; [id] is the draft's, made on the device. */
 @Serializable
 data class Game(

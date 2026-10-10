@@ -37,6 +37,8 @@ class FakeGameRepository(vararg games: Game) : GameRepository {
             throw IOException("offline")
         }
         saved += draft
+        callUps[draft.id] = draft.callUps
+        events[draft.id] = draft.events
         return draft.toGame().also { games += it }
     }
 

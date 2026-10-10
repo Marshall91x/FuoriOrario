@@ -1,5 +1,5 @@
 begin;
-select plan(19);
+select plan(22);
 
 insert into public.members (id, team_id, email, display_name, role) values
   ('20000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-000000000001', 'anna@example.com', 'Anna', 'player'),
@@ -63,6 +63,27 @@ select results_eq($$ select our_score, their_score, note from public.save_game(
 select results_eq($$ select count(*)::int from public.game_events where game_id = '30000000-0000-0000-0000-000000000004' $$,
   $$ values (1) $$, 'a convocato no longer in the roster is left out with their events');
 delete from public.games where id = '30000000-0000-0000-0000-000000000004';
+
+-- RIM, AST, PP, REC, FAL (#83): a convocato's, with the quarter and nothing else.
+select results_eq($$ select count(*)::int from public.save_game(
+    '{"id":"30000000-0000-0000-0000-000000000005","date":"2026-10-10","opponent":"Stats","home":true,"our_score":0,"their_score":0}',
+    '{20000000-0000-0000-0000-00000000000a}',
+    '[{"type":"REBOUND","quarter":"1","member_id":"20000000-0000-0000-0000-00000000000a"},
+      {"type":"ASSIST","quarter":"2","member_id":"20000000-0000-0000-0000-00000000000a"},
+      {"type":"TURNOVER","quarter":"3","member_id":"20000000-0000-0000-0000-00000000000a"},
+      {"type":"STEAL","quarter":"4","member_id":"20000000-0000-0000-0000-00000000000a"},
+      {"type":"FOUL","quarter":"5","member_id":"20000000-0000-0000-0000-00000000000a","zone":null,"made":null,"value":null}]') $$,
+  $$ values (1) $$, 'rebounds, assists, turnovers, steals and fouls save');
+select results_eq($$ select type, quarter::int from public.game_events
+    where game_id = '30000000-0000-0000-0000-000000000005' order by seq $$,
+  $$ values ('REBOUND', 1), ('ASSIST', 2), ('TURNOVER', 3), ('STEAL', 4), ('FOUL', 5) $$,
+  'each with its quarter');
+delete from public.games where id = '30000000-0000-0000-0000-000000000005';
+select throws_ok($$ select public.save_game(
+    '{"id":"30000000-0000-0000-0000-000000000006","date":"2026-10-10","opponent":"X","home":true,"our_score":0,"their_score":0}',
+    '{20000000-0000-0000-0000-00000000000a}',
+    '[{"type":"REBOUND","quarter":"1","member_id":"20000000-0000-0000-0000-00000000000a","zone":"pit"}]') $$,
+  '23514', null, 'a rebound has no zone');
 
 -- Player
 select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-00000000000a"}', true);

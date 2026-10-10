@@ -105,6 +105,16 @@ class GameTest {
     }
 
     @Test
+    fun fouledOut_whoeverHasFiveFoulsOrMore() {
+        fun foul(who: String) = GameEvent(GameEventType.FOUL, Quarter.Q1, who)
+        val rebound = GameEvent(GameEventType.REBOUND, Quarter.Q1, "anna")
+        val events = List(5) { foul("luca") } + List(4) { foul("anna") } + rebound
+
+        assertEquals(setOf("luca"), fouledOut(events))
+        assertEquals(setOf("luca", "anna"), fouledOut(events + foul("anna") + foul("luca")))
+    }
+
+    @Test
     fun toGame_carriesTheScore() {
         val draft = GameDraft(
             "g1",

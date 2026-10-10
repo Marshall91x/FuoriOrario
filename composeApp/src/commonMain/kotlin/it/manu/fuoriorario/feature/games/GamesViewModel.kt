@@ -203,6 +203,9 @@ class GamesViewModel(
 
     fun onFreeThrow(made: Boolean) = addEvent { GameEvent(GameEventType.FREE_THROW, quarter, it, made = made) }
 
+    /** RIM, AST, PP, REC or FAL for the selected convocato. */
+    fun onStat(type: GameEventType) = addEvent { GameEvent(type, quarter, it) }
+
     fun onOpponentScored(points: Int) =
         editDraft { copy(events = events + GameEvent(GameEventType.OPPONENT, quarter, value = points)) }
 

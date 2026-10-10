@@ -35,7 +35,7 @@ import kotlinx.datetime.LocalDate
 
 private const val ACK = "2026-10-01T10:00:00Z"
 
-/** #80: staff record a game live and save it at the end. #82: its Riepilogo. */
+/** #80: staff record a game live and save it at the end. #82: its Riepilogo. #83: the other stats. */
 @OptIn(ExperimentalTestApi::class)
 class GamesTest {
     private val coach = Member("Coach", Role.STAFF, ACK, id = "coach")
@@ -71,6 +71,29 @@ class GamesTest {
         awaitText("3–0")
         awaitText("Piano")
         assertEquals(1, games.saved.size)
+    }
+
+    @Test
+    fun staffRecordAReboundAndSeeItInTheBoxScore() = runAppTest {
+        setContent { TestApp(FakeAuthRepository(coach), FakeRosterRepository(coach, luca)) }
+
+        awaitText("Partite")
+        onNodeWithText("Partite").performClick()
+        onNodeWithTag("game_new").performClick()
+        onNodeWithTag("game_opponent").performTextInput("Virtus")
+        onNodeWithTag("call_up_luca").performClick()
+        onNodeWithTag("game_start").performScrollTo().performClick()
+
+        onNodeWithTag("pick_luca").performClick()
+        onNodeWithTag("stat_rebound").performScrollTo().performClick()
+        awaitText("1Q · #7 Luca B. · RIM")
+        repeat(5) { onNodeWithTag("stat_foul").performScrollTo().performClick() }
+        onNodeWithTag("fouled_out_luca", useUnmergedTree = true).assertExists()
+
+        onNodeWithTag("game_finish").performScrollTo().performClick()
+        onNodeWithText("Virtus").performClick()
+        onNodeWithTag("box_luca_rebounds", useUnmergedTree = true).assertTextEquals("1")
+        onNodeWithTag("box_luca_fouls", useUnmergedTree = true).assertTextEquals("5")
     }
 
     @Test
