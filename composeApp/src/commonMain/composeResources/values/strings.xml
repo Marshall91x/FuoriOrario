@@ -211,7 +211,7 @@
     <string name="privacy_controller_title">Chi li tratta</string>
     <string name="privacy_controller_body">Il titolare del trattamento è Emanuele Del Monte, che gestisce l'app per la squadra. Per qualsiasi richiesta: anima91x@gmail.com.</string>
     <string name="privacy_data_title">Quali dati</string>
-    <string name="privacy_data_body">Email e nome visualizzato (anche un soprannome); numero di maglia e ruolo in campo se li indichi; le sessioni di tiro, i piani settimanali, le spunte degli esercizi e le statistiche delle partite registrate dallo staff (tiri, tiri liberi, convocazioni). Niente data di nascita, foto o altro.</string>
+    <string name="privacy_data_body">Email e nome visualizzato (anche un soprannome); numero di maglia e ruolo in campo se li indichi; le sessioni di tiro, i piani settimanali, le spunte degli esercizi, le convocazioni e le statistiche delle partite registrate dallo staff (tiri con zona ed esito, tiri liberi, rimbalzi, assist, palle perse, recuperi, falli). Niente data di nascita, foto o altro.</string>
     <string name="privacy_purpose_title">Perché</string>
     <string name="privacy_purpose_body">Solo per farti accedere e seguire il tuo lavoro individuale insieme allo staff della squadra, con il tuo consenso. Niente pubblicità, profilazione o cessione a terzi. I dati restano finché sei in squadra.</string>
     <string name="privacy_where_title">Dove</string>
