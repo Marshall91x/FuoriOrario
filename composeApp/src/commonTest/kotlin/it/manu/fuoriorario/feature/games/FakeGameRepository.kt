@@ -1,7 +1,9 @@
 package it.manu.fuoriorario.feature.games
 
+import it.manu.fuoriorario.domain.CallUp
 import it.manu.fuoriorario.domain.Game
 import it.manu.fuoriorario.domain.GameDraft
+import it.manu.fuoriorario.domain.GameEvent
 import it.manu.fuoriorario.feature.games.data.GameRepository
 import kotlinx.io.IOException
 
@@ -14,7 +16,11 @@ class FakeGameRepository(vararg games: Game) : GameRepository {
     /** Next load fails without network, so the screen offers "Riprova". */
     var failLoad = false
 
-    /** Next save fails like a network error. */
+    /** Per game id, what RLS shows the signed-in member: a player only their own. */
+    val callUps = mutableMapOf<String, List<CallUp>>()
+    val events = mutableMapOf<String, List<GameEvent>>()
+
+    /** Next save or delete fails like a network error. */
     var failNext = false
 
     override suspend fun games(): List<Game> {
@@ -32,5 +38,19 @@ class FakeGameRepository(vararg games: Game) : GameRepository {
         }
         saved += draft
         return draft.toGame().also { games += it }
+    }
+
+    override suspend fun callUps(game: Game) = callUps[game.id].orEmpty()
+
+    override suspend fun events(game: Game) = events[game.id].orEmpty()
+
+    override suspend fun ownEvents(): Map<String, List<GameEvent>> = events
+
+    override suspend fun delete(game: Game) {
+        if (failNext) {
+            failNext = false
+            throw IOException("offline")
+        }
+        games.remove(game)
     }
 }

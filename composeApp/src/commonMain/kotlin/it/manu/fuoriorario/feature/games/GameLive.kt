@@ -54,6 +54,7 @@ import it.manu.fuoriorario.domain.GameDraft
 import it.manu.fuoriorario.domain.GameEvent
 import it.manu.fuoriorario.domain.GameEventType
 import it.manu.fuoriorario.domain.Quarter
+import it.manu.fuoriorario.domain.Score
 import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.domain.ZoneHeat
 import it.manu.fuoriorario.domain.quarterScores
@@ -63,7 +64,7 @@ import it.manu.fuoriorario.feature.shots.zoneName
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 
-private val quarterName = mapOf(
+internal val quarterName = mapOf(
     Quarter.Q1 to Res.string.game_q1,
     Quarter.Q2 to Res.string.game_q2,
     Quarter.Q3 to Res.string.game_q3,
@@ -90,7 +91,7 @@ internal fun GameLive(draft: GameDraft, busy: Boolean, actions: GamesActions) {
     val picked = draft.selected != null
 
     GhostButton(stringResource(Res.string.game_all), actions.onLeaveLive, Modifier.testTag("game_back"))
-    Scoreboard(draft)
+    Scoreboard(draft.score, draft.opponent, quarterScores(draft.events))
     SegmentedControl(quarterName, draft.quarter, actions.onQuarter, tag = { "quarter_${it.name.lowercase()}" })
     Panel {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -142,25 +143,23 @@ internal fun GameLive(draft: GameDraft, busy: Boolean, actions: GamesActions) {
     )
 }
 
-/** "NOI 12 – 8 VIRTUS" and the parziali. */
+/** "NOI 12 – 8 VIRTUS" and, without null, the parziali. */
 @Composable
-private fun Scoreboard(draft: GameDraft) {
+internal fun Scoreboard(score: Score, opponent: String, quarters: Map<Quarter, Score>?) {
     val c = FuoriOrarioTheme.colors
-    val score = draft.score
     Panel(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            "${stringResource(
-                Res.string.game_us
-            ).uppercase()} ${score.us} – ${score.them} ${draft.opponent.uppercase()}",
+            "${stringResource(Res.string.game_us).uppercase()} ${score.us} – ${score.them} ${opponent.uppercase()}",
             Modifier.testTag("game_score"),
             style = MaterialTheme.typography.headlineMedium
         )
-        Text(
-            quarterScores(draft.events).map { (q, s) -> "${stringResource(quarterName.getValue(q))} ${s.us}–${s.them}" }
-                .joinToString(" · "),
-            color = c.muted,
-            style = MaterialTheme.typography.bodyMedium
-        )
+        quarters?.let {
+            Text(
+                it.map { (q, s) -> "${stringResource(quarterName.getValue(q))} ${s.us}–${s.them}" }.joinToString(" · "),
+                color = c.muted,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
     }
 }
 

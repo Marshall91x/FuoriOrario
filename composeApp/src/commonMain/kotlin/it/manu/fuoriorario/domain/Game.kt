@@ -71,6 +71,43 @@ fun shotZones(events: List<GameEvent>): Map<Zone, Shots> = Zone.entries.associat
     }.fold(Shots()) { sum, e -> sum + Shots(if (e.made == true) 1 else 0, 1) }
 }
 
+/** The events of [quarter], or the whole game when null ("Tutta"). */
+fun List<GameEvent>.inQuarter(quarter: Quarter?) = if (quarter == null) this else filter { it.quarter == quarter }
+
+/** A row of the tabellino: PT, T2, T3 and TL made / attempted, RIM, AST, PP, REC, FAL. */
+data class BoxLine(
+    val callUp: CallUp,
+    val points: Int,
+    val twos: Shots,
+    val threes: Shots,
+    val freeThrows: Shots,
+    val rebounds: Int,
+    val assists: Int,
+    val turnovers: Int,
+    val steals: Int,
+    val fouls: Int
+)
+
+/** The tabellino: a row per convocato, in [callUps] order, even without events. */
+fun boxScore(callUps: List<CallUp>, events: List<GameEvent>): List<BoxLine> = callUps.map { callUp ->
+    val own = events.filter { it.memberId == callUp.id }
+    fun count(type: GameEventType) = own.count { it.type == type }
+    fun shots(match: (GameEvent) -> Boolean) =
+        own.filter(match).fold(Shots()) { sum, e -> sum + Shots(if (e.made == true) 1 else 0, 1) }
+    BoxLine(
+        callUp,
+        own.sumOf { it.points },
+        shots { it.type == GameEventType.SHOT && it.zone !in THREES },
+        shots { it.type == GameEventType.SHOT && it.zone in THREES },
+        shots { it.type == GameEventType.FREE_THROW },
+        count(GameEventType.REBOUND),
+        count(GameEventType.ASSIST),
+        count(GameEventType.TURNOVER),
+        count(GameEventType.STEAL),
+        count(GameEventType.FOUL)
+    )
+}
+
 /** A `games` row; [id] is the draft's, made on the device. */
 @Serializable
 data class Game(
