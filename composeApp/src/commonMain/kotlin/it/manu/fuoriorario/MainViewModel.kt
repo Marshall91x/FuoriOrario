@@ -1,5 +1,6 @@
 package it.manu.fuoriorario
 
+import androidx.lifecycle.viewModelScope
 import it.manu.fuoriorario.core.error.ErrorManager
 import it.manu.fuoriorario.core.navigation.Route
 import it.manu.fuoriorario.core.session.SelectedPlayer
@@ -15,6 +16,8 @@ import it.manu.fuoriorario.feature.games.data.GameDraftStore
 import it.manu.fuoriorario.feature.roster.data.RosterRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,12 +30,16 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * [players]: staff only, the team's players for the header menu; null while loading.
  * [followed]: whose Diario di tiro and Piano to show, the player themselves or the one staff picked.
  * [confirmingSignOut]: "Esci" took its first tap, with a game in progress on the device.
  */
+/** How long the second tap of "Esci" has, with a game in progress: then the next tap warns again. */
+const val SIGN_OUT_CONFIRM_MILLIS = 5_000L
+
 data class MainScreenState(
     val session: Session = Session.Loading,
     val players: Result<List<Member>>? = null,
@@ -55,23 +62,26 @@ class MainViewModel(
     private val roster: RosterRepository,
     private val selectedPlayer: SelectedPlayer,
     private val drafts: GameDraftStore,
-    dispatchers: DispatcherProvider,
+    private val dispatchers: DispatcherProvider,
     errorManager: ErrorManager
 ) : ComposeViewModel<MainScreenState>(dispatcherProvider = dispatchers, errorManager = errorManager) {
     private val playersReload = MutableStateFlow(0)
     private val confirmingSignOut = MutableStateFlow(false)
+    private var confirmExpiry: Job? = null
 
     init {
         defaultLaunch {
             // One subscription: each one would load the member again.
             val session = auth.session.shareIn(this, SharingStarted.Eagerly, replay = 1)
-            combine(session, session.players(), selectedPlayer.id, confirmingSignOut) {
-                    s,
-                    players,
-                    picked,
-                    confirming
-                ->
-                MainScreenState(s, players, followed(s, players, picked), confirming)
+            // The warning goes with the game: saved or abandoned meanwhile, there's nothing to lose.
+            combine(
+                session,
+                session.players(),
+                selectedPlayer.id,
+                confirmingSignOut,
+                drafts.draft
+            ) { s, players, picked, confirming, draft ->
+                MainScreenState(s, players, followed(s, players, picked), confirming && draft != null)
             }.collect { emitSuccess(it) }
         }
     }
@@ -89,12 +99,20 @@ class MainViewModel(
         onRetryPlayers()
     }
 
-    /** With a game in progress the first tap only warns; signing out forgets it, for the next account (ADR 0010). */
+    /**
+     * With a game in progress the first tap only warns, for [SIGN_OUT_CONFIRM_MILLIS]; signing out forgets it, for the
+     * next account (ADR 0010).
+     */
     fun onSignOut() {
         if (drafts.draft.value != null && !confirmingSignOut.value) {
             confirmingSignOut.value = true
+            confirmExpiry = viewModelScope.launch(dispatchers.main()) {
+                delay(SIGN_OUT_CONFIRM_MILLIS)
+                confirmingSignOut.value = false
+            }
             return
         }
+        confirmExpiry?.cancel()
         drafts.save(null)
         confirmingSignOut.value = false
         // Nothing to say if it fails: the session is forgotten on this device anyway.

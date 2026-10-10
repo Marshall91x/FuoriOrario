@@ -20,7 +20,9 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 
@@ -175,7 +177,8 @@ class MainViewModelTest {
         advanceUntilIdle()
 
         vm.onSignOut()
-        advanceUntilIdle()
+        // Not until idle: that would run out the time to confirm.
+        runCurrent()
         assertEquals(Route.HOME, vm.state.route)
         assertTrue(vm.state.confirmingSignOut)
 
@@ -184,5 +187,38 @@ class MainViewModelTest {
         assertEquals(Route.LOGIN, vm.state.route)
         assertFalse(vm.state.confirmingSignOut)
         assertNull(GameDraftStore(settings).draft.value)
+    }
+
+    @Test
+    fun signOut_confirmationExpires_theNextTapAsksAgain() = runTest(dispatcher) {
+        drafts.save(GameDraft("g1", LocalDate(2026, 10, 10), "Virtus", home = true))
+        val vm = vm(FakeAuthRepository(coach))
+        advanceUntilIdle()
+
+        vm.onSignOut()
+        runCurrent()
+        assertTrue(vm.state.confirmingSignOut)
+        advanceTimeBy(SIGN_OUT_CONFIRM_MILLIS + 1)
+        runCurrent()
+        assertFalse(vm.state.confirmingSignOut)
+
+        vm.onSignOut()
+        runCurrent()
+        assertEquals(Route.HOME, vm.state.route)
+        assertTrue(vm.state.confirmingSignOut)
+    }
+
+    @Test
+    fun signOut_gameSavedMeanwhile_noWarningLeft() = runTest(dispatcher) {
+        drafts.save(GameDraft("g1", LocalDate(2026, 10, 10), "Virtus", home = true))
+        val vm = vm(FakeAuthRepository(coach))
+        advanceUntilIdle()
+
+        vm.onSignOut()
+        runCurrent()
+        drafts.save(null)
+        runCurrent()
+
+        assertFalse(vm.state.confirmingSignOut)
     }
 }
