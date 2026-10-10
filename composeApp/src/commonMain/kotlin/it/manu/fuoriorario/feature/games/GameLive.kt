@@ -45,6 +45,7 @@ import fuoriorario.composeapp.generated.resources.game_free_throw
 import fuoriorario.composeapp.generated.resources.game_made
 import fuoriorario.composeapp.generated.resources.game_missed
 import fuoriorario.composeapp.generated.resources.game_no_events
+import fuoriorario.composeapp.generated.resources.game_opponent
 import fuoriorario.composeapp.generated.resources.game_opponent_points
 import fuoriorario.composeapp.generated.resources.game_overtime
 import fuoriorario.composeapp.generated.resources.game_pick
@@ -169,12 +170,15 @@ internal fun GameLive(draft: GameDraft, busy: Boolean, actions: GamesActions) {
                 )
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // "Avversario" once, then short buttons: "Avversario +3" didn't fit on one line.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(Res.string.game_opponent), color = c.muted)
             (1..3).forEach { points ->
+                val description = stringResource(Res.string.game_opponent_points, points)
                 GhostButton(
-                    stringResource(Res.string.game_opponent_points, points),
+                    "+$points",
                     { actions.onOpponentScored(points) },
-                    Modifier.testTag("opponent_$points")
+                    Modifier.testTag("opponent_$points").semantics { contentDescription = description }
                 )
             }
         }
