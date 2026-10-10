@@ -135,13 +135,15 @@ enum class GhostStyle {
     DANGER
 }
 
+/** [trailing] follows the text: an icon where the web fonts lack the glyph. */
 @Composable
 fun GhostButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     style: GhostStyle = GhostStyle.PLAIN,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    trailing: (@Composable () -> Unit)? = null
 ) {
     val c = FuoriOrarioTheme.colors
     val pill = style == GhostStyle.PILL
@@ -160,7 +162,10 @@ fun GhostButton(
             disabledContentColor = c.muted.copy(alpha = 0.4f)
         ),
         contentPadding = if (pill) PaddingValues(10.dp, 6.dp) else PaddingValues(11.dp, 7.dp)
-    ) { Text(text, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold) }
+    ) {
+        Text(text, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+        trailing?.invoke()
+    }
 }
 
 /** Prototype `.role-toggle` with `aria-pressed`: accent while [on]. */
