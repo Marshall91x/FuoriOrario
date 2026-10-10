@@ -2,6 +2,7 @@ package it.manu.fuoriorario.feature.games
 
 import com.russhwolf.settings.MapSettings
 import fuoriorario.composeapp.generated.resources.Res
+import fuoriorario.composeapp.generated.resources.game_deleted
 import fuoriorario.composeapp.generated.resources.game_saved
 import fuoriorario.composeapp.generated.resources.save_failed
 import it.manu.fuoriorario.core.error.AppErrorManager
@@ -17,9 +18,11 @@ import it.manu.fuoriorario.domain.GameEventType
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Quarter
 import it.manu.fuoriorario.domain.Role
+import it.manu.fuoriorario.domain.Shots
 import it.manu.fuoriorario.domain.Zone
 import it.manu.fuoriorario.feature.games.data.GameDraftStore
 import it.manu.fuoriorario.feature.roster.FakeRosterRepository
+import it.manu.fuoriorario.feature.shots.FakeShotRepository
 import it.manu.fuoriorario.testing.TestDispatcherProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -45,6 +48,7 @@ class GamesViewModelTest {
     private val past = Game(LocalDate(2026, 10, 3), "Virtus", home = true, ourScore = 60, theirScore = 52, id = "g0")
     private val games = FakeGameRepository(past)
     private val roster = FakeRosterRepository(coach, luca, anna)
+    private val shots = FakeShotRepository().apply { refs = refs + (Zone.CEN to 30) }
     private val settings = MapSettings()
     private val drafts = GameDraftStore(settings)
 
@@ -52,6 +56,7 @@ class GamesViewModelTest {
         staff,
         games,
         roster,
+        shots,
         drafts,
         TestDispatcherProvider(dispatcher),
         AppErrorManager(listOf(NetworkErrorHandler(), FallbackHandler())) {}
@@ -142,6 +147,7 @@ class GamesViewModelTest {
             true,
             games,
             roster,
+            shots,
             GameDraftStore(settings),
             TestDispatcherProvider(dispatcher),
             AppErrorManager(emptyList()) {}
@@ -259,5 +265,125 @@ class GamesViewModelTest {
         advanceUntilIdle()
 
         assertNotNull(drafts.draft.value)
+    }
+
+    private val lucaUp = CallUp("luca", "Luca B.", "7")
+    private val annaUp = CallUp("anna", "Anna", "4")
+    private val pastEvents = listOf(
+        GameEvent(GameEventType.SHOT, Quarter.Q1, "luca", Zone.CEN, true),
+        GameEvent(GameEventType.OPPONENT, Quarter.Q1, value = 2),
+        GameEvent(GameEventType.SHOT, Quarter.Q2, "anna", Zone.PIT, false),
+        GameEvent(GameEventType.FREE_THROW, Quarter.Q2, "luca", made = true)
+    )
+
+    /** Staff open the past game, with both players' events. */
+    private suspend fun kotlinx.coroutines.test.TestScope.summary(): GamesViewModel {
+        games.callUps["g0"] = listOf(annaUp, lucaUp)
+        games.events["g0"] = pastEvents
+        val vm = vm()
+        advanceUntilIdle()
+        vm.onOpen(past)
+        advanceUntilIdle()
+        return vm
+    }
+
+    @Test
+    fun open_loadsTheCallUpsTheEventsAndTheTeamRefsOnASecondLevelScreen() = runTest(dispatcher) {
+        val vm = summary()
+
+        val summary = assertNotNull(vm.data.summary)
+        assertTrue(summary.loaded)
+        assertEquals(listOf(annaUp, lucaUp), summary.callUps)
+        assertEquals(pastEvents, summary.events)
+        assertEquals(30, summary.refs[Zone.CEN])
+        assertTrue(vm.data.secondLevel)
+
+        vm.onCloseSummary()
+        advanceUntilIdle()
+        assertNull(vm.data.summary)
+        assertFalse(vm.data.secondLevel)
+    }
+
+    @Test
+    fun quarter_filtersTheTabellinoAndTheMap() = runTest(dispatcher) {
+        val vm = summary()
+        vm.onSummaryQuarter(Quarter.Q2)
+        advanceUntilIdle()
+
+        val summary = vm.data.summary!!
+        assertEquals(listOf(0, 1), summary.box.map { it.points })
+        assertEquals(Shots(0, 1), summary.zones.getValue(Zone.PIT))
+        assertEquals(Shots(), summary.zones.getValue(Zone.CEN))
+    }
+
+    @Test
+    fun boxRow_showsThatPlayersMapUntilTappedAgain() = runTest(dispatcher) {
+        val vm = summary()
+        vm.onBoxRow("anna")
+        advanceUntilIdle()
+        assertEquals(Shots(0, 1), vm.data.summary!!.zones.getValue(Zone.PIT))
+        assertEquals(Shots(), vm.data.summary!!.zones.getValue(Zone.CEN))
+
+        vm.onBoxRow("anna")
+        advanceUntilIdle()
+        assertNull(vm.data.summary!!.member)
+        assertEquals(Shots(1, 1), vm.data.summary!!.zones.getValue(Zone.CEN))
+    }
+
+    @Test
+    fun delete_secondTapRemovesTheGame() = runTest(dispatcher) {
+        val vm = summary()
+        vm.onDelete()
+        advanceUntilIdle()
+        assertTrue(vm.data.summary!!.confirmingRemoval)
+        assertEquals(listOf(past), games.games)
+
+        vm.onDelete()
+        advanceUntilIdle()
+        assertEquals(getString(Res.string.game_deleted), vm.toasts.first())
+        assertNull(vm.data.summary)
+        assertEquals(emptyList(), vm.data.games)
+        assertEquals(emptyList(), games.games)
+    }
+
+    @Test
+    fun delete_offline_toastsAndKeepsTheSummary() = runTest(dispatcher) {
+        val vm = summary()
+        vm.onDelete()
+        games.failNext = true
+        vm.onDelete()
+        advanceUntilIdle()
+
+        assertEquals(getString(Res.string.save_failed), vm.toasts.first())
+        assertNotNull(vm.data.summary)
+        assertEquals(listOf(past), vm.data.games)
+    }
+
+    @Test
+    fun load_playersGetTheirPointsInEachGameCalledUpTo() = runTest(dispatcher) {
+        games.callUps["g0"] = listOf(lucaUp)
+        games.callUps["g1"] = listOf(lucaUp)
+        games.events["g0"] = pastEvents.filter { it.memberId == "luca" }
+        val vm = vm(staff = false)
+        advanceUntilIdle()
+
+        assertEquals(mapOf("g0" to 4, "g1" to 0), vm.data.points)
+    }
+
+    @Test
+    fun open_offline_errorScreenThenRetryLoadsTheSummary() = runTest(dispatcher) {
+        games.callUps["g0"] = listOf(annaUp, lucaUp)
+        games.events["g0"] = pastEvents
+        val vm = vm()
+        advanceUntilIdle()
+        games.failLoad = true
+        vm.onOpen(past)
+        advanceUntilIdle()
+
+        val handler = assertIs<UseCaseMutableState.Error>(vm.uiState.value.state).handler
+        assertIs<NetworkErrorHandler>(handler).retryFunction!!()
+        advanceUntilIdle()
+        assertTrue(vm.data.summary!!.loaded)
+        assertEquals(pastEvents, vm.data.summary!!.events)
     }
 }

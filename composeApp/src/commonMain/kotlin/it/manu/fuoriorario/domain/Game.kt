@@ -64,11 +64,50 @@ fun quarterScores(events: List<GameEvent>): Map<Quarter, Score> = Quarter.entrie
     .filter { q -> q != Quarter.OT || events.any { it.quarter == q } }
     .associateWith { q -> score(events.filter { it.quarter == q }) }
 
+/** Made / attempted over shots or free throws. */
+private fun List<GameEvent>.shots() = fold(Shots()) { sum, e -> sum + Shots(if (e.made == true) 1 else 0, 1) }
+
 /** Made / attempted per zone, free throws under [Zone.TL], like [zoneTotals]: every zone present. */
 fun shotZones(events: List<GameEvent>): Map<Zone, Shots> = Zone.entries.associateWith { z ->
     events.filter { e ->
         e.type == GameEventType.SHOT && e.zone == z || e.type == GameEventType.FREE_THROW && z == Zone.TL
-    }.fold(Shots()) { sum, e -> sum + Shots(if (e.made == true) 1 else 0, 1) }
+    }.shots()
+}
+
+/** The events of [quarter], or the whole game when null ("Tutta"). */
+fun List<GameEvent>.inQuarter(quarter: Quarter?) = if (quarter == null) this else filter { it.quarter == quarter }
+
+/** A row of the tabellino: PT, T2, T3 and TL made / attempted, RIM, AST, PP, REC, FAL. */
+data class BoxLine(
+    val callUp: CallUp,
+    val points: Int,
+    val twos: Shots,
+    val threes: Shots,
+    val freeThrows: Shots,
+    val rebounds: Int,
+    val assists: Int,
+    val turnovers: Int,
+    val steals: Int,
+    val fouls: Int
+)
+
+/** The tabellino: a row per convocato, in [callUps] order, even without events. */
+fun boxScore(callUps: List<CallUp>, events: List<GameEvent>): List<BoxLine> = callUps.map { callUp ->
+    val own = events.filter { it.memberId == callUp.id }
+    fun count(type: GameEventType) = own.count { it.type == type }
+    fun shots(match: (GameEvent) -> Boolean) = own.filter(match).shots()
+    BoxLine(
+        callUp,
+        own.sumOf { it.points },
+        shots { it.type == GameEventType.SHOT && it.zone !in THREES },
+        shots { it.type == GameEventType.SHOT && it.zone in THREES },
+        shots { it.type == GameEventType.FREE_THROW },
+        count(GameEventType.REBOUND),
+        count(GameEventType.ASSIST),
+        count(GameEventType.TURNOVER),
+        count(GameEventType.STEAL),
+        count(GameEventType.FOUL)
+    )
 }
 
 /** A `games` row; [id] is the draft's, made on the device. */

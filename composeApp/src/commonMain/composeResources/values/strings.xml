@@ -293,4 +293,21 @@
     <string name="game_remove_event">Elimina evento</string>
     <string name="game_finish">Termina partita</string>
     <string name="game_saved">Partita salvata</string>
+    <string name="game_whole">Tutta</string>
+    <string name="game_box">Tabellino</string>
+    <string name="game_box_player">Giocatore</string>
+    <string name="game_box_points">PT</string>
+    <string name="game_box_twos">T2</string>
+    <string name="game_box_threes">T3</string>
+    <string name="game_box_free_throws">TL</string>
+    <string name="game_box_rebounds">RIM</string>
+    <string name="game_box_assists">AST</string>
+    <string name="game_box_turnovers">PP</string>
+    <string name="game_box_steals">REC</string>
+    <string name="game_box_fouls">FAL</string>
+    <string name="game_map_team">Squadra</string>
+    <string name="game_my_points">%1$d PT</string>
+    <string name="game_delete">Elimina</string>
+    <string name="game_delete_confirm">Conferma eliminazione</string>
+    <string name="game_deleted">Partita eliminata</string>
 </resources>

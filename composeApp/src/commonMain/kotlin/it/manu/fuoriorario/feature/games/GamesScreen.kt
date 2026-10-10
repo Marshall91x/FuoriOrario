@@ -1,5 +1,6 @@
 package it.manu.fuoriorario.feature.games
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -29,6 +30,7 @@ import fuoriorario.composeapp.generated.resources.game_away
 import fuoriorario.composeapp.generated.resources.game_call_ups
 import fuoriorario.composeapp.generated.resources.game_home
 import fuoriorario.composeapp.generated.resources.game_in_progress
+import fuoriorario.composeapp.generated.resources.game_my_points
 import fuoriorario.composeapp.generated.resources.game_new
 import fuoriorario.composeapp.generated.resources.game_new_title
 import fuoriorario.composeapp.generated.resources.game_no_opponent
@@ -107,12 +109,17 @@ fun GamesScreen(
             onUndo = vm::onUndo,
             onRemoveEvent = vm::onRemoveEvent,
             onFinish = vm::onFinish,
-            onRetry = vm::onRetry
+            onRetry = vm::onRetry,
+            onOpen = vm::onOpen,
+            onCloseSummary = vm::onCloseSummary,
+            onSummaryQuarter = vm::onSummaryQuarter,
+            onBoxRow = vm::onBoxRow,
+            onDelete = vm::onDelete
         )
     )
 }
 
-/** What Partite does, from the list to Live. */
+/** What Partite does, from the list to Live and Riepilogo. */
 class GamesActions(
     val onNew: () -> Unit = {},
     val onCancelForm: () -> Unit = {},
@@ -133,7 +140,12 @@ class GamesActions(
     val onUndo: () -> Unit = {},
     val onRemoveEvent: (Int) -> Unit = {},
     val onFinish: () -> Unit = {},
-    val onRetry: () -> Unit = {}
+    val onRetry: () -> Unit = {},
+    val onOpen: (Game) -> Unit = {},
+    val onCloseSummary: () -> Unit = {},
+    val onSummaryQuarter: (Quarter?) -> Unit = {},
+    val onBoxRow: (String) -> Unit = {},
+    val onDelete: () -> Unit = {}
 )
 
 @Composable
@@ -145,14 +157,16 @@ fun GamesStateContent(state: UseCaseMutableState<GamesScreenState>?, staff: Bool
     }
 }
 
-/** Live if open, else the new game form, else the list. */
+/** Live if open, else the new game form, else a Riepilogo, else the list. */
 @Composable
 fun GamesContent(state: GamesScreenState, staff: Boolean, actions: GamesActions) {
     val draft = state.draft
     val form = state.form
+    val summary = state.summary
     when {
         state.live && draft != null -> GameLive(draft, state.busy, actions)
         form != null -> NewGame(form, state.players, actions)
+        summary != null -> Summary(summary, staff, state.busy, actions)
         else -> {
             if (staff) {
                 draft?.let { InProgress(it, state.confirmingAbandon, actions) }
@@ -163,7 +177,8 @@ fun GamesContent(state: GamesScreenState, staff: Boolean, actions: GamesActions)
                     enabled = draft == null
                 )
             }
-            state.games?.let { GameList(it) } ?: if (state.loadFailed) LoadFailed(actions.onRetry) else Unit
+            state.games?.let { GameList(it, state.points, actions.onOpen) }
+                ?: if (state.loadFailed) LoadFailed(actions.onRetry) else Unit
         }
     }
 }
@@ -199,9 +214,9 @@ private fun InProgress(draft: GameDraft, confirming: Boolean, actions: GamesActi
     }
 }
 
-/** Date, opponent, home or away, result. */
+/** Date, opponent, home or away, result, and a player's own [points]; tapping a game opens its Riepilogo. */
 @Composable
-private fun GameList(games: List<Game>) {
+private fun GameList(games: List<Game>, points: Map<String, Int>, onOpen: (Game) -> Unit) {
     val c = FuoriOrarioTheme.colors
     Panel {
         if (games.isEmpty()) Text(stringResource(Res.string.games_empty), color = c.muted)
@@ -209,7 +224,7 @@ private fun GameList(games: List<Game>) {
             games.forEachIndexed { i, game ->
                 if (i > 0) HorizontalDivider(color = c.line)
                 Row(
-                    Modifier.fillMaxWidth().padding(vertical = 11.dp),
+                    Modifier.fillMaxWidth().clickable { onOpen(game) }.padding(vertical = 11.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -218,6 +233,7 @@ private fun GameList(games: List<Game>) {
                         Text(game.opponent, fontWeight = FontWeight.SemiBold)
                         Text(homeLabel(game.home), color = c.muted, style = MaterialTheme.typography.bodyMedium)
                     }
+                    points[game.id]?.let { Text(stringResource(Res.string.game_my_points, it), color = c.muted) }
                     Text("${game.ourScore}–${game.theirScore}", style = MaterialTheme.typography.headlineMedium)
                 }
             }

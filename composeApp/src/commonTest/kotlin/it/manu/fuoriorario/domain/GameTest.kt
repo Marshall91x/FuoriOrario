@@ -67,6 +67,44 @@ class GameTest {
     }
 
     @Test
+    fun inQuarter_nullIsTheWholeGame() {
+        val events = listOf(shot(Zone.PIT, true), opponent(2, Quarter.Q2), shot(Zone.CEN, false, Quarter.OT))
+
+        assertEquals(events, events.inQuarter(null))
+        assertEquals(listOf(opponent(2, Quarter.Q2)), events.inQuarter(Quarter.Q2))
+    }
+
+    @Test
+    fun boxScore_aRowPerCallUpInTheirOrderWithTwosThreesFreeThrowsAndTheRest() {
+        val luca = CallUp("luca", "Luca B.", "7")
+        val anna = CallUp("anna", "Anna", "4")
+        fun luca(type: GameEventType) = GameEvent(type, Quarter.Q1, "luca")
+        val events = listOf(
+            shot(Zone.PIT, true),
+            shot(Zone.MLS, false),
+            shot(Zone.CEN, true),
+            shot(Zone.ACD, false),
+            freeThrow(true),
+            freeThrow(false),
+            opponent(3),
+            luca(GameEventType.REBOUND),
+            luca(GameEventType.REBOUND),
+            luca(GameEventType.ASSIST),
+            luca(GameEventType.TURNOVER),
+            luca(GameEventType.STEAL),
+            luca(GameEventType.FOUL)
+        )
+
+        assertEquals(
+            listOf(
+                BoxLine(luca, 6, Shots(1, 2), Shots(1, 2), Shots(1, 2), 2, 1, 1, 1, 1),
+                BoxLine(anna, 0, Shots(), Shots(), Shots(), 0, 0, 0, 0, 0)
+            ),
+            boxScore(listOf(luca, anna), events)
+        )
+    }
+
+    @Test
     fun toGame_carriesTheScore() {
         val draft = GameDraft(
             "g1",
