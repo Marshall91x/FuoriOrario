@@ -422,7 +422,7 @@ private fun LogSheet(name: String, draft: SessionDraft, today: LocalDate, busy: 
 /** Prototype `input type=date` with `max` = today: a field opening the date picker. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DateField(value: LocalDate, today: LocalDate, onChange: (LocalDate) -> Unit) {
+internal fun DateField(value: LocalDate, today: LocalDate, onChange: (LocalDate) -> Unit) {
     val c = FuoriOrarioTheme.colors
     var open by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {

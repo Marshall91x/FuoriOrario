@@ -51,6 +51,8 @@ import fuoriorario.composeapp.generated.resources.brand_first
 import fuoriorario.composeapp.generated.resources.brand_second
 import fuoriorario.composeapp.generated.resources.ic_chevron_down
 import fuoriorario.composeapp.generated.resources.sign_out
+import fuoriorario.composeapp.generated.resources.sign_out_confirm
+import fuoriorario.composeapp.generated.resources.sign_out_draft
 import fuoriorario.composeapp.generated.resources.subtitle_player
 import fuoriorario.composeapp.generated.resources.subtitle_staff
 import it.manu.fuoriorario.core.designsystem.GhostButton
@@ -141,6 +143,7 @@ private fun MainContent(
             member,
             state.players?.getOrNull().takeIf { staff }.orEmpty(),
             state.followed,
+            state.confirmingSignOut,
             onPick = onPick,
             onSignOut = onSignOut,
             Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).widthIn(max = 560.dp)
@@ -165,12 +168,16 @@ private fun MainContent(
     }
 }
 
-/** Prototype `.top`: brand + subtitle; when signed in, the `.who` row with logout and the name, or for staff with [players] the menu. */
+/**
+ * Prototype `.top`: brand + subtitle; when signed in, the `.who` row with logout and the name, or for staff with
+ * [players] the menu. [confirmingSignOut]: logging out would lose the game in progress, a second tap does it.
+ */
 @Composable
 private fun Header(
     member: Member?,
     players: List<Member>,
     picked: Member?,
+    confirmingSignOut: Boolean,
     onPick: (Member) -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier
@@ -208,7 +215,20 @@ private fun Header(
                 } else {
                     PlayerPicker(players, picked, onPick, Modifier.weight(1f))
                 }
-                GhostButton(stringResource(Res.string.sign_out), onSignOut, style = GhostStyle.PILL)
+                GhostButton(
+                    stringResource(if (confirmingSignOut) Res.string.sign_out_confirm else Res.string.sign_out),
+                    onSignOut,
+                    Modifier.testTag("sign_out"),
+                    style = if (confirmingSignOut) GhostStyle.DANGER else GhostStyle.PILL
+                )
+            }
+            if (confirmingSignOut) {
+                Text(
+                    stringResource(Res.string.sign_out_draft),
+                    Modifier.padding(top = 6.dp),
+                    color = c.accent,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
         HorizontalDivider(Modifier.padding(top = 10.dp), color = c.line)

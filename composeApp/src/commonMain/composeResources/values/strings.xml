@@ -7,6 +7,7 @@
     <string name="tab_shot_log">Diario di tiro</string>
     <string name="tab_plan">Piano</string>
     <string name="tab_plays">Schemi</string>
+    <string name="tab_games">Partite</string>
     <string name="tab_team">Squadra</string>
 
     <string name="save_failed">Salvataggio non riuscito. Riprova tra poco.</string>
@@ -257,4 +258,39 @@
     <string name="play_discard">Esci senza salvare</string>
     <string name="play_unsaved">Modifiche non salvate: ripeti per uscire senza salvarle.</string>
     <string name="play_no_title">Dai un titolo allo schema.</string>
+    <string name="sign_out_draft">Hai una partita non salvata: uscendo la perdi.</string>
+    <string name="sign_out_confirm">Esci comunque</string>
+    <string name="games_empty">Ancora nessuna partita.</string>
+    <string name="game_new">+ Nuova partita</string>
+    <string name="game_new_title">Nuova partita</string>
+    <string name="game_in_progress">Partita in corso</string>
+    <string name="game_resume">Riprendi</string>
+    <string name="game_abandon">Abbandona</string>
+    <string name="game_abandon_confirm">Conferma abbandono</string>
+    <string name="game_home">Casa</string>
+    <string name="game_away">Trasferta</string>
+    <string name="game_opponent">Avversario</string>
+    <string name="game_note">Nota</string>
+    <string name="game_call_ups">Convocati</string>
+    <string name="game_no_players">Nessun giocatore in rosa.</string>
+    <string name="game_start">Inizia partita</string>
+    <string name="game_no_opponent">Scrivi l'avversario.</string>
+    <string name="game_all">Tutte le partite</string>
+    <string name="game_us">Noi</string>
+    <string name="game_pick">Tocca un convocato, poi la zona del tiro.</string>
+    <string name="game_made">Segnato</string>
+    <string name="game_missed">Sbagliato</string>
+    <string name="game_free_throw">Libero</string>
+    <string name="game_opponent_points">Avversario +%1$d</string>
+    <string name="game_q1">1Q</string>
+    <string name="game_q2">2Q</string>
+    <string name="game_q3">3Q</string>
+    <string name="game_q4">4Q</string>
+    <string name="game_overtime">SUPP</string>
+    <string name="game_undo">Annulla ultimo</string>
+    <string name="game_events">Eventi</string>
+    <string name="game_no_events">Ancora nessun evento.</string>
+    <string name="game_remove_event">Elimina evento</string>
+    <string name="game_finish">Termina partita</string>
+    <string name="game_saved">Partita salvata</string>
 </resources>
