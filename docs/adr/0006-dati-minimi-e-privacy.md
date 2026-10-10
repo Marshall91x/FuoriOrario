@@ -6,9 +6,10 @@
 Utenti reali, inclusi minorenni dai 14 anni (età del consenso digitale in Italia). Titolare del trattamento: Emanuele Del Monte. Il GDPR si applica anche a una prova interna.
 
 ## Decisione
-- Dati raccolti: email e nome visualizzato (obbligatori, anche soprannome); numero e ruolo in campo facoltativi; sessioni di tiro, piani, spunte, statistiche delle partite (eventi registrati dallo staff, M7.5: per questo l'informativa va riaccettata, #81). Niente data di nascita, foto o altro.
+- Dati raccolti: email e nome visualizzato (obbligatori, anche soprannome); numero e ruolo in campo facoltativi; sessioni di tiro, piani, spunte, statistiche delle partite (eventi registrati dallo staff, M7.5). Niente data di nascita, foto o altro.
 - Supabase in regione UE (Francoforte). Le email con il codice OTP partono via SMTP da un account Gmail dedicato all'app: niente dominio da comprare, circa 500 email al giorno.
 - Informativa di una pagina al primo accesso con accettazione registrata (`privacy_ack_at`): chi tratta e come contattarlo (anima91x@gmail.com, pubblico nel repo come il nome), quali dati, perché e su che base (consenso), per quanto (finché si è in squadra), dove, diritti di accesso, rettifica e cancellazione, reclamo al Garante.
+- Se cambiano i dati raccolti, l'informativa va riaccettata: una migrazione azzera `privacy_ack_at` per tutti, senza un campo di versione (M7.5, statistiche delle partite: #81).
 - Cancellazione su richiesta via email, eseguita a mano; togliere un membro elimina i suoi dati (cascade) **e il suo account** (`auth.users`): non resta nessuna email di chi non è più in squadra. Se lo staff lo riaggiunge, al primo accesso riparte da un account nuovo, informativa compresa.
 
 ## Rimandato a M8
