@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -64,7 +65,9 @@ class GamesTest {
         onNodeWithContentDescription("Tripla centrale").performScrollTo().performClick()
         onNodeWithTag("shot_made").performScrollTo().performClick()
         awaitText("NOI 3 – 0 VIRTUS")
-        awaitText("1Q · #7 Luca B. · Tripla centrale ✓")
+        awaitText("1Q · #7 Luca B. · Tripla centrale")
+        // The event's ✓, and Libero's.
+        awaitNode(hasContentDescription("Segnato"), count = 2)
 
         onNodeWithTag("game_finish").performScrollTo().performClick()
         awaitText("Virtus")
