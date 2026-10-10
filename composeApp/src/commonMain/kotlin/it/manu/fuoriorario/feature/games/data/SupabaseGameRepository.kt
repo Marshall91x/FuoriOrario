@@ -59,11 +59,15 @@ class SupabaseGameRepository : GameRepository {
         order("seq", Order.ASCENDING)
     }.decodeList<EventRow>().map { it.event }
 
-    // RLS shows a player only their own events.
-    override suspend fun ownEvents(): Map<String, List<GameEvent>> = supabase.from("game_events")
-        .select(EVENT_COLUMNS) { order("seq", Order.ASCENDING) }
-        .decodeList<EventRow>()
-        .groupBy({ it.gameId }, { it.event })
+    // RLS shows a player only their own call-ups and events.
+    override suspend fun ownEvents(): Map<String, List<GameEvent>> {
+        val calledUp = supabase.from("game_call_ups").select(Columns.list("game_id")).decodeList<GameIdRow>()
+        val events = supabase.from("game_events")
+            .select(EVENT_COLUMNS) { order("seq", Order.ASCENDING) }
+            .decodeList<EventRow>()
+            .groupBy({ it.gameId }, { it.event })
+        return calledUp.associate { it.gameId to events[it.gameId].orEmpty() }
+    }
 
     override suspend fun delete(game: Game) = mapErrors {
         supabase.from("games").delete {
@@ -72,6 +76,9 @@ class SupabaseGameRepository : GameRepository {
         }.requireRow()
     }
 }
+
+@Serializable
+private class GameIdRow(@SerialName("game_id") val gameId: String)
 
 @Serializable
 private class CallUpRow(@SerialName("member_id") val memberId: String, @SerialName("members") val member: CallUpMember)

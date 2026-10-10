@@ -23,7 +23,10 @@ interface GameRepository {
     /** [game]'s events in order: a player gets only their own. */
     suspend fun events(game: Game): List<GameEvent>
 
-    /** The signed-in player's events by game id. Players only: staff would get the whole team's. */
+    /**
+     * The signed-in player's events by game id, every game they were called up to (an empty list without events).
+     * Players only: staff would get the whole team's.
+     */
     suspend fun ownEvents(): Map<String, List<GameEvent>>
 
     /** The game with its call-ups and events. Throws [PermissionDeniedException]. */

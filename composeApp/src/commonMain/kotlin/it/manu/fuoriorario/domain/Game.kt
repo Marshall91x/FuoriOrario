@@ -64,11 +64,14 @@ fun quarterScores(events: List<GameEvent>): Map<Quarter, Score> = Quarter.entrie
     .filter { q -> q != Quarter.OT || events.any { it.quarter == q } }
     .associateWith { q -> score(events.filter { it.quarter == q }) }
 
+/** Made / attempted over shots or free throws. */
+private fun List<GameEvent>.shots() = fold(Shots()) { sum, e -> sum + Shots(if (e.made == true) 1 else 0, 1) }
+
 /** Made / attempted per zone, free throws under [Zone.TL], like [zoneTotals]: every zone present. */
 fun shotZones(events: List<GameEvent>): Map<Zone, Shots> = Zone.entries.associateWith { z ->
     events.filter { e ->
         e.type == GameEventType.SHOT && e.zone == z || e.type == GameEventType.FREE_THROW && z == Zone.TL
-    }.fold(Shots()) { sum, e -> sum + Shots(if (e.made == true) 1 else 0, 1) }
+    }.shots()
 }
 
 /** The events of [quarter], or the whole game when null ("Tutta"). */
@@ -92,8 +95,7 @@ data class BoxLine(
 fun boxScore(callUps: List<CallUp>, events: List<GameEvent>): List<BoxLine> = callUps.map { callUp ->
     val own = events.filter { it.memberId == callUp.id }
     fun count(type: GameEventType) = own.count { it.type == type }
-    fun shots(match: (GameEvent) -> Boolean) =
-        own.filter(match).fold(Shots()) { sum, e -> sum + Shots(if (e.made == true) 1 else 0, 1) }
+    fun shots(match: (GameEvent) -> Boolean) = own.filter(match).shots()
     BoxLine(
         callUp,
         own.sumOf { it.points },

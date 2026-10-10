@@ -13,7 +13,7 @@ class FakeGameRepository(vararg games: Game) : GameRepository {
     /** The drafts saved, in order. */
     val saved = mutableListOf<GameDraft>()
 
-    /** Next load fails without network, so the screen offers "Riprova". */
+    /** Next load, of the list or of a Riepilogo, fails without network, so the screen offers "Riprova". */
     var failLoad = false
 
     /** Per game id, what RLS shows the signed-in member: a player only their own. */
@@ -42,9 +42,16 @@ class FakeGameRepository(vararg games: Game) : GameRepository {
 
     override suspend fun callUps(game: Game) = callUps[game.id].orEmpty()
 
-    override suspend fun events(game: Game) = events[game.id].orEmpty()
+    override suspend fun events(game: Game): List<GameEvent> {
+        if (failLoad) {
+            failLoad = false
+            throw IOException("offline")
+        }
+        return events[game.id].orEmpty()
+    }
 
-    override suspend fun ownEvents(): Map<String, List<GameEvent>> = events
+    override suspend fun ownEvents(): Map<String, List<GameEvent>> =
+        callUps.mapValues { (id, _) -> events[id].orEmpty() }
 
     override suspend fun delete(game: Game) {
         if (failNext) {

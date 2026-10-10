@@ -360,11 +360,30 @@ class GamesViewModelTest {
     }
 
     @Test
-    fun load_playersGetTheirPointsInEachGame() = runTest(dispatcher) {
+    fun load_playersGetTheirPointsInEachGameCalledUpTo() = runTest(dispatcher) {
+        games.callUps["g0"] = listOf(lucaUp)
+        games.callUps["g1"] = listOf(lucaUp)
         games.events["g0"] = pastEvents.filter { it.memberId == "luca" }
         val vm = vm(staff = false)
         advanceUntilIdle()
 
-        assertEquals(mapOf("g0" to 4), vm.data.points)
+        assertEquals(mapOf("g0" to 4, "g1" to 0), vm.data.points)
+    }
+
+    @Test
+    fun open_offline_errorScreenThenRetryLoadsTheSummary() = runTest(dispatcher) {
+        games.callUps["g0"] = listOf(annaUp, lucaUp)
+        games.events["g0"] = pastEvents
+        val vm = vm()
+        advanceUntilIdle()
+        games.failLoad = true
+        vm.onOpen(past)
+        advanceUntilIdle()
+
+        val handler = assertIs<UseCaseMutableState.Error>(vm.uiState.value.state).handler
+        assertIs<NetworkErrorHandler>(handler).retryFunction!!()
+        advanceUntilIdle()
+        assertTrue(vm.data.summary!!.loaded)
+        assertEquals(pastEvents, vm.data.summary!!.events)
     }
 }
