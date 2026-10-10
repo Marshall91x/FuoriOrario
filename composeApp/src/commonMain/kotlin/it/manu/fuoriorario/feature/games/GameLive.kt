@@ -98,7 +98,8 @@ private val noHeat = Zone.entries.associateWith { ZoneHeat.NONE }
 
 /**
  * Live (glossary): the staff courtside. A convocato tapped stays selected; then a zone of the court and Segnato or
- * Sbagliato, a free throw, or RIM, AST, PP, REC, FAL; a badge at [FOUL_LIMIT] fouls. The opponent's points, the quarter, "Annulla ultimo", the events, "Termina partita".
+ * Sbagliato, a free throw, or RIM, AST, PP, REC, FAL; a badge at [FOUL_LIMIT] fouls. The opponent's points, the
+ * quarter, "Annulla ultimo", the events, "Termina partita".
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -110,7 +111,7 @@ internal fun GameLive(draft: GameDraft, busy: Boolean, actions: GamesActions) {
     // The zone tapped, waiting for Segnato or Sbagliato.
     var pending by remember { mutableStateOf<Zone?>(null) }
     val picked = draft.selected != null
-    val fouledOut = fouledOut(draft.events)
+    val fouls = fouledOut(draft.events)
 
     GhostButton(stringResource(Res.string.game_all), actions.onLeaveLive, Modifier.testTag("game_back"))
     Scoreboard(draft.score, draft.opponent, quarterScores(draft.events))
@@ -123,7 +124,7 @@ internal fun GameLive(draft: GameDraft, busy: Boolean, actions: GamesActions) {
                         actions.onSelect(p.id)
                     }, Modifier.testTag("pick_${p.id}"))
                     // Still selectable: a foul too many is fixed with "Annulla ultimo" or from the events.
-                    if (p.id in fouledOut) FoulBadge(Modifier.align(Alignment.TopEnd).testTag("fouled_out_${p.id}"))
+                    fouls[p.id]?.let { FoulBadge(it, Modifier.align(Alignment.TopEnd).testTag("fouled_out_${p.id}")) }
                 }
             }
         }
@@ -181,11 +182,11 @@ internal fun GameLive(draft: GameDraft, busy: Boolean, actions: GamesActions) {
 
 /** A red (hot) dot with the fouls, on the chip's corner. */
 @Composable
-private fun FoulBadge(modifier: Modifier) {
+private fun FoulBadge(fouls: Int, modifier: Modifier) {
     val c = FuoriOrarioTheme.colors
-    val description = stringResource(Res.string.game_fouled_out, FOUL_LIMIT)
+    val description = stringResource(Res.string.game_fouled_out, fouls)
     Text(
-        "$FOUL_LIMIT",
+        "$fouls",
         modifier
             .offset(x = 4.dp, y = (-4).dp)
             .background(c.hot, CircleShape)

@@ -110,8 +110,8 @@ class GameTest {
         val rebound = GameEvent(GameEventType.REBOUND, Quarter.Q1, "anna")
         val events = List(5) { foul("luca") } + List(4) { foul("anna") } + rebound
 
-        assertEquals(setOf("luca"), fouledOut(events))
-        assertEquals(setOf("luca", "anna"), fouledOut(events + foul("anna") + foul("luca")))
+        assertEquals(mapOf("luca" to 5), fouledOut(events))
+        assertEquals(mapOf("luca" to 6, "anna" to 5), fouledOut(events + foul("anna") + foul("luca")))
     }
 
     @Test
