@@ -18,8 +18,11 @@ import org.jetbrains.compose.resources.getStringArray
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     MainScope().launch {
-        Res.allStringResources.values.forEach { getString(it) }
-        Res.allStringArrayResources.values.forEach { getStringArray(it) }
+        // A failed preload falls back to loading on first use: the app still starts.
+        runCatching {
+            Res.allStringResources.values.forEach { getString(it) }
+            Res.allStringArrayResources.values.forEach { getStringArray(it) }
+        }
         ComposeViewport(document.body!!) { App() }
     }
 }
