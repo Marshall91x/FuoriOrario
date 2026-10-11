@@ -16,6 +16,10 @@ import it.manu.fuoriorario.feature.auth.LoginViewModel
 import it.manu.fuoriorario.feature.auth.PrivacyViewModel
 import it.manu.fuoriorario.feature.auth.data.AuthRepository
 import it.manu.fuoriorario.feature.auth.data.SupabaseAuthRepository
+import it.manu.fuoriorario.feature.games.GamesViewModel
+import it.manu.fuoriorario.feature.games.data.GameDraftStore
+import it.manu.fuoriorario.feature.games.data.GameRepository
+import it.manu.fuoriorario.feature.games.data.SupabaseGameRepository
 import it.manu.fuoriorario.feature.plan.PlanViewModel
 import it.manu.fuoriorario.feature.plan.data.PlanRepository
 import it.manu.fuoriorario.feature.plan.data.SupabasePlanRepository
@@ -54,6 +58,7 @@ val appModule = module {
         )
     }
     singleOf(::SelectedPlayer)
+    singleOf(::GameDraftStore)
 
     viewModelOf(::MainViewModel)
     viewModelOf(::LoginViewModel)
@@ -63,6 +68,8 @@ val appModule = module {
     // The player and the first week come from the screen: koinViewModel { parametersOf(player, week) }.
     viewModelOf(::PlanViewModel)
     viewModelOf(::PlaysViewModel)
+    // Whether the user is staff comes from the screen: koinViewModel { parametersOf(staff) }.
+    viewModelOf(::GamesViewModel)
     viewModelOf(::RosterViewModel)
     // The players come from the screen: koinViewModel { parametersOf(players) }.
     viewModelOf(::TeamOverviewViewModel)
@@ -70,7 +77,7 @@ val appModule = module {
     viewModelOf(::ZoneRefsViewModel)
 }
 
-/** Supabase and the device's own storage (only the staff's picked player). */
+/** Supabase and the device's own storage (the staff's picked player and the game in progress). */
 val dataModule = module {
     single<Settings> { Settings() }
     single { SupabaseAuthRepository() } binds arrayOf(AuthRepository::class, SessionExpiry::class)
@@ -78,6 +85,7 @@ val dataModule = module {
     single<ShotRepository> { SupabaseShotRepository() }
     single<PlanRepository> { SupabasePlanRepository() }
     single<PlayRepository> { SupabasePlayRepository() }
+    single<GameRepository> { SupabaseGameRepository() }
 }
 
 /** One per process: ViewModels outlive an Activity, so what they hold must too. */

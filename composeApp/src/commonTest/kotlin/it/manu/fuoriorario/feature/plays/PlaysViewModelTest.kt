@@ -14,6 +14,7 @@ import it.manu.fuoriorario.domain.Play
 import it.manu.fuoriorario.domain.PlayCategory
 import it.manu.fuoriorario.domain.PlayError
 import it.manu.fuoriorario.domain.Point
+import it.manu.fuoriorario.domain.isDefender
 import it.manu.fuoriorario.domain.startingStep
 import it.manu.fuoriorario.testing.TestDispatcherProvider
 import kotlin.test.Test
@@ -205,5 +206,86 @@ class PlaysViewModelTest {
         vm.onRemoveStep()
         assertEquals(19, vm.data.draft!!.play.steps.size)
         assertEquals(18, vm.data.draft!!.index)
+    }
+
+    @Test
+    fun undo_aDragIsOneEntryAndBringsBackItsStep() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.onOpen(box)
+        vm.onEdit()
+        vm.onAddStep()
+        vm.onDragStart()
+        vm.onPieceMoved("1", Point(250f, 300f))
+        vm.onPieceMoved("1", Point(250f, 200f))
+        vm.onPrevStep()
+        assertEquals(2, vm.data.draft!!.history.size)
+
+        vm.onUndo()
+        val draft = vm.data.draft!!
+        assertEquals(1, draft.index)
+        assertEquals(box.steps[0].pos, draft.step.pos)
+        assertEquals(1, draft.history.size)
+
+        vm.onUndo()
+        assertFalse(vm.data.draft!!.unsaved)
+        assertEquals(0, vm.data.draft!!.history.size)
+        vm.onUndo()
+        assertFalse(vm.data.draft!!.unsaved)
+    }
+
+    @Test
+    fun undo_bringsBackARemovedStepAndTheDefense() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.onNew()
+        vm.onAddStep()
+        vm.onHold(Point(60f, 230f))
+        vm.onScreenToggled("5", true)
+        vm.onRemoveStep()
+        vm.onDefenseChanged(true)
+
+        vm.onUndo()
+        assertFalse(vm.data.draft!!.play.defense)
+        assertTrue(vm.data.draft!!.play.steps.none { step -> step.pos.keys.any(::isDefender) })
+        vm.onUndo()
+        val draft = vm.data.draft!!
+        assertEquals(2, draft.play.steps.size)
+        assertEquals(1, draft.index)
+        assertEquals("2", draft.step.ball)
+        assertEquals(listOf("5"), draft.step.screens)
+    }
+
+    @Test
+    fun undo_skipsTheTextFieldsAndKeepsThem() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.onNew()
+        vm.onAddStep()
+        vm.onHold(Point(60f, 230f))
+        vm.onTitleChanged("Spain")
+        vm.onNoteChanged("1 sale")
+        assertEquals(2, vm.data.draft!!.history.size)
+
+        vm.onUndo()
+        assertEquals("Spain", vm.data.draft!!.play.title)
+        assertEquals("1 sale", vm.data.draft!!.step.note)
+        vm.onUndo()
+        assertEquals(1, vm.data.draft!!.play.steps.size)
+    }
+
+    @Test
+    fun undo_keepsTheLastFiftyAndEmptiesOnSave() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.onOpen(box)
+        vm.onEdit()
+        repeat(60) { vm.onScreenToggled("5", it % 2 == 0) }
+        assertEquals(50, vm.data.draft!!.history.size)
+
+        vm.onSave()
+        advanceUntilIdle()
+        vm.onEdit()
+        assertEquals(emptyList(), vm.data.draft!!.history)
     }
 }

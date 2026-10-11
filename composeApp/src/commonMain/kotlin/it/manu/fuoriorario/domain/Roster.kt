@@ -1,14 +1,21 @@
 package it.manu.fuoriorario.domain
 
+import kotlin.jvm.JvmName
+
 /** Ruolo in campo, stored as-is in `members.position`. */
 val POSITIONS = listOf("Playmaker", "Guardia", "Ala", "Ala grande", "Centro")
 
 private val EMAIL = Regex("""[^@\s]+@[^@\s]+\.[^@\s]+""")
 
 /** By jersey number (unnumbered last), then name. */
-fun List<Member>.rosterOrder(): List<Member> = sortedWith(
-    compareBy<Member, Int?>(nullsLast()) { it.jerseyNumber?.toIntOrNull() }.thenBy { it.displayName.lowercase() }
-)
+fun List<Member>.rosterOrder(): List<Member> = sortedWith(rosterOrder(Member::jerseyNumber, Member::displayName))
+
+/** Convocati like the roster they come from. */
+@JvmName("callUpRosterOrder")
+fun List<CallUp>.rosterOrder(): List<CallUp> = sortedWith(rosterOrder(CallUp::number, CallUp::name))
+
+private fun <T> rosterOrder(number: (T) -> String?, name: (T) -> String) =
+    compareBy<T, Int?>(nullsLast()) { number(it)?.toIntOrNull() }.thenBy { name(it).lowercase() }
 
 /** [this] as typed in a form, ready to save: trimmed, email lowercase, number "07" → "7" and "" → null. */
 fun Member.cleaned() = copy(

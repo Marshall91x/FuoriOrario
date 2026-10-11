@@ -26,6 +26,8 @@ import it.manu.fuoriorario.core.viewmodel.DispatcherProvider
 import it.manu.fuoriorario.di.appModule
 import it.manu.fuoriorario.feature.auth.FakeAuthRepository
 import it.manu.fuoriorario.feature.auth.data.AuthRepository
+import it.manu.fuoriorario.feature.games.FakeGameRepository
+import it.manu.fuoriorario.feature.games.data.GameRepository
 import it.manu.fuoriorario.feature.plan.FakePlanRepository
 import it.manu.fuoriorario.feature.plan.data.PlanRepository
 import it.manu.fuoriorario.feature.plays.FakePlayRepository
@@ -57,7 +59,8 @@ fun TestApp(
     prefs: Settings = MapSettings(),
     plans: PlanRepository = FakePlanRepository(),
     plays: PlayRepository = FakePlayRepository(),
-    back: DirectNavigationEventInput = DirectNavigationEventInput()
+    back: DirectNavigationEventInput = DirectNavigationEventInput(),
+    games: GameRepository = FakeGameRepository()
 ) {
     val koin = remember {
         koinApplication {
@@ -73,6 +76,7 @@ fun TestApp(
                     single { prefs }
                     single { plans }
                     single { plays }
+                    single { games }
                 }
             )
         }

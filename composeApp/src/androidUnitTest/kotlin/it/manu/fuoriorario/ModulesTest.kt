@@ -15,9 +15,10 @@ class ModulesTest {
     @OptIn(KoinExperimentalAPI::class)
     @Test
     fun everyDefinitionResolves() {
-        // SavedStateHandle, the followed player and the plan's week come from the screen, not from a definition.
+        // SavedStateHandle, the followed player, the plan's week and whether the user is staff come from the screen,
+        // not from a definition.
         module { includes(appModule, dataModule) }.verify(
-            extraTypes = listOf(SavedStateHandle::class, Member::class, LocalDate::class, List::class)
+            extraTypes = listOf(SavedStateHandle::class, Member::class, LocalDate::class, List::class, Boolean::class)
         )
     }
 }

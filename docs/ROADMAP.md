@@ -54,6 +54,13 @@ Ogni milestone diventa una GitHub Milestone; ogni punto una issue. Branch `featu
 - Release `v0.1.0` via gitflow: web su GitHub Pages, APK firmato su GitHub Releases.
 - Inserimento della rosa reale, raccolta feedback.
 
+## M7.5 — Scouting partite
+- Scheda Partite: nuova partita con convocati, live a bordo campo (tiri per zona, liberi, punti avversari, quarti), bozza locale salvata a fine partita.
+- Informativa aggiornata e riaccettata da tutti.
+- Riepilogo: punteggio, parziali, tabellino e mappa per quarto; il giocatore vede i propri dati.
+- Rimbalzi, assist, perse, recuperi, falli.
+- **Fatto quando**: lo staff registra una partita vera dal telefono e un giocatore rivede i propri tiri.
+
 ## M8 — Pronti per gli store
 - Privacy policy pubblica, eliminazione account in-app (richiesta da Apple e Google).
 - Revisione consensi e target d'età (regole Google Play Families se applicabili).

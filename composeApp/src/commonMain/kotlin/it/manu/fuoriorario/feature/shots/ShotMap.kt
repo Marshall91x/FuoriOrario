@@ -189,7 +189,7 @@ private fun zonePaths(): Map<Zone, Path> {
 
 /** Prototype `courtSvg`: drawn in the 500 × 470 viewBox scaled to the width; taps go through [zoneAt]. */
 @Composable
-private fun Court(totals: Map<Zone, Shots>, heats: Map<Zone, ZoneHeat>, selected: Zone?, onTap: (Zone) -> Unit) {
+internal fun Court(totals: Map<Zone, Shots>, heats: Map<Zone, ZoneHeat>, selected: Zone?, onTap: (Zone) -> Unit) {
     val c = FuoriOrarioTheme.colors
     val zones = remember { zonePaths() }
     val arc = remember { arcPath(closed = false) }

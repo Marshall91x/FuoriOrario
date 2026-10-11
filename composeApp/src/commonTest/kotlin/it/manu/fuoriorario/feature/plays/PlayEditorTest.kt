@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.TouchInjectionScope
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -274,6 +275,26 @@ class PlayEditorTest {
         val step = plays.plays.single().steps.single()
         assertEquals("1", step.ball)
         assertTrue(step.pos.getValue("2").y > 240f, "${step.pos["2"]}")
+    }
+
+    @Test
+    fun undoPutsADraggedPieceBack() = runAppTest {
+        val plays = FakePlayRepository(box)
+        open(FakeAuthRepository(coach), plays)
+
+        awaitText("Schemi")
+        onNodeWithText("Schemi").performClick()
+        onNodeWithText("Box").performClick()
+        onNodeWithTag("play_edit").performScrollTo().performClick()
+        onNodeWithTag("play_undo").performScrollTo().assertIsNotEnabled()
+        // 1 drives up, then back.
+        onCourt(Point(250f, 330f)) { swipe(it, it + Offset(0f, -100f)) }
+        onNodeWithTag("play_undo").performScrollTo().assertIsEnabled()
+        onNodeWithTag("play_undo").performClick()
+        onNodeWithTag("play_undo").assertIsNotEnabled()
+        onNodeWithTag("play_save").performScrollTo().performClick()
+        awaitText("Passo 1 di 1")
+        assertEquals(startingStep(defense = false), plays.plays.single().steps.single())
     }
 
     @Test

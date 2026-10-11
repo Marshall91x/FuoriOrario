@@ -23,6 +23,10 @@ Dare a staff e giocatori di una squadra di basket uno strumento per seguire il *
 | Gestire rosa e staff | — | ✓ |
 | Modificare libreria e riferimenti | — | ✓ |
 | Quadro squadra | — | ✓ |
+| Vedere gli schemi | ✓ | ✓ |
+| Creare/modificare/eliminare schemi | — | ✓ |
+| Vedere le partite | punteggio e solo i propri dati | tutto |
+| Registrare/eliminare una partita | — | ✓ |
 
 ## Funzionalità MVP
 
@@ -65,6 +69,18 @@ Dare a staff e giocatori di una squadra di basket uno strumento per seguire il *
 - Tabella giocatori: completamento piano settimana corrente (pill verde ≥75%, arancio ≥40%, grigio sotto), tiri ultimi 7g, % liberi 30g, % triple 30g.
 - Tocco su un giocatore → apre il suo diario.
 
+### F7 — Schemi
+- Scheda **Schemi** per tutti: elenco per categoria, visualizzatore passo per passo con movimenti animati (taglio, palleggio, passaggio, blocco), "Riproduci".
+- Staff: editor dal telefono (metà campo o campo intero, difesa facoltativa, pedine trascinabili, curve, note per passo), salvataggio dell'intero schema, eliminazione a doppio tocco. Formato in [adr/0008](adr/0008-formato-degli-schemi.md).
+
+### F8 — Partite
+- Scheda **Partite** per tutti: elenco con data, avversario, risultato (il giocatore vede anche i propri punti).
+- Staff: **nuova partita** con data, avversario, casa/trasferta, nota facoltativa e convocati dalla rosa (nessun minimo né massimo).
+- **Live** a bordo campo: si tocca un convocato (resta selezionato), poi una zona del mezzo campo → Segnato/Sbagliato, oppure Libero ✓/✗, RIM, AST, PP, REC, FAL; punti avversari +1/+2/+3; selettore del quarto (1–4, SUPP); "Annulla ultimo" ed elenco eventi eliminabili. A 5 falli la chip ha un badge rosso, ma resta selezionabile.
+- La partita in corso resta sul dispositivo anche senza rete e si salva tutta a fine partita ([adr/0010](adr/0010-partita-live-in-bozza-locale.md)). "Partita in corso – Riprendi"; "Abbandona" a doppio tocco; al logout la bozza si cancella previa conferma.
+- **Riepilogo**: punteggio, parziali, tabellino (PT, T2, T3, TL, RIM, AST, PP, REC, FAL) e mappa di tiro, filtrabili per quarto. Il giocatore vede solo la propria riga e la propria mappa. Lo staff elimina la partita per intero (doppio tocco); non si modifica dopo il salvataggio.
+- I tiri in partita non entrano nel Diario di tiro.
+
 ### Trasversali
 - Tema chiaro/scuro automatico, design del prototipo.
 - Solo italiano (testi in Compose Resources).
@@ -75,12 +91,12 @@ Dare a staff e giocatori di una squadra di basket uno strumento per seguire il *
 - Funzionamento offline, aggiornamento in tempo reale.
 - Più squadre nella UI, creazione squadra dall'app (si fa con seed).
 - Stagioni passate consultabili (prevista per settembre 2027).
-- Notifiche, statistiche partita, export.
+- Notifiche, export.
 - Eliminazione account in-app, privacy policy pubblica, social login (→ M8).
 - Distribuzione iOS nativa ai tester (nessun account Apple Developer: i tester iPhone usano il web).
 
 ## Dati e privacy
-- Titolare: Emanuele Del Monte. Dati raccolti: email, nome visualizzato, numero/ruolo (facoltativi), sessioni di tiro, piani e spunte. Niente foto, data di nascita o altro.
+- Titolare: Emanuele Del Monte. Dati raccolti: email, nome visualizzato, numero/ruolo (facoltativi), sessioni di tiro, piani e spunte, statistiche delle partite. Niente foto, data di nascita o altro.
 - Database Supabase in regione UE.
 - Cancellazione su richiesta, gestita manualmente durante la prova.
 - Dettagli in [adr/0006](adr/0006-dati-minimi-e-privacy.md).
