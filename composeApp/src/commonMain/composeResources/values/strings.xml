@@ -235,6 +235,7 @@
     <string name="play_step">Passo %1$d di %2$d</string>
     <string name="play_prev">Passo precedente</string>
     <string name="play_next">Passo successivo</string>
+    <string name="play_undo">Annulla l'ultima modifica</string>
     <string name="play_play">Riproduci</string>
     <string name="play_court_description">Campo con le pedine dello schema</string>
     <string name="play_new">Nuovo schema</string>

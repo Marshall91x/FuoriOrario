@@ -6,7 +6,9 @@ import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +33,7 @@ import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.cancel
 import fuoriorario.composeapp.generated.resources.ic_step_next
 import fuoriorario.composeapp.generated.resources.ic_step_prev
+import fuoriorario.composeapp.generated.resources.ic_undo
 import fuoriorario.composeapp.generated.resources.play_add_step
 import fuoriorario.composeapp.generated.resources.play_category
 import fuoriorario.composeapp.generated.resources.play_court
@@ -53,6 +56,7 @@ import fuoriorario.composeapp.generated.resources.play_screen
 import fuoriorario.composeapp.generated.resources.play_screens
 import fuoriorario.composeapp.generated.resources.play_step
 import fuoriorario.composeapp.generated.resources.play_title
+import fuoriorario.composeapp.generated.resources.play_undo
 import fuoriorario.composeapp.generated.resources.play_with_defense
 import it.manu.fuoriorario.core.designsystem.Field
 import it.manu.fuoriorario.core.designsystem.GhostButton
@@ -196,6 +200,14 @@ fun PlayEditor(draft: PlayDraft, busy: Boolean, actions: PlaysActions) {
                 draft.index < play.steps.lastIndex,
                 actions.onNextStep
             )
+            Spacer(Modifier.width(8.dp))
+            StepButton(
+                Res.drawable.ic_undo,
+                stringResource(Res.string.play_undo),
+                "play_undo",
+                draft.history.isNotEmpty(),
+                actions.onUndo
+            )
         }
         PlayCourt(
             play.court,
@@ -237,6 +249,7 @@ fun PlayEditor(draft: PlayDraft, busy: Boolean, actions: PlaysActions) {
                             else -> {
                                 moved.consume()
                                 lifted = target
+                                latest.onLift()
                                 try {
                                     latest.onPieceMoved(target, moved.position.court(size.width))
                                     drag(moved.id) { change ->
