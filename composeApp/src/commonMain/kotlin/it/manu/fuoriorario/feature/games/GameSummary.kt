@@ -194,8 +194,8 @@ private fun BoxRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        // Every row shares [scroll], so the header and the rows stay aligned.
-        Row(Modifier.horizontalScroll(scroll)) {
+        // Every row shares [scroll], so the header and the rows stay aligned; a per-row overscroll would stretch one alone.
+        Row(Modifier.horizontalScroll(scroll, overscrollEffect = null)) {
             cells.zip(boxColumns.keys).forEach { (cell, key) ->
                 val cellTag = tag?.let { "${it}_$key" }
                 Text(
