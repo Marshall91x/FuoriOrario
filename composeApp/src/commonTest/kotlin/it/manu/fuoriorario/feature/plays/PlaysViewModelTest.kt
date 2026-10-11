@@ -14,6 +14,7 @@ import it.manu.fuoriorario.domain.Play
 import it.manu.fuoriorario.domain.PlayCategory
 import it.manu.fuoriorario.domain.PlayError
 import it.manu.fuoriorario.domain.Point
+import it.manu.fuoriorario.domain.isDefender
 import it.manu.fuoriorario.domain.startingStep
 import it.manu.fuoriorario.testing.TestDispatcherProvider
 import kotlin.test.Test
@@ -214,7 +215,7 @@ class PlaysViewModelTest {
         vm.onOpen(box)
         vm.onEdit()
         vm.onAddStep()
-        vm.onLift()
+        vm.onDragStart()
         vm.onPieceMoved("1", Point(250f, 300f))
         vm.onPieceMoved("1", Point(250f, 200f))
         vm.onPrevStep()
@@ -246,6 +247,7 @@ class PlaysViewModelTest {
 
         vm.onUndo()
         assertFalse(vm.data.draft!!.play.defense)
+        assertTrue(vm.data.draft!!.play.steps.none { step -> step.pos.keys.any(::isDefender) })
         vm.onUndo()
         val draft = vm.data.draft!!
         assertEquals(2, draft.play.steps.size)
@@ -260,12 +262,15 @@ class PlaysViewModelTest {
         advanceUntilIdle()
         vm.onNew()
         vm.onAddStep()
+        vm.onHold(Point(60f, 230f))
         vm.onTitleChanged("Spain")
         vm.onNoteChanged("1 sale")
-        assertEquals(1, vm.data.draft!!.history.size)
+        assertEquals(2, vm.data.draft!!.history.size)
 
         vm.onUndo()
         assertEquals("Spain", vm.data.draft!!.play.title)
+        assertEquals("1 sale", vm.data.draft!!.step.note)
+        vm.onUndo()
         assertEquals(1, vm.data.draft!!.play.steps.size)
     }
 

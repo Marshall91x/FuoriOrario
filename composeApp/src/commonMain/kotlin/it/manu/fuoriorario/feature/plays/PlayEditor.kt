@@ -249,7 +249,7 @@ fun PlayEditor(draft: PlayDraft, busy: Boolean, actions: PlaysActions) {
                             else -> {
                                 moved.consume()
                                 lifted = target
-                                latest.onLift()
+                                latest.onDragStart()
                                 try {
                                     latest.onPieceMoved(target, moved.position.court(size.width))
                                     drag(moved.id) { change ->

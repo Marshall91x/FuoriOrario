@@ -39,14 +39,14 @@ const val HANDLE = "~"
 /** How near an attacker a hold must be to give him the ball, in viewBox units: about two pieces. */
 private const val HOLD_REACH = 40f
 
-/** How many changes "Annulla" can take back. */
+/** How many changes ↶ can take back. */
 private const val UNDO_MAX = 50
 
 /**
  * The editor as drawn (ADR 0008): [play] is the draft of [original], without id for a new one; [index] is the step on
  * screen. [confirmingExit] and [confirmingRemoval] took the first tap; any change takes them back.
- * [history] is the play and step before each change "Annulla" can take back, the last one last; [lifting]: a drag began
- * and hasn't changed anything yet, its first move goes in the history.
+ * [history] is the play and step before each change ↶ can take back, the last one last; [dragStarted]: a drag began and
+ * hasn't changed anything yet, its first move goes in the history.
  */
 data class PlayDraft(
     val original: Play,
@@ -56,7 +56,7 @@ data class PlayDraft(
     val confirmingExit: Boolean = false,
     val confirmingRemoval: Boolean = false,
     val history: List<Pair<Play, Int>> = emptyList(),
-    val lifting: Boolean = false
+    val dragStarted: Boolean = false
 ) {
     val isNew get() = original.id == null
     val unsaved get() = play != original
@@ -136,7 +136,7 @@ class PlaysViewModel(
     fun onNextStep() = updateDraft { copy(index = (index + 1).coerceAtMost(play.steps.lastIndex)) }
 
     /** [target], a piece or a [HANDLE], dragged to [at]: the piece moves, the handle bends its move. */
-    fun onPieceMoved(target: String, at: Point) = editStep({ lifting }) { draft, step ->
+    fun onPieceMoved(target: String, at: Point) = editStep({ dragStarted }) { draft, step ->
         val spot = at.within(draft.play.court)
         val piece = target.removePrefix(HANDLE)
         val from = draft.prev?.pos?.get(piece)
@@ -156,7 +156,7 @@ class PlaysViewModel(
         editStep { _, step -> step.copy(screens = if (on) step.screens + piece else step.screens - piece) }
 
     /** A drag begins: one entry in the history for all of it. */
-    fun onLift() = updateDraft { copy(lifting = true) }
+    fun onDragStart() = updateDraft { copy(dragStarted = true) }
 
     fun onNoteChanged(note: String) = editStep({ false }) { _, step -> step.copy(note = note.take(STEP_NOTE_MAX)) }
 
@@ -182,12 +182,18 @@ class PlaysViewModel(
     }
 
     /**
-     * The last change back, on the step where it happened. Only steps and defense: title, category and description
-     * aren't in the history and stay as typed.
+     * The last change back, on the step where it happened. The text fields aren't in the history and stay as typed: the
+     * notes too, unless a step comes or goes.
      */
     fun onUndo() = updateDraft {
         val (was, at) = history.lastOrNull() ?: return@updateDraft this
-        changed(play.copy(defense = was.defense, steps = was.steps)).copy(index = at, history = history.dropLast(1))
+        val steps = if (was.steps.size == play.steps.size) {
+            was.steps.zip(play.steps) { old, now -> old.copy(note = now.note) }
+        } else {
+            was.steps
+        }
+        changed(play.copy(court = was.court, defense = was.defense, steps = steps))
+            .copy(index = at, history = history.dropLast(1))
     }
 
     /** "Annulla" or the system back: with changes, the first tap only warns. */
@@ -230,7 +236,7 @@ class PlaysViewModel(
     }
 
     private fun PlayDraft.changed(to: Play) =
-        copy(play = to, confirmingExit = false, confirmingRemoval = false, lifting = false)
+        copy(play = to, confirmingExit = false, confirmingRemoval = false, dragStarted = false)
 
     private fun PlayDraft.recorded() = copy(history = (history + (play to index)).takeLast(UNDO_MAX))
 
@@ -240,13 +246,8 @@ class PlaysViewModel(
     /** A hold or drag that leaves the step as it was isn't a change: the first tap of a confirmation stays. */
     private fun editStep(record: PlayDraft.() -> Boolean = { true }, edit: (PlayDraft, Step) -> Step) = updateDraft {
         val edited = edit(this, step)
-        if (edited ==
-            step
-        ) {
-            this
-        } else {
-            (if (record()) recorded() else this).changed(play.copy(steps = play.steps.with(index, edited)))
-        }
+        if (edited == step) return@updateDraft this
+        (if (record()) recorded() else this).changed(play.copy(steps = play.steps.with(index, edited)))
     }
 
     private fun updateDraft(change: PlayDraft.() -> PlayDraft) = update { copy(draft = draft?.change()) }
