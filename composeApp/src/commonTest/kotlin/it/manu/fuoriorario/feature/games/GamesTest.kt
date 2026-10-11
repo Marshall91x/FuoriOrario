@@ -1,10 +1,14 @@
 package it.manu.fuoriorario.feature.games
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasContentDescription
@@ -15,6 +19,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.dp
 import com.russhwolf.settings.MapSettings
 import it.manu.fuoriorario.domain.CallUp
 import it.manu.fuoriorario.domain.Game
@@ -186,5 +191,25 @@ class GamesTest {
 
         awaitText("Ancora nessuna partita.")
         assertEquals(emptyList(), games.games)
+    }
+
+    @Test
+    fun theNamesStayPutWhileTheBoxScoreScrollsSideways() = runAppTest {
+        val games = FakeGameRepository(fortitudo).apply { callUps["g1"] = listOf(CallUp("luca", "Luca B.", "7")) }
+        // A phone: the box score is wider than the screen.
+        setContent {
+            Box(Modifier.width(360.dp)) {
+                TestApp(FakeAuthRepository(coach), FakeRosterRepository(coach, luca), games = games)
+            }
+        }
+
+        awaitText("Partite")
+        onNodeWithText("Partite").performClick()
+        onNodeWithText("Fortitudo").performClick()
+        onNodeWithTag("box_luca_fouls", useUnmergedTree = true).performScrollTo().assertIsDisplayed()
+        onNodeWithText("#7 Luca B.", useUnmergedTree = true).assertIsDisplayed()
+        // A tap on the numbers still opens the map: the row's label, and the map's.
+        onNodeWithTag("box_luca_fouls", useUnmergedTree = true).performClick()
+        awaitNode(hasText("#7 Luca B."), count = 2)
     }
 }

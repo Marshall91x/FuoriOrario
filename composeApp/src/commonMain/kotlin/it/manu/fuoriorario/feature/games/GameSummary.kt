@@ -1,5 +1,6 @@
 package it.manu.fuoriorario.feature.games
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -129,20 +130,30 @@ internal fun Summary(summary: GameSummary, staff: Boolean, busy: Boolean, action
     }
 }
 
-/** A row per convocato, scrolling sideways on a narrow screen; tapping one shows their map, [selected] stands out. */
+/**
+ * A row per convocato; on a narrow screen the numbers scroll sideways together while the names stay put. Tapping a
+ * row shows their map, [selected] stands out.
+ */
 @Composable
 private fun BoxScore(lines: List<BoxLine>, selected: String?, onRow: (String) -> Unit) {
     val c = FuoriOrarioTheme.colors
+    val scroll = rememberScrollState()
     Panel {
         Text(stringResource(Res.string.game_box).uppercase(), style = MaterialTheme.typography.titleMedium)
-        Column(Modifier.horizontalScroll(rememberScrollState())) {
-            BoxRow(stringResource(Res.string.game_box_player), boxColumns.values.map { stringResource(it) }, c.muted)
+        Column {
+            BoxRow(
+                stringResource(Res.string.game_box_player),
+                boxColumns.values.map { stringResource(it) },
+                c.muted,
+                scroll
+            )
             lines.forEach { line ->
                 HorizontalDivider(Modifier.width(NAME_WIDTH + CELL_WIDTH * boxColumns.size), color = c.line)
                 BoxRow(
                     line.callUp.label,
                     line.cells(),
                     c.ink,
+                    scroll,
                     Modifier
                         .background(
                             if (line.callUp.id == selected) c.surface2 else Color.Transparent,
@@ -167,6 +178,7 @@ private fun BoxRow(
     name: String,
     cells: List<String>,
     color: Color,
+    scroll: ScrollState,
     modifier: Modifier = Modifier,
     tag: String? = null
 ) {
@@ -182,15 +194,18 @@ private fun BoxRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        cells.zip(boxColumns.keys).forEach { (cell, key) ->
-            val cellTag = tag?.let { "${it}_$key" }
-            Text(
-                cell,
-                Modifier.width(CELL_WIDTH).then(cellTag?.let { Modifier.testTag(it) } ?: Modifier),
-                color = color,
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodyMedium
-            )
+        // Every row shares [scroll], so the header and the rows stay aligned; a per-row overscroll would stretch one alone.
+        Row(Modifier.horizontalScroll(scroll, overscrollEffect = null)) {
+            cells.zip(boxColumns.keys).forEach { (cell, key) ->
+                val cellTag = tag?.let { "${it}_$key" }
+                Text(
+                    cell,
+                    Modifier.width(CELL_WIDTH).then(cellTag?.let { Modifier.testTag(it) } ?: Modifier),
+                    color = color,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }
