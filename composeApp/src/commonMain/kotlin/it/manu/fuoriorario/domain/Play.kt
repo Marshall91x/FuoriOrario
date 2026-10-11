@@ -108,9 +108,9 @@ data class Move(
 }
 
 /**
- * The lines from [prev] to [step]: whoever changed spot moves (defenders, screeners, the ball handler dribbling, the
- * others cutting), then the ball goes to its new holder. A screener standing still gets just the ⊥, on the first step
- * too; nothing else moves there.
+ * The lines from [prev] to [step]: the ball goes first, from where the passer stands to where the receiver stands, then
+ * whoever changed spot moves (defenders, screeners, the new ball handler dribbling, the others cutting). A screener
+ * standing still gets just the ⊥, on the first step too; nothing else moves there.
  */
 fun moves(prev: Step?, step: Step): List<Move> {
     val players = step.pos.mapNotNull { (piece, to) ->
@@ -119,7 +119,7 @@ fun moves(prev: Step?, step: Step): List<Move> {
             from == to -> null
             isDefender(piece) -> MoveKind.DEFENDER
             piece in step.screens -> MoveKind.SCREEN
-            piece == prev?.ball -> MoveKind.DRIBBLE
+            piece == step.ball -> MoveKind.DRIBBLE
             else -> MoveKind.CUT
         }
         when {
@@ -130,8 +130,8 @@ fun moves(prev: Step?, step: Step): List<Move> {
     }
     val pass = if (prev != null && prev.ball != step.ball) {
         listOfNotNull(
-            step.pos[prev.ball]?.let { from ->
-                step.pos[step.ball]?.let { to -> Move(MoveKind.PASS, prev.ball, from, to) }
+            prev.pos[prev.ball]?.let { from ->
+                prev.pos[step.ball]?.let { to -> Move(MoveKind.PASS, prev.ball, from, to) }
             }
         )
     } else {
@@ -140,9 +140,9 @@ fun moves(prev: Step?, step: Step): List<Move> {
     return players + pass
 }
 
-/** Players move in the first 60% of a step, a pass flies in the rest. */
+/** A pass flies in the first 40% of a step, players move in the rest. */
 const val STEP_MILLIS = 1000
-private const val PLAYERS_END = 0.6f
+private const val PASS_END = 0.4f
 
 /** Where the pieces and the ball are at one moment. */
 data class Frame(val pos: Map<String, Point>, val ball: Point)
@@ -150,17 +150,13 @@ data class Frame(val pos: Map<String, Point>, val ball: Point)
 /** The court at [t] (0..1) of the way from [prev] to [step]; without [prev], [step] as it is. */
 fun frame(prev: Step?, step: Step, t: Float): Frame {
     val lines = moves(prev, step)
-    val walk = (t / PLAYERS_END).coerceIn(0f, 1f)
+    val walk = ((t - PASS_END) / (1 - PASS_END)).coerceIn(0f, 1f)
     val pos = step.pos.mapValues { (piece, to) ->
         lines.find { it.piece == piece && it.kind != MoveKind.PASS }?.at(walk)
             ?: to
     }
     val pass = lines.find { it.kind == MoveKind.PASS }
-    val ball = when {
-        pass == null -> pos.getValue(step.ball)
-        t < PLAYERS_END -> pos.getValue(pass.piece)
-        else -> pass.at(((t - PLAYERS_END) / (1 - PLAYERS_END)).coerceIn(0f, 1f))
-    }
+    val ball = if (pass != null && t < PASS_END) pass.at(t / PASS_END) else pos.getValue(step.ball)
     return Frame(pos, ball)
 }
 
