@@ -98,10 +98,10 @@ private fun MainStateContent(
 ) {
     when (state) {
         is UseCaseMutableState.Error -> state.handler.ErrorScreenContent()
-        is UseCaseMutableState.ShowData -> MainContent(state.items, onPick, onSignOut, onRetryPlayers, onRosterChanged)
-        // Restoring the saved session: the header and the loader.
-        UseCaseMutableState.Loading, null -> MainContent(
-            MainScreenState(),
+        // One call site for both, or the header is rebuilt mid-load and on the web a resource it was loading stays
+        // blank (#88). Restoring the saved session: the header and the loader.
+        is UseCaseMutableState.ShowData, UseCaseMutableState.Loading, null -> MainContent(
+            (state as? UseCaseMutableState.ShowData)?.items ?: MainScreenState(),
             onPick,
             onSignOut,
             onRetryPlayers,

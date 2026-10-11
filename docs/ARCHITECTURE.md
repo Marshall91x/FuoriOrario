@@ -252,7 +252,7 @@ Le migrazioni si applicano in produzione con `supabase db push` dal job di rilas
 
 Architettura: Konsist + `verify()` dei moduli Koin in `androidUnitTest`.
 
-I test UI partono con `runAppTest` (non `runComposeUiTest`): carica prima tutte le stringhe, perché su Wasm ogni stringa letta la prima volta arriva in modo asincrono e per qualche frame l'etichetta è vuota.
+I test UI partono con `runAppTest` (non `runComposeUiTest`): carica prima tutte le stringhe, perché su Wasm ogni stringa letta la prima volta arriva in modo asincrono e per qualche frame l'etichetta è vuota. Per lo stesso motivo anche l'app web le carica tutte prima del primo frame (`Main.kt` in `wasmJsMain`): un caricamento condiviso, cancellato perché il composable che l'aveva avviato è uscito dalla composizione, lasciava la stringa vuota per sempre (#88).
 
 ## CI/CD (GitHub Actions)
 
