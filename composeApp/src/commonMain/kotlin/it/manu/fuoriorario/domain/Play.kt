@@ -46,15 +46,18 @@ fun isDefender(piece: String) = piece.startsWith("X")
 
 /**
  * Passo (ADR 0008): where every piece stands at its end. [ball] is who has the ball, [screens] the attackers setting a
- * screen, [curves] the control point of a piece's curved move from the step before.
+ * screen, [curves] the control point of a piece's curved move from the step before. [passLast]: the coach moved the
+ * passer or the receiver before giving the ball, so the players move first and the pass flies last (#98).
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class Step(
     val pos: Map<String, Point>,
     val ball: String,
     val screens: List<String> = emptyList(),
     val curves: Map<String, Point> = emptyMap(),
-    val note: String? = null
+    val note: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val passLast: Boolean = false
 )
 
 /** Schema: a `plays` row; team is filled by the database from the staff. */
@@ -109,17 +112,19 @@ data class Move(
 
 /**
  * The lines from [prev] to [step]: the ball goes first, from where the passer stands to where the receiver stands, then
- * whoever changed spot moves (defenders, screeners, the new ball handler dribbling, the others cutting). A screener
- * standing still gets just the ⊥, on the first step too; nothing else moves there.
+ * whoever changed spot moves (defenders, screeners, the new ball handler dribbling, the others cutting). With
+ * [Step.passLast] the other way round: they move first, the passer dribbling, then the ball goes between where they end.
+ * A screener standing still gets just the ⊥, on the first step too; nothing else moves there.
  */
 fun moves(prev: Step?, step: Step): List<Move> {
+    val dribbler = if (step.passLast) prev?.ball else step.ball
     val players = step.pos.mapNotNull { (piece, to) ->
         val from = prev?.pos?.get(piece) ?: to
         val kind = when {
             from == to -> null
             isDefender(piece) -> MoveKind.DEFENDER
             piece in step.screens -> MoveKind.SCREEN
-            piece == step.ball -> MoveKind.DRIBBLE
+            piece == dribbler -> MoveKind.DRIBBLE
             else -> MoveKind.CUT
         }
         when {
@@ -129,9 +134,10 @@ fun moves(prev: Step?, step: Step): List<Move> {
         }
     }
     val pass = if (prev != null && prev.ball != step.ball) {
+        val at = if (step.passLast) step.pos else prev.pos
         listOfNotNull(
-            prev.pos[prev.ball]?.let { from ->
-                prev.pos[step.ball]?.let { to -> Move(MoveKind.PASS, prev.ball, from, to) }
+            at[prev.ball]?.let { from ->
+                at[step.ball]?.let { to -> Move(MoveKind.PASS, prev.ball, from, to) }
             }
         )
     } else {
@@ -140,9 +146,9 @@ fun moves(prev: Step?, step: Step): List<Move> {
     return players + pass
 }
 
-/** A pass flies in the first 40% of a step, players move in the rest. */
+/** A pass flies in the first 40% of a step, players move in the rest; with [Step.passLast], in the last 40%. */
 const val STEP_MILLIS = 1000
-private const val PASS_END = 0.4f
+private const val PASS_SPAN = 0.4f
 
 /** Where the pieces and the ball are at one moment. */
 data class Frame(val pos: Map<String, Point>, val ball: Point)
@@ -150,13 +156,20 @@ data class Frame(val pos: Map<String, Point>, val ball: Point)
 /** The court at [t] (0..1) of the way from [prev] to [step]; without [prev], [step] as it is. */
 fun frame(prev: Step?, step: Step, t: Float): Frame {
     val lines = moves(prev, step)
-    val walk = ((t - PASS_END) / (1 - PASS_END)).coerceIn(0f, 1f)
+    val walkStart = if (step.passLast) 0f else PASS_SPAN
+    val walk = ((t - walkStart) / (1 - PASS_SPAN)).coerceIn(0f, 1f)
     val pos = step.pos.mapValues { (piece, to) ->
         lines.find { it.piece == piece && it.kind != MoveKind.PASS }?.at(walk)
             ?: to
     }
     val pass = lines.find { it.kind == MoveKind.PASS }
-    val ball = if (pass != null && t < PASS_END) pass.at(t / PASS_END) else pos.getValue(step.ball)
+    // Counted from the end with the pass last, so that at t = 1 it has landed.
+    val flight = if (step.passLast) 1 - (1 - t) / PASS_SPAN else t / PASS_SPAN
+    val ball = when {
+        pass == null || flight >= 1 -> pos.getValue(step.ball)
+        flight < 0 -> pos.getValue(pass.piece)
+        else -> pass.at(flight)
+    }
     return Frame(pos, ball)
 }
 

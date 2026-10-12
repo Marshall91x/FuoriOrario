@@ -195,6 +195,47 @@ class PlaysViewModelTest {
     }
 
     @Test
+    fun passLast_followsTheOrderTheCoachDraws() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.onNew()
+        vm.onAddStep()
+        // Moved, then given the ball: the pass comes last.
+        vm.onPieceMoved("2", Point(60f, 100f))
+        vm.onHold(Point(60f, 100f))
+        assertTrue(vm.data.draft!!.step.passLast)
+        // Moved again after the pass: the pass goes first.
+        vm.onPieceMoved("2", Point(60f, 80f))
+        assertFalse(vm.data.draft!!.step.passLast)
+        // Somebody else moving doesn't change it.
+        vm.onHold(Point(60f, 80f))
+        vm.onPieceMoved("4", Point(150f, 60f))
+        assertTrue(vm.data.draft!!.step.passLast)
+        // The passer counts too.
+        vm.onDragStart()
+        vm.onPieceMoved("1", Point(250f, 300f))
+        assertFalse(vm.data.draft!!.step.passLast)
+
+        vm.onUndo()
+        assertTrue(vm.data.draft!!.step.passLast)
+    }
+
+    @Test
+    fun passLast_givenBeforeAnyMoveTheBallGoesFirst() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.onNew()
+        vm.onAddStep()
+        vm.onPieceMoved("4", Point(150f, 60f))
+        vm.onHold(Point(60f, 230f))
+        assertFalse(vm.data.draft!!.step.passLast)
+        // Back to who had it: no pass.
+        vm.onPieceMoved("2", Point(60f, 100f))
+        vm.onHold(Point(250f, 330f))
+        assertFalse(vm.data.draft!!.step.passLast)
+    }
+
+    @Test
     fun steps_addAndRemoveWithinTheLimits() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()

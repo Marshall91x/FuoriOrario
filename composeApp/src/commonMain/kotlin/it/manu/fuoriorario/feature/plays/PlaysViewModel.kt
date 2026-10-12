@@ -135,21 +135,34 @@ class PlaysViewModel(
 
     fun onNextStep() = updateDraft { copy(index = (index + 1).coerceAtMost(play.steps.lastIndex)) }
 
-    /** [target], a piece or a [HANDLE], dragged to [at]: the piece moves, the handle bends its move. */
+    /**
+     * [target], a piece or a [HANDLE], dragged to [at]: the piece moves, the handle bends its move. The passer or the
+     * receiver moved after the ball was given: the pass goes first (#98).
+     */
     fun onPieceMoved(target: String, at: Point) = editStep({ dragStarted }) { draft, step ->
         val spot = at.within(draft.play.court)
         val piece = target.removePrefix(HANDLE)
         val from = draft.prev?.pos?.get(piece)
         when {
-            !target.startsWith(HANDLE) -> step.copy(pos = step.pos + (piece to spot))
+            !target.startsWith(HANDLE) -> step.copy(
+                pos = step.pos + (piece to spot),
+                passLast = step.passLast && piece != draft.prev?.ball && piece != step.ball
+            )
             from != null -> step.bent(piece, from, spot)
             else -> step
         }
     }
 
-    /** A hold at [at]: the ball to the attacker under the finger, if any. */
-    fun onHold(at: Point) = editStep { _, step ->
-        nearest(step.pos.filterKeys { !isDefender(it) }, at, HOLD_REACH)?.let { step.copy(ball = it) } ?: step
+    /**
+     * A hold at [at]: the ball to the attacker under the finger, if any. Given after the passer or the receiver moved,
+     * the pass comes last, as the coach draws it on paper (#98).
+     */
+    fun onHold(at: Point) = editStep { draft, step ->
+        nearest(step.pos.filterKeys { !isDefender(it) }, at, HOLD_REACH)?.let { ball ->
+            val prev = draft.prev
+            val moved = prev != null && listOf(prev.ball, ball).any { prev.pos[it] != step.pos[it] }
+            step.copy(ball = ball, passLast = moved && prev?.ball != ball)
+        } ?: step
     }
 
     fun onScreenToggled(piece: String, on: Boolean) =

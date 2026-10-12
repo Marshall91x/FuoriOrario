@@ -101,6 +101,39 @@ class PlayTest {
         assertEquals(Point(330f, 50f), frame(start, next, 1f).ball)
     }
 
+    /** #98: the coach moved them, then gave the ball. */
+    private val passLast = Step(
+        start.pos + mapOf("1" to Point(250f, 230f), "5" to Point(330f, 50f)),
+        ball = "5",
+        passLast = true
+    )
+
+    @Test
+    fun passLast_thePasserDribblesTheReceiverCutsThenThePassBetweenWhereTheyEnd() {
+        assertEquals(
+            listOf(
+                Move(MoveKind.DRIBBLE, "1", Point(250f, 330f), Point(250f, 230f)),
+                Move(MoveKind.CUT, "5", Point(330f, 150f), Point(330f, 50f)),
+                Move(MoveKind.PASS, "1", Point(250f, 230f), Point(330f, 50f))
+            ),
+            moves(start, passLast)
+        )
+    }
+
+    @Test
+    fun passLast_playersMoveInTheFirst600msThenTheBallFlies() {
+        assertEquals(Point(250f, 330f), frame(start, passLast, 0f).ball)
+        // The ball stays with the passer while he moves.
+        assertNear(Point(250f, 280f), frame(start, passLast, 0.3f).pos["1"])
+        assertNear(Point(250f, 280f), frame(start, passLast, 0.3f).ball)
+        assertNear(Point(330f, 100f), frame(start, passLast, 0.3f).pos["5"])
+        assertNear(Point(250f, 230f), frame(start, passLast, 0.6f).ball)
+        // Nobody moves while the ball flies.
+        assertEquals(Point(330f, 50f), frame(start, passLast, 0.8f).pos["5"])
+        assertNear(Point(290f, 140f), frame(start, passLast, 0.8f).ball)
+        assertEquals(Point(330f, 50f), frame(start, passLast, 1f).ball)
+    }
+
     @Test
     fun withoutAStepBeforeTheFrameIsTheStep() {
         assertEquals(Frame(start.pos, Point(250f, 330f)), frame(null, start, 0f))
