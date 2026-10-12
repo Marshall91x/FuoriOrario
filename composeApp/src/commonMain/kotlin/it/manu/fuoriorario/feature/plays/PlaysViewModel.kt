@@ -137,7 +137,7 @@ class PlaysViewModel(
 
     /**
      * [target], a piece or a [HANDLE], dragged to [at]: the piece moves, the handle bends its move. The passer or the
-     * receiver moved after the ball was given: the pass goes first (#98).
+     * receiver moved after the ball was given moves after the pass (#98).
      */
     fun onPieceMoved(target: String, at: Point) = editStep({ dragStarted }) { draft, step ->
         val spot = at.within(draft.play.court)
@@ -146,7 +146,7 @@ class PlaysViewModel(
         when {
             !target.startsWith(HANDLE) -> step.copy(
                 pos = step.pos + (piece to spot),
-                passLast = step.passLast && piece != draft.prev?.ball && piece != step.ball
+                beforePass = step.beforePass - piece
             )
             from != null -> step.bent(piece, from, spot)
             else -> step
@@ -154,14 +154,14 @@ class PlaysViewModel(
     }
 
     /**
-     * A hold at [at]: the ball to the attacker under the finger, if any. Given after the passer or the receiver moved,
-     * the pass comes last, as the coach draws it on paper (#98).
+     * A hold at [at]: the ball to the attacker under the finger, if any. Who of the passer and the receiver already moved,
+     * moves before the pass, as the coach draws it on paper (#98).
      */
     fun onHold(at: Point) = editStep { draft, step ->
         nearest(step.pos.filterKeys { !isDefender(it) }, at, HOLD_REACH)?.let { ball ->
             val prev = draft.prev
-            val moved = prev != null && listOf(prev.ball, ball).any { prev.pos[it] != step.pos[it] }
-            step.copy(ball = ball, passLast = moved && prev?.ball != ball)
+            val moved = listOfNotNull(prev?.ball, ball).filter { prev?.ball != ball && prev?.pos[it] != step.pos[it] }
+            step.copy(ball = ball, beforePass = moved)
         } ?: step
     }
 

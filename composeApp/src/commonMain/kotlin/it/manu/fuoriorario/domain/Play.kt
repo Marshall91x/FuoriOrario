@@ -46,8 +46,8 @@ fun isDefender(piece: String) = piece.startsWith("X")
 
 /**
  * Passo (ADR 0008): where every piece stands at its end. [ball] is who has the ball, [screens] the attackers setting a
- * screen, [curves] the control point of a piece's curved move from the step before. [passLast]: the coach moved the
- * passer or the receiver before giving the ball, so the players move first and the pass flies last (#98).
+ * screen, [curves] the control point of a piece's curved move from the step before. [beforePass]: the passer or the
+ * receiver the coach moved before giving the ball, so they move before the pass flies (#98).
  */
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -57,7 +57,7 @@ data class Step(
     val screens: List<String> = emptyList(),
     val curves: Map<String, Point> = emptyMap(),
     val note: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.NEVER) val passLast: Boolean = false
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val beforePass: List<String> = emptyList()
 )
 
 /** Schema: a `plays` row; team is filled by the database from the staff. */
@@ -111,20 +111,21 @@ data class Move(
 }
 
 /**
- * The lines from [prev] to [step]: the ball goes first, from where the passer stands to where the receiver stands, then
- * whoever changed spot moves (defenders, screeners, the new ball handler dribbling, the others cutting). With
- * [Step.passLast] the other way round: they move first, the passer dribbling, then the ball goes between where they end.
- * A screener standing still gets just the ⊥, on the first step too; nothing else moves there.
+ * The lines from [prev] to [step]: whoever changed spot moves (defenders, screeners, who has the ball while moving
+ * dribbling, the others cutting) and the ball goes from the passer to the receiver. They move after the pass, the
+ * receiver dribbling, unless in [Step.beforePass]: the passer then dribbles and passes from where he ends, the receiver
+ * cuts and catches where he ends. A screener standing still gets just the ⊥, on the first step too; nothing else moves
+ * there.
  */
 fun moves(prev: Step?, step: Step): List<Move> {
-    val dribbler = if (step.passLast) prev?.ball else step.ball
+    fun first(piece: String) = piece in step.beforePass
     val players = step.pos.mapNotNull { (piece, to) ->
         val from = prev?.pos?.get(piece) ?: to
         val kind = when {
             from == to -> null
             isDefender(piece) -> MoveKind.DEFENDER
             piece in step.screens -> MoveKind.SCREEN
-            piece == dribbler -> MoveKind.DRIBBLE
+            piece == prev?.ball && first(piece) || piece == step.ball && !first(piece) -> MoveKind.DRIBBLE
             else -> MoveKind.CUT
         }
         when {
@@ -134,10 +135,10 @@ fun moves(prev: Step?, step: Step): List<Move> {
         }
     }
     val pass = if (prev != null && prev.ball != step.ball) {
-        val spots = if (step.passLast) step.pos else prev.pos
+        fun spot(piece: String) = (if (first(piece)) step.pos else prev.pos)[piece]
         listOfNotNull(
-            spots[prev.ball]?.let { from ->
-                spots[step.ball]?.let { to -> Move(MoveKind.PASS, prev.ball, from, to) }
+            spot(prev.ball)?.let { from ->
+                spot(step.ball)?.let { to -> Move(MoveKind.PASS, prev.ball, from, to) }
             }
         )
     } else {
@@ -146,9 +147,14 @@ fun moves(prev: Step?, step: Step): List<Move> {
     return players + pass
 }
 
-/** A pass flies in the first 40% of a step, players move in the rest; with [Step.passLast], in the last 40%. */
+/**
+ * A step: the players in [Step.beforePass] and those off the ball move, the pass flies, then the others move. A pass
+ * takes 0.4 of a move's time; a phase without anyone moving is skipped, but without [Step.beforePass] the pass always
+ * goes first.
+ */
 const val STEP_MILLIS = 1000
 private const val PASS_SPAN = 0.4f
+private const val MOVE_SPAN = 0.6f
 
 /** Where the pieces and the ball are at one moment. */
 data class Frame(val pos: Map<String, Point>, val ball: Point)
@@ -157,20 +163,23 @@ data class Frame(val pos: Map<String, Point>, val ball: Point)
 fun frame(prev: Step?, step: Step, t: Float): Frame {
     val lines = moves(prev, step)
     val pass = lines.find { it.kind == MoveKind.PASS }
-    // Without a pass, a flag left from an earlier edit of the steps before changes nothing.
-    val passLast = step.passLast && pass != null
-    val walkStart = if (passLast) 0f else PASS_SPAN
-    val walk = ((t - walkStart) / (1 - PASS_SPAN)).coerceIn(0f, 1f)
+    // Without a pass, or for someone no longer passing or receiving, a flag left from an earlier edit changes nothing.
+    val first = pass?.let { step.beforePass.filter { it == pass.piece || it == step.ball } }.orEmpty()
+    val late = if (first.isEmpty()) step.pos.keys else listOfNotNull(pass?.piece, step.ball) - first
+    val walks = lines.filter { it.kind != MoveKind.PASS }.associateBy { it.piece }
+    val early = if (first.isEmpty()) 0f else MOVE_SPAN
+    val after = if (first.isEmpty() || late.any { walks[it]?.let { w -> w.from != w.to } == true }) MOVE_SPAN else 0f
+    val total = early + PASS_SPAN + after
+    val passStart = early / total
+    val passEnd = (early + PASS_SPAN) / total
+    fun phase(from: Float, to: Float) = ((t - from) / (to - from)).coerceIn(0f, 1f)
     val pos = step.pos.mapValues { (piece, to) ->
-        lines.find { it.piece == piece && it.kind != MoveKind.PASS }?.at(walk)
-            ?: to
+        walks[piece]?.at(if (piece in late) phase(passEnd, 1f) else phase(0f, passStart)) ?: to
     }
-    // Counted from the end with the pass last, so that at t = 1 it has landed.
-    val flight = if (passLast) 1 - (1 - t) / PASS_SPAN else t / PASS_SPAN
     val ball = when {
-        pass == null || flight >= 1 -> pos.getValue(step.ball)
-        flight < 0 -> pos.getValue(pass.piece)
-        else -> pass.at(flight)
+        pass == null || t >= passEnd -> pos.getValue(step.ball)
+        t <= passStart -> pos.getValue(pass.piece)
+        else -> pass.at(phase(passStart, passEnd))
     }
     return Frame(pos, ball)
 }
@@ -283,8 +292,8 @@ enum class PlayError { TITLE }
 fun playError(play: Play): PlayError? = if (play.title.isBlank()) PlayError.TITLE else null
 
 /**
- * The play to save: trimmed, blanks null, no curves left on a piece that doesn't move into its step, no [Step.passLast]
- * where the ball doesn't change hands.
+ * The play to save: trimmed, blanks null, no curves left on a piece that doesn't move into its step, in
+ * [Step.beforePass] only the passer and the receiver of a pass.
  */
 fun Play.cleaned() = copy(
     title = title.trim(),
@@ -296,7 +305,11 @@ fun Play.cleaned() = copy(
                 prev?.pos?.get(piece).let { it != null && it != step.pos[piece] }
             },
             note = step.note?.trim()?.ifEmpty { null },
-            passLast = step.passLast && prev != null && prev.ball != step.ball
+            beforePass = if (prev == null || prev.ball == step.ball) {
+                emptyList()
+            } else {
+                step.beforePass.filter { it == prev.ball || it == step.ball }
+            }
         )
     }
 )

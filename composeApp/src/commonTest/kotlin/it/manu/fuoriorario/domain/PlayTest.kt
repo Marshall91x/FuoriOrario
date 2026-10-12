@@ -105,8 +105,11 @@ class PlayTest {
     private val passLast = Step(
         start.pos + mapOf("1" to Point(250f, 230f), "5" to Point(330f, 50f)),
         ball = "5",
-        passLast = true
+        beforePass = listOf("1", "5")
     )
+
+    /** #98: 5 cuts, then the ball, then 1 cuts. */
+    private val passBetween = passLast.copy(beforePass = listOf("5"))
 
     @Test
     fun passLast_thePasserDribblesTheReceiverCutsThenThePassBetweenWhereTheyEnd() {
@@ -132,6 +135,30 @@ class PlayTest {
         assertEquals(Point(330f, 50f), frame(start, passLast, 0.8f).pos["5"])
         assertNear(Point(290f, 140f), frame(start, passLast, 0.8f).ball)
         assertEquals(Point(330f, 50f), frame(start, passLast, 1f).ball)
+    }
+
+    @Test
+    fun passBetween_theReceiverCutsThePassFromWhereThePasserStartsThenThePasserCuts() {
+        assertEquals(
+            listOf(
+                Move(MoveKind.CUT, "1", Point(250f, 330f), Point(250f, 230f)),
+                Move(MoveKind.CUT, "5", Point(330f, 150f), Point(330f, 50f)),
+                Move(MoveKind.PASS, "1", Point(250f, 330f), Point(330f, 50f))
+            ),
+            moves(start, passBetween)
+        )
+    }
+
+    @Test
+    fun passBetween_theReceiverMovesThenTheBallFliesThenThePasserMoves() {
+        assertNear(Point(330f, 100f), frame(start, passBetween, 0.1875f).pos["5"])
+        assertEquals(Point(250f, 330f), frame(start, passBetween, 0.1875f).pos["1"])
+        assertEquals(Point(250f, 330f), frame(start, passBetween, 0.1875f).ball)
+        assertNear(Point(290f, 190f), frame(start, passBetween, 0.5f).ball)
+        assertEquals(Point(250f, 330f), frame(start, passBetween, 0.5f).pos["1"])
+        assertNear(Point(250f, 280f), frame(start, passBetween, 0.8125f).pos["1"])
+        assertEquals(Point(330f, 50f), frame(start, passBetween, 0.8125f).ball)
+        assertEquals(Frame(passBetween.pos, Point(330f, 50f)), frame(start, passBetween, 1f))
     }
 
     @Test
@@ -256,11 +283,13 @@ class PlayEditTest {
     @Test
     fun savedWithoutPassLastWhereTheBallStaysInHand() {
         val first = startingStep(false)
-        val moved = Step(first.pos + ("1" to Point(250f, 230f)), "1", passLast = true)
+        val moved = Step(first.pos + ("1" to Point(250f, 230f)), "1", beforePass = listOf("1", "3"))
         val play = Play("Box", PlayCategory.ATTACK, null, CourtSize.HALF, false, listOf(first, moved))
-        assertEquals(listOf(first, moved.copy(passLast = false)), play.cleaned().steps)
+        assertEquals(listOf(first, moved.copy(beforePass = emptyList())), play.cleaned().steps)
+        // Only the passer and the receiver count.
         val passed = moved.copy(ball = "2")
-        assertEquals(listOf(first, passed), play.copy(steps = listOf(first, passed)).cleaned().steps)
+        val kept = passed.copy(beforePass = listOf("1"))
+        assertEquals(listOf(first, kept), play.copy(steps = listOf(first, passed)).cleaned().steps)
     }
 
     private val first = startingStep(false)
