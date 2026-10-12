@@ -134,10 +134,10 @@ fun moves(prev: Step?, step: Step): List<Move> {
         }
     }
     val pass = if (prev != null && prev.ball != step.ball) {
-        val at = if (step.passLast) step.pos else prev.pos
+        val spots = if (step.passLast) step.pos else prev.pos
         listOfNotNull(
-            at[prev.ball]?.let { from ->
-                at[step.ball]?.let { to -> Move(MoveKind.PASS, prev.ball, from, to) }
+            spots[prev.ball]?.let { from ->
+                spots[step.ball]?.let { to -> Move(MoveKind.PASS, prev.ball, from, to) }
             }
         )
     } else {
@@ -156,15 +156,17 @@ data class Frame(val pos: Map<String, Point>, val ball: Point)
 /** The court at [t] (0..1) of the way from [prev] to [step]; without [prev], [step] as it is. */
 fun frame(prev: Step?, step: Step, t: Float): Frame {
     val lines = moves(prev, step)
-    val walkStart = if (step.passLast) 0f else PASS_SPAN
+    val pass = lines.find { it.kind == MoveKind.PASS }
+    // Without a pass, a flag left from an earlier edit of the steps before changes nothing.
+    val passLast = step.passLast && pass != null
+    val walkStart = if (passLast) 0f else PASS_SPAN
     val walk = ((t - walkStart) / (1 - PASS_SPAN)).coerceIn(0f, 1f)
     val pos = step.pos.mapValues { (piece, to) ->
         lines.find { it.piece == piece && it.kind != MoveKind.PASS }?.at(walk)
             ?: to
     }
-    val pass = lines.find { it.kind == MoveKind.PASS }
     // Counted from the end with the pass last, so that at t = 1 it has landed.
-    val flight = if (step.passLast) 1 - (1 - t) / PASS_SPAN else t / PASS_SPAN
+    val flight = if (passLast) 1 - (1 - t) / PASS_SPAN else t / PASS_SPAN
     val ball = when {
         pass == null || flight >= 1 -> pos.getValue(step.ball)
         flight < 0 -> pos.getValue(pass.piece)
@@ -280,7 +282,10 @@ enum class PlayError { TITLE }
 /** First problem with the play as drawn, or null; lengths are capped by the fields. */
 fun playError(play: Play): PlayError? = if (play.title.isBlank()) PlayError.TITLE else null
 
-/** The play to save: trimmed, blanks null, no curves left on a piece that doesn't move into its step. */
+/**
+ * The play to save: trimmed, blanks null, no curves left on a piece that doesn't move into its step, no [Step.passLast]
+ * where the ball doesn't change hands.
+ */
 fun Play.cleaned() = copy(
     title = title.trim(),
     description = description?.trim()?.ifEmpty { null },
@@ -290,7 +295,8 @@ fun Play.cleaned() = copy(
             curves = step.curves.filterKeys { piece ->
                 prev?.pos?.get(piece).let { it != null && it != step.pos[piece] }
             },
-            note = step.note?.trim()?.ifEmpty { null }
+            note = step.note?.trim()?.ifEmpty { null },
+            passLast = step.passLast && prev != null && prev.ball != step.ball
         )
     }
 )

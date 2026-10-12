@@ -135,6 +135,14 @@ class PlayTest {
     }
 
     @Test
+    fun passLast_withoutAPassPlayersMoveInTheLast600ms() {
+        // Left over after an earlier step was edited: the ball no longer changes hands here.
+        val next = passLast.copy(ball = "1")
+        assertEquals(Point(250f, 330f), frame(start, next, 0.4f).pos["1"])
+        assertNear(Point(250f, 280f), frame(start, next, 0.7f).pos["1"])
+    }
+
+    @Test
     fun withoutAStepBeforeTheFrameIsTheStep() {
         assertEquals(Frame(start.pos, Point(250f, 330f)), frame(null, start, 0f))
     }
@@ -243,6 +251,16 @@ class PlayEditTest {
             Play("Box", PlayCategory.ATTACK, null, CourtSize.HALF, false, listOf(first.copy(curves = bend), moved))
         // Nothing moves into the first step; 1 stands still in the second.
         assertEquals(listOf(first, moved.copy(curves = bend)), play.cleaned().steps)
+    }
+
+    @Test
+    fun savedWithoutPassLastWhereTheBallStaysInHand() {
+        val first = startingStep(false)
+        val moved = Step(first.pos + ("1" to Point(250f, 230f)), "1", passLast = true)
+        val play = Play("Box", PlayCategory.ATTACK, null, CourtSize.HALF, false, listOf(first, moved))
+        assertEquals(listOf(first, moved.copy(passLast = false)), play.cleaned().steps)
+        val passed = moved.copy(ball = "2")
+        assertEquals(listOf(first, passed), play.copy(steps = listOf(first, passed)).cleaned().steps)
     }
 
     private val first = startingStep(false)
