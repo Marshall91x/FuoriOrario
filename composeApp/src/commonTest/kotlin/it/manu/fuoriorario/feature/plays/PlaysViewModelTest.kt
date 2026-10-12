@@ -195,6 +195,44 @@ class PlaysViewModelTest {
     }
 
     @Test
+    fun beforePass_followsTheOrderTheCoachDraws() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.onNew()
+        vm.onAddStep()
+        // Moved, then given the ball: they move before the pass.
+        vm.onPieceMoved("1", Point(250f, 300f))
+        vm.onPieceMoved("2", Point(60f, 100f))
+        vm.onHold(Point(60f, 100f))
+        assertEquals(listOf("1", "2"), vm.data.draft!!.step.beforePass)
+        // Moved again after the pass: after it.
+        vm.onDragStart()
+        vm.onPieceMoved("1", Point(250f, 280f))
+        assertEquals(listOf("2"), vm.data.draft!!.step.beforePass)
+        // Somebody else moving doesn't change it.
+        vm.onPieceMoved("4", Point(150f, 60f))
+        assertEquals(listOf("2"), vm.data.draft!!.step.beforePass)
+
+        vm.onUndo()
+        assertEquals(listOf("1", "2"), vm.data.draft!!.step.beforePass)
+    }
+
+    @Test
+    fun beforePass_givenBeforeAnyMoveEveryoneMovesAfter() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.onNew()
+        vm.onAddStep()
+        vm.onPieceMoved("4", Point(150f, 60f))
+        vm.onHold(Point(60f, 230f))
+        assertEquals(emptyList(), vm.data.draft!!.step.beforePass)
+        // Back to who had it: no pass.
+        vm.onPieceMoved("1", Point(250f, 300f))
+        vm.onHold(Point(250f, 300f))
+        assertEquals(emptyList(), vm.data.draft!!.step.beforePass)
+    }
+
+    @Test
     fun steps_addAndRemoveWithinTheLimits() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()
