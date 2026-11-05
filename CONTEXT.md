@@ -56,3 +56,12 @@ Linguaggio comune del progetto. UI e documentazione in italiano, codice in ingle
 | Partita in corso | `GameDraft` | La partita non ancora salvata, tenuta sul dispositivo a ogni tocco. Una per dispositivo; si cancella al logout. |
 | Tabellino | `BoxScore` | Riga per convocato: PT, T2, T3, TL (segnati/tentati), RIM, AST, PP, REC, FAL. Il giocatore vede solo la propria. |
 | Parziali | `quarterScores` | Punti delle due squadre per quarto. |
+| Campionato | `League` | Una fase di un campionato FIP (es. "Under 19 Maschile Regionale – Prima fase"), con le sue squadre e gare. Si vede l'ultimo creato nella stagione corrente. Lo staff lo importa dal PDF e lo può eliminare (doppio tocco): le Partite registrate restano. |
+| Squadra del girone | `LeagueTeam` | Una squadra del campionato, col nome FIP così com'è. Una è segnata come la nostra. Da non confondere con *Squadra* (`Team`), il gruppo che usa l'app. |
+| Gara | `Fixture` | Una gara ufficiale del campionato, anche tra altre squadre: giornata, numero gara FIP, data e ora, casa, ospite, campo, stato, risultato. Da non confondere con *Partita*, che è la nostra gara registrata col live. |
+| Stato (della gara) | `FixtureStatus` | `SCHEDULED` (programmata), `POSTPONED` (rinviata, senza data), `PLAYED` (giocata, con risultato). Il forfait è un risultato 20-0. |
+| Giornata | `round`, `leg` | Numero 1–N più andata/ritorno, come nel PDF FIP: si mostra "3ª andata". |
+| Numero gara | `number` | Codice FIP della gara (es. `000691`). Ritrova la gara a un nuovo import; si vede solo nel foglio Modifica. |
+| Riposo | — | Con un numero dispari di squadre, in ogni giornata una non gioca. Si ricava, non si salva. |
+| Import del calendario | `importLeague` | Lo staff carica il PDF FIP, vede un'anteprima e la conferma. Un nuovo import aggiorna data, ora e campo delle gare ritrovate, mai i risultati; quelle non più nel PDF restano. |
+| Classifica | `Standings` | Calcolata dalle gare giocate del campionato: vittoria 2, sconfitta 0. Parità: scontri diretti (punti, differenza canestri) fra le squadre a pari punti, poi differenza canestri totale, poi punti segnati. Colonne Pos, Squadra, Pt, G, V, P, PF, PS, Diff. |
