@@ -57,6 +57,7 @@ supabase/
   migrations/              # schema + RLS versionati
   seed.sql                 # squadra, primo staff, un giocatore, uno schema (libreria e riferimenti di default arrivano dallo schema)
   tests/                   # test pgTAP delle RLS
+  functions/               # Edge Function: import del calendario FIP da PDF (adr/0011)
 ```
 
 Una feature contiene `XScreen.kt` + `XViewModel.kt` per schermata e `data/` con interfaccia del repository e implementazione Supabase. Un repository sta nella feature che possiede le tabelle; le altre feature (es. `team`, `settings`) lo importano da lì.
@@ -73,9 +74,10 @@ Login (email → codice OTP) → Informativa (primo accesso) → Home
 Home = barra in basso:
   Diario di tiro  ─ foglio "Registra sessione"
   Piano           ─ fogli "Esercizio", "Nota"
-  Partite         ─ elenco; staff: Nuova partita → Live (bozza locale, Termina partita), Partita in corso – Riprendi/Abbandona
+  Partite         ─ Calendario (Nostre / Tutto il girone), Classifica, Registrate;
+                    Registrate: elenco; staff: Nuova partita → Live (bozza locale, Termina partita), Partita in corso – Riprendi/Abbandona
   Schemi          ─ elenco per categoria → schema passo per passo (◀ ▶ Riproduci); staff: Nuovo schema / Modifica → editor
-  Squadra (staff) ─ Quadro (tocco → Diario del giocatore), Rosa, Impostazioni (Libreria, Riferimenti)
+  Squadra (staff) ─ Quadro (tocco → Diario del giocatore), Rosa, Impostazioni (Libreria, Riferimenti, Campionato: import PDF)
 Header: menu giocatore (solo staff), logout
 ```
 
@@ -172,6 +174,23 @@ game_events (
   zone text null, made boolean null, value smallint null   -- check per tipo
 )
 
+leagues (                                          -- campionato = una fase FIP (adr/0011)
+  id uuid pk, team_id uuid fk teams, name text not null, created_at timestamptz default now()
+)
+
+league_teams (id uuid pk, league_id fk leagues on delete cascade, name text not null, ours boolean not null default false)
+
+fixtures (
+  id uuid pk, league_id fk leagues on delete cascade,
+  number text not null,                            -- numero gara FIP, unique per campionato: chiave del reimport
+  round smallint not null, leg text check (FIRST|SECOND),
+  starts_at timestamptz null,                      -- null se rinviata
+  home_team_id, away_team_id fk league_teams,      -- diverse
+  venue text null,
+  status text check (SCHEDULED|POSTPONED|PLAYED),
+  home_score int null, away_score int null         -- presenti solo se PLAYED
+)
+
 plan_checks (
   plan_item_id uuid fk plan_items on delete cascade,
   day smallint check (day between 0 and 6),        -- solo un giorno assegnato all'esercizio (RLS)
@@ -209,6 +228,7 @@ Funzioni helper `security definer stable`:
 | plan_items, weekly_notes | staff; giocatore proprie | staff | staff | staff |
 | plan_checks | staff; giocatore proprie | solo giocatore proprietario dell'item | — | solo giocatore proprietario |
 | games | membri della squadra | staff (RPC `save_game`) | — | staff |
+| leagues, league_teams, fixtures | membri della squadra | staff (RPC di conferma import) | staff | staff |
 | game_call_ups, game_events | staff; giocatore proprie | staff (RPC `save_game`) | — | con la partita (cascade) |
 
 `ack_privacy()` è l'unica scrittura del giocatore su `members` (RPC, aggiorna solo `privacy_ack_at`).

@@ -61,6 +61,13 @@ Ogni milestone diventa una GitHub Milestone; ogni punto una issue. Branch `featu
 - Rimbalzi, assist, perse, recuperi, falli.
 - **Fatto quando**: lo staff registra una partita vera dal telefono e un giocatore rivede i propri tiri.
 
+## M7.6 — Calendario e classifica
+- Import del calendario FIP da PDF con anteprima; gare programmate per tutta la squadra (#100).
+- Modifica, inserimento ed eliminazione delle gare (#101).
+- Classifica calcolata (#102).
+- "Inizia live" dalla gara, risultato del live sulla gara (#103).
+- **Fatto quando**: la squadra vede calendario e classifica aggiornati senza che lo staff scriva le gare a mano.
+
 ## M8 — Pronti per gli store
 - Privacy policy pubblica, eliminazione account in-app (richiesta da Apple e Google).
 - Revisione consensi e target d'età (regole Google Play Families se applicabili).
