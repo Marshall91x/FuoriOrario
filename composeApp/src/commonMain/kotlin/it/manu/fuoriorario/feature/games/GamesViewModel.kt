@@ -39,15 +39,19 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.LocalDate
 
-/** "Nuova partita" as typed; [callUps] are member ids. */
+/** "Nuova partita" as typed; [callUps] are member ids. [fixtureId]: started from that calendar fixture. */
 data class GameForm(
     val date: LocalDate,
     val opponent: String = "",
     val home: Boolean = true,
     val note: String = "",
     val callUps: Set<String> = emptySet(),
-    val error: GameError? = null
+    val error: GameError? = null,
+    val fixtureId: String? = null
 )
+
+/** How the calendar opens Partite: [form] filled in from a fixture ("Inizia live"), or the Riepilogo of game [open]. */
+data class GamesStart(val form: GameForm? = null, val open: String? = null)
 
 /**
  * Riepilogo of a saved game, [loaded] with what RLS shows: a player gets only their own call-up and events. [quarter]
@@ -100,6 +104,7 @@ data class GamesScreenState(
 /** Partite (PRD F8): the team's games; staff create one, record it live and save it at the end (ADR 0010). */
 class GamesViewModel(
     private val staff: Boolean,
+    start: GamesStart,
     private val repository: GameRepository,
     private val roster: RosterRepository,
     private val shots: ShotRepository,
@@ -107,11 +112,15 @@ class GamesViewModel(
     private val dispatchers: DispatcherProvider,
     errorManager: ErrorManager
 ) : ScreenModel<GamesScreenState>(
-    GamesScreenState(draft = drafts.draft.value),
+    // Only one game at a time: with a draft the fixture's form doesn't open, as "Nuova partita" doesn't.
+    GamesScreenState(draft = drafts.draft.value, form = start.form.takeIf { drafts.draft.value == null }),
     dispatchers,
     errorManager,
     busy = { copy(busy = it) }
 ) {
+    /** The game to open once the list is there; then forgotten, so "Riprova" doesn't open it again. */
+    private var open = start.open
+
     init {
         load()
     }
@@ -143,6 +152,10 @@ class GamesViewModel(
             }
                 ?: copy(loadFailed = true)
         }
+        open?.let { id -> state.games?.firstOrNull { it.id == id } }?.let {
+            open = null
+            onOpen(it)
+        }
     }
 
     /** Only one game at a time: with a draft it's "Riprendi" or "Abbandona". */
@@ -171,7 +184,8 @@ class GamesViewModel(
             form.opponent.trim(),
             form.home,
             form.note.trim().ifEmpty { null },
-            players.filter { it.id in form.callUps }.map { CallUp(it.id!!, it.displayName, it.jerseyNumber) }
+            players.filter { it.id in form.callUps }.map { CallUp(it.id!!, it.displayName, it.jerseyNumber) },
+            fixtureId = form.fixtureId
         )
         drafts.save(draft)
         copy(form = null, draft = draft, live = true)

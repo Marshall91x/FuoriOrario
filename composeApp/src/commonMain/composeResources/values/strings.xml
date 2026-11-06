@@ -349,6 +349,8 @@
     <string name="fixture_played">Giocata</string>
     <string name="fixture_save">Salva</string>
     <string name="fixture_saved">Gara salvata</string>
+    <string name="fixture_live">Inizia live</string>
+    <string name="fixture_summary">Riepilogo</string>
     <string name="fixture_deleted">Gara eliminata</string>
     <string name="fixture_error_teams">Scegli due squadre diverse.</string>
     <string name="fixture_error_date">Data e ora non valide.</string>

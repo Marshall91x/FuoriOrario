@@ -6,6 +6,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -20,6 +21,7 @@ import it.manu.fuoriorario.domain.Leg
 import it.manu.fuoriorario.domain.Member
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.feature.auth.FakeAuthRepository
+import it.manu.fuoriorario.feature.games.FakeGameRepository
 import it.manu.fuoriorario.feature.roster.FakeRosterRepository
 import it.manu.fuoriorario.testing.TestApp
 import it.manu.fuoriorario.testing.awaitNode
@@ -100,7 +102,7 @@ class CalendarTest {
         "l",
         "U19",
         listOf(LeagueTeam("a", "Artemis", ours = true), LeagueTeam("b", "Vasto")),
-        listOf(Fixture("1", 1, Leg.FIRST, Clock.System.now() + 1.days, "a", "b"))
+        listOf(Fixture("1", 1, Leg.FIRST, Clock.System.now() + 1.days, "a", "b", id = "f1"))
     )
 
     @Test
@@ -156,6 +158,42 @@ class CalendarTest {
         onNodeWithTag("fixture_away_score").performTextReplacement(away)
         onNodeWithTag("fixture_save").performScrollTo().performClick()
         awaitText("$home–$away")
+    }
+
+    @Test
+    fun staffStartTheLiveFromAFixtureSaveItAndOpenItsRiepilogo() = runAppTest {
+        val leagues = FakeLeagueRepository(leagueWithOneFixture())
+        val games = FakeGameRepository(leagues = leagues)
+        setContent {
+            TestApp(FakeAuthRepository(coach), FakeRosterRepository(coach, luca), games = games, leagues = leagues)
+        }
+
+        awaitText("Partite")
+        onNodeWithText("Partite").performClick()
+        onNodeWithTag("fixture_live_1").performClick()
+        // Date, opponent and home already there: only the convocati to pick.
+        awaitNode(hasTestTag("game_opponent") and hasText("Vasto"))
+        onNodeWithTag("call_up_luca").performClick()
+        onNodeWithTag("game_start").performScrollTo().performClick()
+        awaitText("NOI 0 – 0 VASTO")
+        onNodeWithTag("pick_luca").performClick()
+        onNodeWithContentDescription("Tripla centrale").performScrollTo().performClick()
+        onNodeWithTag("shot_made").performScrollTo().performClick()
+        onNodeWithTag("game_finish").performScrollTo().performClick()
+
+        // Back to the tab later is a plain visit: the fixture's form doesn't open again.
+        onNodeWithText("Piano").performClick()
+        onNodeWithText("Partite").performClick()
+        awaitNode(hasTestTag("game_new"))
+        awaitNode(hasTestTag("game_opponent"), count = 0)
+
+        onNodeWithTag("games_calendar").performClick()
+        awaitText("3–0")
+        awaitNode(hasTestTag("fixture_live_1"), count = 0)
+        onNodeWithTag("fixture_1").performClick()
+        onNodeWithTag("fixture_summary").performClick()
+        awaitText("Tutte le partite")
+        onNodeWithTag("box_luca_points", useUnmergedTree = true).assertTextEquals("3")
     }
 
     @Test

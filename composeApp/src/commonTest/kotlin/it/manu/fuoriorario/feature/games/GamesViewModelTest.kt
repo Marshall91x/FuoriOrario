@@ -52,8 +52,9 @@ class GamesViewModelTest {
     private val settings = MapSettings()
     private val drafts = GameDraftStore(settings)
 
-    private fun vm(staff: Boolean = true) = GamesViewModel(
+    private fun vm(staff: Boolean = true, start: GamesStart = GamesStart()) = GamesViewModel(
         staff,
+        start,
         games,
         roster,
         shots,
@@ -63,6 +64,46 @@ class GamesViewModelTest {
     )
 
     private val GamesViewModel.data get() = uiState.value.data!!
+
+    private val fromFixture = GameForm(LocalDate(2026, 11, 9), "Atessa", home = false, fixtureId = "f1")
+
+    @Test
+    fun aLiveStartedFromAFixtureCarriesItToTheSave() = runTest(dispatcher) {
+        val vm = vm(start = GamesStart(form = fromFixture))
+        advanceUntilIdle()
+        assertEquals(fromFixture, vm.data.form)
+
+        vm.onCallUpToggled("luca", true)
+        vm.onStart()
+        assertEquals("f1", vm.data.draft?.fixtureId)
+        assertEquals("f1", GameDraftStore(settings).draft.value?.fixtureId)
+
+        vm.onFinish()
+        advanceUntilIdle()
+        assertEquals("f1", games.saved.single().fixtureId)
+    }
+
+    @Test
+    fun aGameInProgressKeepsTheFixturesFormClosed() = runTest(dispatcher) {
+        drafts.save(GameDraft("d", LocalDate(2026, 11, 1), "Vasto", home = true))
+        val vm = vm(start = GamesStart(form = fromFixture))
+        advanceUntilIdle()
+        assertNull(vm.data.form)
+        assertEquals("d", vm.data.draft?.id)
+    }
+
+    @Test
+    fun theCalendarOpensTheRiepilogoOfItsGame() = runTest(dispatcher) {
+        val vm = vm(start = GamesStart(open = "g0"))
+        advanceUntilIdle()
+        assertEquals(past, vm.data.summary?.game)
+        assertTrue(vm.data.summary?.loaded == true)
+
+        vm.onRetry()
+        vm.onCloseSummary()
+        advanceUntilIdle()
+        assertNull(vm.data.summary)
+    }
 
     /** Staff start a game against Fortitudo with both players, in Live. */
     private suspend fun kotlinx.coroutines.test.TestScope.live(): GamesViewModel {
@@ -165,6 +206,7 @@ class GamesViewModelTest {
 
         val restarted = GamesViewModel(
             true,
+            GamesStart(),
             games,
             roster,
             shots,

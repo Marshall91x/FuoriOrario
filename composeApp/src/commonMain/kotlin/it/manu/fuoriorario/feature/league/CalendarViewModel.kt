@@ -12,17 +12,23 @@ import it.manu.fuoriorario.domain.Fixture
 import it.manu.fuoriorario.domain.FixtureStatus
 import it.manu.fuoriorario.domain.League
 import it.manu.fuoriorario.domain.Leg
+import it.manu.fuoriorario.domain.OPPONENT_MAX
 import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.Round
 import it.manu.fuoriorario.domain.nextRound
 import it.manu.fuoriorario.domain.ours
 import it.manu.fuoriorario.domain.rounds
+import it.manu.fuoriorario.feature.games.GameForm
+import it.manu.fuoriorario.feature.games.GamesStart
 import it.manu.fuoriorario.feature.league.data.LeagueRepository
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 
@@ -128,7 +134,26 @@ data class CalendarScreenState(
     val error: FixtureError? = null,
     val confirmingDelete: Boolean = false,
     val busy: Boolean = false
-)
+) {
+    /**
+     * "Inizia live" on our fixture still to play, without a live game yet, from the day before (Partite's limit):
+     * Partite's form with its date, the opponent's FIP name and home or away. Null: no button.
+     */
+    /** The live game recorded for the fixture being edited, if any: its Riepilogo from the sheet. */
+    val editingGameId get() = editing?.takeIf { !it.new }?.let { d ->
+        league?.fixtures?.firstOrNull { it.number == d.number }?.gameId
+    }
+
+    fun liveStart(fixture: Fixture, today: LocalDate = today()): GamesStart? {
+        val ours = league?.ours ?: return null
+        val date = fixture.startsAt?.toLocalDateTime(ROME)?.date ?: return null
+        if (!fixture.plays(ours) || fixture.status == FixtureStatus.PLAYED || fixture.gameId != null) return null
+        if (date > today.plus(1, DateTimeUnit.DAY)) return null
+        val home = fixture.homeId == ours.id
+        val opponent = league.team(if (home) fixture.awayId else fixture.homeId).name
+        return GamesStart(GameForm(date, opponent.take(OPPONENT_MAX), home, fixtureId = fixture.id))
+    }
+}
 
 /** Partite → Calendario (ADR 0011): the league's fixtures by round, for the whole team; staff edit, add, delete them. */
 class CalendarViewModel(
@@ -172,8 +197,8 @@ class CalendarViewModel(
         if (error != null) return
         val fixture = draft.fixture
         act {
-            repository.save(league, fixture)
-            set { closed(league.fixtures.filter { it.number != fixture.number } + fixture) }
+            val saved = repository.save(league, fixture)
+            set { closed(league.fixtures.filter { it.number != fixture.number } + saved) }
             toast(Res.string.fixture_saved)
         }
     }

@@ -49,6 +49,7 @@ import fuoriorario.composeapp.generated.resources.fixture_error_draw
 import fuoriorario.composeapp.generated.resources.fixture_error_result
 import fuoriorario.composeapp.generated.resources.fixture_error_teams
 import fuoriorario.composeapp.generated.resources.fixture_home
+import fuoriorario.composeapp.generated.resources.fixture_live
 import fuoriorario.composeapp.generated.resources.fixture_new
 import fuoriorario.composeapp.generated.resources.fixture_number
 import fuoriorario.composeapp.generated.resources.fixture_played
@@ -56,6 +57,7 @@ import fuoriorario.composeapp.generated.resources.fixture_postponed
 import fuoriorario.composeapp.generated.resources.fixture_round
 import fuoriorario.composeapp.generated.resources.fixture_save
 import fuoriorario.composeapp.generated.resources.fixture_scheduled
+import fuoriorario.composeapp.generated.resources.fixture_summary
 import fuoriorario.composeapp.generated.resources.fixture_time
 import fuoriorario.composeapp.generated.resources.fixture_venue
 import fuoriorario.composeapp.generated.resources.league_delete
@@ -81,6 +83,7 @@ import it.manu.fuoriorario.domain.LeagueTeam
 import it.manu.fuoriorario.domain.Leg
 import it.manu.fuoriorario.domain.Round
 import it.manu.fuoriorario.domain.rounds
+import it.manu.fuoriorario.feature.games.GamesStart
 import kotlin.time.Instant
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
@@ -88,9 +91,12 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
-/** Partite → Calendario (ADR 0011): the league's fixtures by round, opened on the next one. */
+/**
+ * Partite → Calendario (ADR 0011): the league's fixtures by round, opened on the next one. [onGames] opens Registrate
+ * on "Inizia live" or on the Riepilogo of a fixture's live game.
+ */
 @Composable
-fun CalendarScreen(staff: Boolean, vm: CalendarViewModel = koinViewModel()) {
+fun CalendarScreen(staff: Boolean, vm: CalendarViewModel = koinViewModel(), onGames: (GamesStart) -> Unit = {}) {
     val uiState = vm.uiState.collectAsStateWithLifecycle()
     val toast = LocalToast.current
     LaunchedEffect(vm) { vm.toasts.collect { launch { toast.show(it) } } }
@@ -104,12 +110,13 @@ fun CalendarScreen(staff: Boolean, vm: CalendarViewModel = koinViewModel()) {
             onDraftChanged = vm::onDraftChanged,
             onDismiss = vm::onDismiss,
             onSave = vm::onSave,
-            onDelete = vm::onDelete
+            onDelete = vm::onDelete,
+            onGames = onGames
         )
     )
 }
 
-/** What the calendar does; all but [onOursChanged] are staff's. */
+/** What the calendar does; all but [onOursChanged] and [onGames] (a Riepilogo) are staff's. */
 class CalendarActions(
     val onOursChanged: (Boolean) -> Unit = {},
     val onEdit: (Fixture) -> Unit = {},
@@ -117,7 +124,8 @@ class CalendarActions(
     val onDraftChanged: (FixtureDraft) -> Unit = {},
     val onDismiss: () -> Unit = {},
     val onSave: () -> Unit = {},
-    val onDelete: () -> Unit = {}
+    val onDelete: () -> Unit = {},
+    val onGames: (GamesStart) -> Unit = {}
 )
 
 @Composable
@@ -129,7 +137,10 @@ fun CalendarStateContent(state: UseCaseMutableState<CalendarScreenState>?, staff
     }
 }
 
-/** "Nostre" or "Tutto il girone" (staff: "+ Gara"), then a panel per round with who rests. Staff tap a fixture to edit it. */
+/**
+ * "Nostre" or "Tutto il girone" (staff: "+ Gara"), then a panel per round with who rests. Staff tap a fixture to edit
+ * it and start its live; a player taps one recorded live to see its Riepilogo.
+ */
 @Composable
 fun CalendarContent(state: CalendarScreenState, staff: Boolean, actions: CalendarActions) {
     val c = FuoriOrarioTheme.colors
@@ -152,25 +163,41 @@ fun CalendarContent(state: CalendarScreenState, staff: Boolean, actions: Calenda
         Spacer(Modifier.weight(1f))
         if (staff) GhostButton(stringResource(Res.string.fixture_add), actions.onAdd, Modifier.testTag("fixture_add"))
     }
-    val onEdit = actions.onEdit.takeIf { staff }
+    val onClick: (Fixture) -> (() -> Unit)? = { f ->
+        if (staff) {
+            { actions.onEdit(f) }
+        } else {
+            f.gameId?.let { id -> { actions.onGames(GamesStart(open = id)) } }
+        }
+    }
+    val onLive: (Fixture) -> (() -> Unit)? = { f ->
+        state.liveStart(f)?.takeIf { staff }?.let { start -> { actions.onGames(start) } }
+    }
     state.rounds.forEachIndexed { i, round ->
         // Scrolling to the next round is the screen's own: the ViewModel says which.
         val requester = remember { BringIntoViewRequester() }
         if (i == state.open) LaunchedEffect(state.open, state.ours) { requester.bringIntoView() }
-        RoundPanel(league, round, state.ours, onEdit, Modifier.bringIntoViewRequester(requester))
+        RoundPanel(league, round, state.ours, onClick, onLive, Modifier.bringIntoViewRequester(requester))
     }
     if (staff) state.editing?.let { FixtureSheet(league, it, state, actions) }
 }
 
 @Composable
-private fun RoundPanel(league: League, round: Round, ours: Boolean, onEdit: ((Fixture) -> Unit)?, modifier: Modifier) {
+private fun RoundPanel(
+    league: League,
+    round: Round,
+    ours: Boolean,
+    onClick: (Fixture) -> (() -> Unit)?,
+    onLive: (Fixture) -> (() -> Unit)?,
+    modifier: Modifier
+) {
     val c = FuoriOrarioTheme.colors
     Panel(modifier) {
         Text(roundLabel(round.number, round.leg).uppercase(), style = MaterialTheme.typography.titleMedium)
         Column {
             round.fixtures.forEachIndexed { i, fixture ->
                 if (i > 0) HorizontalDivider(color = c.line)
-                FixtureRow(league, fixture, onEdit)
+                FixtureRow(league, fixture, onClick(fixture), onLive(fixture))
             }
         }
         val usResting = league.ours?.let { it in round.resting } == true
@@ -185,15 +212,15 @@ private fun RoundPanel(league: League, round: Round, ours: Boolean, onEdit: ((Fi
     }
 }
 
-/** When, home – away (ours in bold), venue; the result once played. [onEdit] null: not staff. */
+/** When, home – away (ours in bold), venue; the result once played, else "Inizia live" with [onLive]. */
 @Composable
-private fun FixtureRow(league: League, fixture: Fixture, onEdit: ((Fixture) -> Unit)?) {
+private fun FixtureRow(league: League, fixture: Fixture, onClick: (() -> Unit)?, onLive: (() -> Unit)?) {
     val c = FuoriOrarioTheme.colors
     Row(
         Modifier
             .fillMaxWidth()
             .testTag("fixture_${fixture.number}")
-            .then(if (onEdit != null) Modifier.clickable { onEdit(fixture) } else Modifier)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(vertical = 9.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -210,6 +237,9 @@ private fun FixtureRow(league: League, fixture: Fixture, onEdit: ((Fixture) -> U
         }
         if (fixture.status == FixtureStatus.PLAYED) {
             Text("${fixture.homeScore}–${fixture.awayScore}", style = MaterialTheme.typography.headlineMedium)
+        }
+        onLive?.let {
+            GhostButton(stringResource(Res.string.fixture_live), it, Modifier.testTag("fixture_live_${fixture.number}"))
         }
     }
 }
@@ -267,6 +297,14 @@ private fun FixtureSheet(league: League, draft: FixtureDraft, state: CalendarScr
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
+                }
+                // The live game recorded for it, if any: its result here stays editable, the referto counts.
+                state.editingGameId?.let { id ->
+                    GhostButton(
+                        stringResource(Res.string.fixture_summary),
+                        { actions.onGames(GamesStart(open = id)) },
+                        Modifier.testTag("fixture_summary")
+                    )
                 }
                 GhostButton(stringResource(Res.string.close), actions.onDismiss)
             }

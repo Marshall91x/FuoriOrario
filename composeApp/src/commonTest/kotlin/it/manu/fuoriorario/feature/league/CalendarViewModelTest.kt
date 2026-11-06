@@ -14,6 +14,8 @@ import it.manu.fuoriorario.domain.FixtureStatus
 import it.manu.fuoriorario.domain.League
 import it.manu.fuoriorario.domain.LeagueTeam
 import it.manu.fuoriorario.domain.Leg
+import it.manu.fuoriorario.feature.games.GameForm
+import it.manu.fuoriorario.feature.games.GamesStart
 import it.manu.fuoriorario.testing.TestDispatcherProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -29,6 +31,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.getString
@@ -113,6 +116,43 @@ class CalendarViewModelTest {
     private val first get() = repository.league!!.fixtures.first { it.number == "1" }
 
     private fun TestScope.loaded() = vm().also { advanceUntilIdle() }
+
+    @Test
+    fun liveStart_ourFixtureToPlay_fromTheDayBefore() = runTest(dispatcher) {
+        val day = LocalDateTime(2026, 11, 9, 18, 30).toInstant(ROME)
+        val atessa = Fixture("4", 4, Leg.FIRST, day, "c", "a", id = "f4")
+        val state = loaded().data.copy(league = league.copy(fixtures = listOf(atessa)))
+
+        assertEquals(
+            GamesStart(GameForm(LocalDate(2026, 11, 9), "Atessa", home = false, fixtureId = "f4")),
+            state.liveStart(atessa, today = LocalDate(2026, 11, 8))
+        )
+        assertNull(state.liveStart(atessa, today = LocalDate(2026, 11, 7)), "two days before")
+        assertNull(state.liveStart(atessa.copy(awayId = "b"), LocalDate(2026, 11, 9)), "not ours")
+        assertNull(state.liveStart(atessa.copy(gameId = "g"), LocalDate(2026, 11, 9)), "already recorded")
+        val played = atessa.copy(status = FixtureStatus.PLAYED, homeScore = 50, awayScore = 60)
+        assertNull(state.liveStart(played, LocalDate(2026, 11, 9)), "played")
+        assertNull(state.liveStart(atessa.copy(startsAt = null), LocalDate(2026, 11, 9)), "postponed")
+    }
+
+    @Test
+    fun editingTheResultByHand_keepsTheLiveGame() = runTest(dispatcher) {
+        val played = Fixture(
+            "1", 1, Leg.FIRST, now - 7.days, "a", "b", status = FixtureStatus.PLAYED, homeScore = 60, awayScore = 50,
+            id = "f1", gameId = "g1"
+        )
+        repository.league = league.copy(fixtures = listOf(played))
+        val vm = loaded()
+        vm.onEdit(played)
+        vm.onDraftChanged(vm.data.editing!!.copy(homeScore = "62"))
+        vm.onSave()
+        advanceUntilIdle()
+
+        val saved = vm.data.league!!.fixtures.single()
+        assertEquals(62, saved.homeScore)
+        assertEquals("g1", saved.gameId)
+        assertEquals("g1", first.gameId)
+    }
 
     @Test
     fun edit_opensTheDraftInRomeTime() = runTest(dispatcher) {
