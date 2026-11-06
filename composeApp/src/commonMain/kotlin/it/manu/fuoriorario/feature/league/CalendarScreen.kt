@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -152,7 +151,8 @@ fun CalendarContent(state: CalendarScreenState, staff: Boolean, actions: Calenda
         }
         return
     }
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    // A weighted Spacer would cap the switch at half the row: on a phone "Tutto il girone" wrapped.
+    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
         SegmentedControl(
             mapOf(true to Res.string.calendar_ours, false to Res.string.calendar_all),
             state.ours,
@@ -160,7 +160,6 @@ fun CalendarContent(state: CalendarScreenState, staff: Boolean, actions: Calenda
             tag = { if (it) "calendar_ours" else "calendar_all" },
             modifier = Modifier.weight(1f, fill = false)
         )
-        Spacer(Modifier.weight(1f))
         if (staff) GhostButton(stringResource(Res.string.fixture_add), actions.onAdd, Modifier.testTag("fixture_add"))
     }
     val onClick: (Fixture) -> (() -> Unit)? = { f ->
