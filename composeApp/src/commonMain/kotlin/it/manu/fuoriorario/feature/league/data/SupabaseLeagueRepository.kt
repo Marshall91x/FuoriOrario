@@ -9,6 +9,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import it.manu.fuoriorario.core.error.PermissionDeniedException
 import it.manu.fuoriorario.core.error.mapErrors
 import it.manu.fuoriorario.core.error.requireRow
 import it.manu.fuoriorario.core.supabase
@@ -82,11 +83,12 @@ class SupabaseLeagueRepository : LeagueRepository {
         }.requireRow()
     }
 
+    // FixtureWrite has no game_id: the upsert leaves the link alone.
     override suspend fun save(league: League, fixture: Fixture) = mapErrors {
         supabase.from("fixtures").upsert(FixtureWrite(league.id, fixture)) {
             onConflict = "league_id,number"
             select()
-        }.requireRow()
+        }.decodeList<FixtureRow>().firstOrNull()?.fixture ?: throw PermissionDeniedException()
     }
 
     override suspend fun delete(league: League, fixture: Fixture) = mapErrors {
@@ -108,6 +110,8 @@ private class TeamRow(val id: String, val name: String, val ours: Boolean)
 
 @Serializable
 private class FixtureRow(
+    val id: String,
+    @SerialName("game_id") val gameId: String? = null,
     val number: String,
     val round: Int,
     val leg: Leg,
@@ -120,7 +124,18 @@ private class FixtureRow(
     @SerialName("away_score") val awayScore: Int? = null
 ) {
     val fixture get() = Fixture(
-        number, round, leg, startsAt?.let(Instant::parse), homeId, awayId, venue, status, homeScore, awayScore
+        number,
+        round,
+        leg,
+        startsAt?.let(Instant::parse),
+        homeId,
+        awayId,
+        venue,
+        status,
+        homeScore,
+        awayScore,
+        id,
+        gameId
     )
 }
 

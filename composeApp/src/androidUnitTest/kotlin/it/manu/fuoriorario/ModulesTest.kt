@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import it.manu.fuoriorario.di.appModule
 import it.manu.fuoriorario.di.dataModule
 import it.manu.fuoriorario.domain.Member
+import it.manu.fuoriorario.feature.games.GamesStart
 import kotlinx.datetime.LocalDate
 import org.junit.Test
 import org.koin.core.annotation.KoinExperimentalAPI
@@ -15,10 +16,17 @@ class ModulesTest {
     @OptIn(KoinExperimentalAPI::class)
     @Test
     fun everyDefinitionResolves() {
-        // SavedStateHandle, the followed player, the plan's week and whether the user is staff come from the screen,
-        // not from a definition.
+        // SavedStateHandle, the followed player, the plan's week, whether the user is staff and how the calendar opens
+        // Partite come from the screen, not from a definition.
         module { includes(appModule, dataModule) }.verify(
-            extraTypes = listOf(SavedStateHandle::class, Member::class, LocalDate::class, List::class, Boolean::class)
+            extraTypes = listOf(
+                SavedStateHandle::class,
+                Member::class,
+                LocalDate::class,
+                List::class,
+                Boolean::class,
+                GamesStart::class
+            )
         )
     }
 }

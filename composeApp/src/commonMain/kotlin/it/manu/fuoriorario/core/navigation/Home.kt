@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -80,6 +81,7 @@ import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.feature.games.GamesScreen
+import it.manu.fuoriorario.feature.games.GamesStart
 import it.manu.fuoriorario.feature.league.CalendarScreen
 import it.manu.fuoriorario.feature.league.LeagueScreen
 import it.manu.fuoriorario.feature.league.StandingsScreen
@@ -140,6 +142,9 @@ fun Home(
     var week by remember { mutableStateOf(weekOf(today())) }
     var section by remember { mutableStateOf(TeamSection.OVERVIEW) }
     var gamesSection by remember { mutableStateOf(GamesSection.CALENDAR) }
+    // What the calendar asked Registrate to open: "Inizia live" or a Riepilogo. Only for that visit: GamesScreen's
+    // ViewModel takes it when created, then it's cleared, so coming back to the tab doesn't open it again.
+    var gamesStart by remember { mutableStateOf(GamesStart()) }
 
     fun open(tab: Tab) = nav.navigate(tab.name) {
         popUpTo(nav.graph.findStartDestination().id) { saveState = true }
@@ -205,16 +210,25 @@ fun Home(
                                             SegmentedControl(
                                                 GamesSection.entries.associateWith { it.label },
                                                 gamesSection,
-                                                { gamesSection = it },
+                                                {
+                                                    gamesSection = it
+                                                    gamesStart = GamesStart()
+                                                },
                                                 tag = { it.tag }
                                             )
                                         }
                                         val staff = member.role == Role.STAFF
                                         when (gamesSection) {
-                                            GamesSection.CALENDAR -> ScreenViewModels { CalendarScreen(staff) }
+                                            GamesSection.CALENDAR -> ScreenViewModels {
+                                                CalendarScreen(staff) {
+                                                    gamesStart = it
+                                                    gamesSection = GamesSection.RECORDED
+                                                }
+                                            }
                                             GamesSection.STANDINGS -> ScreenViewModels { StandingsScreen(staff) }
                                             GamesSection.RECORDED -> ScreenViewModels {
-                                                GamesScreen(staff, onSecondLevel = { secondLevel = it })
+                                                GamesScreen(staff, gamesStart, onSecondLevel = { secondLevel = it })
+                                                SideEffect { gamesStart = GamesStart() }
                                             }
                                         }
                                     }

@@ -26,8 +26,11 @@ interface LeagueRepository {
     /** The league with its teams and fixtures; recorded games stay. Throws [PermissionDeniedException]. */
     suspend fun delete(league: League)
 
-    /** [fixture] into [league], found by number, else added: sending it again changes nothing. Throws [PermissionDeniedException]. */
-    suspend fun save(league: League, fixture: Fixture)
+    /**
+     * [fixture] into [league], found by number, else added: sending it again changes nothing. The link to a live game
+     * stays. Gives back the fixture saved, with its id. Throws [PermissionDeniedException].
+     */
+    suspend fun save(league: League, fixture: Fixture): Fixture
 
     /** Throws [PermissionDeniedException]. */
     suspend fun delete(league: League, fixture: Fixture)

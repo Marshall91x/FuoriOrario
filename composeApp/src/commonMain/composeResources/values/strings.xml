@@ -265,6 +265,7 @@
     <string name="game_new">+ Nuova partita</string>
     <string name="game_new_title">Nuova partita</string>
     <string name="game_in_progress">Partita in corso</string>
+    <string name="game_other_in_progress">C\'è già una partita in corso: terminala o abbandonala prima di iniziarne un\'altra.</string>
     <string name="game_resume">Riprendi</string>
     <string name="game_abandon">Abbandona</string>
     <string name="game_abandon_confirm">Conferma abbandono</string>
@@ -349,6 +350,8 @@
     <string name="fixture_played">Giocata</string>
     <string name="fixture_save">Salva</string>
     <string name="fixture_saved">Gara salvata</string>
+    <string name="fixture_live">Inizia live</string>
+    <string name="fixture_summary">Riepilogo</string>
     <string name="fixture_deleted">Gara eliminata</string>
     <string name="fixture_error_teams">Scegli due squadre diverse.</string>
     <string name="fixture_error_date">Data e ora non valide.</string>

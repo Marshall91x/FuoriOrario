@@ -19,9 +19,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 
 // The quarter as text, like its serial names: PostgREST gives a smallint as a JSON number.
@@ -41,7 +43,9 @@ class SupabaseGameRepository : GameRepository {
         supabase.postgrest.rpc(
             "save_game",
             buildJsonObject {
-                put("game", withDefaults.encodeToJsonElement(draft.toGame()))
+                // The fixture isn't the game's (ADR 0010: a saved game doesn't change): the RPC links and fills it.
+                val game = withDefaults.encodeToJsonElement(draft.toGame()).jsonObject
+                put("game", JsonObject(game + ("fixture_id" to JsonPrimitive(draft.fixtureId))))
                 put("call_ups", JsonArray(draft.callUps.map { JsonPrimitive(it.id) }))
                 put("events", Json.encodeToJsonElement(draft.events))
             }

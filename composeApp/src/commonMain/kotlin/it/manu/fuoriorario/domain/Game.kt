@@ -137,7 +137,8 @@ data class CallUp(val id: String, val name: String, val number: String? = null)
 
 /**
  * Partita in corso (ADR 0010): the game not saved yet, on the device. [id] is made here so a save retried after a
- * lost answer finds the game already there. [selected] is the convocato the next shot goes to.
+ * lost answer finds the game already there. [selected] is the convocato the next shot goes to. [fixtureId] is the
+ * calendar's fixture it was started from: the save puts the result on it.
  */
 @Serializable
 data class GameDraft(
@@ -149,7 +150,8 @@ data class GameDraft(
     val callUps: List<CallUp> = emptyList(),
     val events: List<GameEvent> = emptyList(),
     val quarter: Quarter = Quarter.Q1,
-    val selected: String? = null
+    val selected: String? = null,
+    val fixtureId: String? = null
 ) {
     val score get() = score(events)
 
