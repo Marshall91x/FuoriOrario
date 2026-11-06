@@ -21,6 +21,8 @@ navigation = "2.9.2"
 # What ui-backhandler already brings: the tests send the system back through it.
 navigationevent = "1.0.2"
 supabase = "3.8.0"
+# The last on Compose 1.10.
+filekit = "0.13.0"
 # What supabase-kt already brings for the auth session.
 multiplatform-settings = "1.3.0"
 
@@ -40,6 +42,8 @@ compose-uiTest = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "c
 supabase-bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "supabase" }
 supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt" }
 supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
+supabase-functions = { module = "io.github.jan-tennert.supabase:functions-kt" }
+filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }

@@ -48,6 +48,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import fuoriorario.composeapp.generated.resources.Res
+import fuoriorario.composeapp.generated.resources.games_calendar
+import fuoriorario.composeapp.generated.resources.games_recorded
 import fuoriorario.composeapp.generated.resources.ic_tab_games
 import fuoriorario.composeapp.generated.resources.ic_tab_plan
 import fuoriorario.composeapp.generated.resources.ic_tab_plays
@@ -77,6 +79,8 @@ import it.manu.fuoriorario.domain.Period
 import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.feature.games.GamesScreen
+import it.manu.fuoriorario.feature.league.CalendarScreen
+import it.manu.fuoriorario.feature.league.LeagueScreen
 import it.manu.fuoriorario.feature.plan.PlanScreen
 import it.manu.fuoriorario.feature.plays.PlaysScreen
 import it.manu.fuoriorario.feature.roster.RosterScreen
@@ -105,6 +109,12 @@ private enum class TeamSection(val label: StringResource, val tag: String) {
     SETTINGS(Res.string.team_settings, "team_settings")
 }
 
+/** What the Partite tab shows; Classifica comes with #102. [tag] is the test tag of its switch. */
+private enum class GamesSection(val label: StringResource, val tag: String) {
+    CALENDAR(Res.string.games_calendar, "games_calendar"),
+    RECORDED(Res.string.games_recorded, "games_recorded")
+}
+
 /**
  * Signed-in content under the header: tabs for the member's role, with the toast host. Players have no Squadra route at all.
  * [followed] is whose Diario di tiro and Piano to show: the player themselves, or the one staff picked from [players] (null while loading).
@@ -126,6 +136,7 @@ fun Home(
     var period by remember { mutableStateOf(Period.DAYS_30) }
     var week by remember { mutableStateOf(weekOf(today())) }
     var section by remember { mutableStateOf(TeamSection.OVERVIEW) }
+    var gamesSection by remember { mutableStateOf(GamesSection.CALENDAR) }
 
     fun open(tab: Tab) = nav.navigate(tab.name) {
         popUpTo(nav.graph.findStartDestination().id) { saveState = true }
@@ -178,14 +189,30 @@ fun Home(
                                             TeamSection.SETTINGS -> ScreenViewModels {
                                                 LibraryScreen()
                                                 ZoneRefsScreen()
+                                                LeagueScreen()
                                             }
                                         }
                                     }
                                     tab == Tab.PLAYS -> ScreenViewModels {
                                         PlaysScreen(member.role == Role.STAFF, onSecondLevel = { secondLevel = it })
                                     }
-                                    tab == Tab.GAMES -> ScreenViewModels {
-                                        GamesScreen(member.role == Role.STAFF, onSecondLevel = { secondLevel = it })
+                                    tab == Tab.GAMES -> {
+                                        // Live and the other second-level screens of Registrate stand alone.
+                                        if (!secondLevel) {
+                                            SegmentedControl(
+                                                GamesSection.entries.associateWith { it.label },
+                                                gamesSection,
+                                                { gamesSection = it },
+                                                tag = { it.tag }
+                                            )
+                                        }
+                                        val staff = member.role == Role.STAFF
+                                        when (gamesSection) {
+                                            GamesSection.CALENDAR -> ScreenViewModels { CalendarScreen(staff) }
+                                            GamesSection.RECORDED -> ScreenViewModels {
+                                                GamesScreen(staff, onSecondLevel = { secondLevel = it })
+                                            }
+                                        }
                                     }
                                     // A fresh screen per player: no data or pending writes carried over.
                                     followed != null -> key(followed.id) {

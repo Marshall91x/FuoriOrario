@@ -20,6 +20,10 @@ import it.manu.fuoriorario.feature.games.GamesViewModel
 import it.manu.fuoriorario.feature.games.data.GameDraftStore
 import it.manu.fuoriorario.feature.games.data.GameRepository
 import it.manu.fuoriorario.feature.games.data.SupabaseGameRepository
+import it.manu.fuoriorario.feature.league.CalendarViewModel
+import it.manu.fuoriorario.feature.league.LeagueViewModel
+import it.manu.fuoriorario.feature.league.data.LeagueRepository
+import it.manu.fuoriorario.feature.league.data.SupabaseLeagueRepository
 import it.manu.fuoriorario.feature.plan.PlanViewModel
 import it.manu.fuoriorario.feature.plan.data.PlanRepository
 import it.manu.fuoriorario.feature.plan.data.SupabasePlanRepository
@@ -75,6 +79,8 @@ val appModule = module {
     viewModelOf(::TeamOverviewViewModel)
     viewModelOf(::LibraryViewModel)
     viewModelOf(::ZoneRefsViewModel)
+    viewModelOf(::CalendarViewModel)
+    viewModelOf(::LeagueViewModel)
 }
 
 /** Supabase and the device's own storage (the staff's picked player and the game in progress). */
@@ -86,6 +92,7 @@ val dataModule = module {
     single<PlanRepository> { SupabasePlanRepository() }
     single<PlayRepository> { SupabasePlayRepository() }
     single<GameRepository> { SupabaseGameRepository() }
+    single<LeagueRepository> { SupabaseLeagueRepository() }
 }
 
 /** One per process: ViewModels outlive an Activity, so what they hold must too. */

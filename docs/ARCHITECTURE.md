@@ -45,6 +45,7 @@ composeApp/src/
       plan/                # piano settimanale, editor esercizio, nota + data/PlanRepository
       plays/               # schemi: elenco, visualizzatore, editor (staff), campo + data/PlayRepository
       games/               # partite: elenco, nuova partita, live (staff) + data/GameRepository, GameDraftStore
+      league/              # calendario (Partite) e campionato (Impostazioni, import PDF) + data/LeagueRepository
       roster/              # rosa (staff)                + data/RosterRepository
       team/                # quadro squadra (staff)
       settings/            # libreria + riferimenti (staff)
@@ -178,14 +179,15 @@ leagues (                                          -- campionato = una fase FIP 
   id uuid pk, team_id uuid fk teams, name text not null, created_at timestamptz default now()
 )
 
-league_teams (id uuid pk, league_id fk leagues on delete cascade, name text not null, ours boolean not null default false)
+league_teams (id uuid pk, league_id, team_id fk leagues on delete cascade, name text not null, ours boolean not null default false)
+                                                   -- unique (league_id, name); una sola ours per campionato
 
 fixtures (
-  id uuid pk, league_id fk leagues on delete cascade,
+  id uuid pk, league_id, team_id fk leagues on delete cascade,
   number text not null,                            -- numero gara FIP, unique per campionato: chiave del reimport
   round smallint not null, leg text check (FIRST|SECOND),
   starts_at timestamptz null,                      -- null se rinviata
-  home_team_id, away_team_id fk league_teams,      -- diverse
+  home_team_id, away_team_id fk league_teams,      -- diverse, dello stesso campionato
   venue text null,
   status text check (SCHEDULED|POSTPONED|PLAYED),
   home_score int null, away_score int null         -- presenti solo se PLAYED
@@ -235,6 +237,8 @@ Funzioni helper `security definer stable`:
 `copy_previous_week(player, target, seen)` copia in un colpo gli esercizi della settimana prima (RPC `security invoker`: valgono le RLS di `plan_items`). Se la settimana non ha più `seen` esercizi (un altro staff l'ha cambiata) non copia nulla e alza `plan_changed` (SQLSTATE `FO002`): due copie insieme non creano doppioni.
 `set_zone_refs(refs)` sostituisce i riferimenti della squadra dell'utente (RPC `security invoker`: valgono le RLS di `teams`, solo lo staff scrive). Il client non conosce l'id della squadra; i default stanno anche in `domain/` (`DEFAULT_ZONE_REFS`) per il "Ripristina".
 `reorder_library(ids)` mette la libreria nell'ordine dato con un solo `update` (RPC `security invoker`: valgono le RLS di `exercise_library`), così un errore non lascia due esercizi allo stesso posto.
+`import_league(league, ours, fixtures)` conferma l'anteprima dell'import in una transazione (RPC `security invoker`: valgono le RLS, solo lo staff scrive). L'id del campionato arriva dal dispositivo (nuovo, o quello mostrato se il PDF ha lo stesso nome): rimandarla non aggiunge nulla. Le gare si ritrovano dal numero gara: cambiano data, ora e campo, mai il risultato; quelle non più nel PDF restano. Le ore arrivano in ora locale e diventano `timestamptz` in `Europe/Rome`.
+L'Edge Function `import-league` riceve il PDF e restituisce l'anteprima (nome, squadre, gare) senza scrivere; un PDF illeggibile risponde 422.
 `save_game(game, call_ups, events)` salva in una transazione partita, convocati ed eventi (RPC `security invoker`: valgono le RLS, solo lo staff scrive). Con un id già salvato restituisce la partita esistente; un convocato tolto dalla rosa durante la partita resta fuori con i suoi eventi.
 Trigger `keep_one_staff` (`before update of role, team_id or delete on members`): una squadra non resta mai senza staff; togliere o declassare l'ultimo alza `last_staff` (SQLSTATE `FO001`). Cancellare l'intera squadra resta possibile.
 Le RLS sono la vera barriera: la UI nasconde, il database impedisce. Coperte da test pgTAP in `supabase/tests/`.
@@ -266,8 +270,9 @@ Le migrazioni si applicano in produzione con `supabase db push` dal job di rilas
 
 | Livello | Dove | Cosa | In CI |
 |---|---|---|---|
-| Unit | `commonTest` | ViewModel (con `TestDispatcherProvider` e repository finti) · `domain/`: percentuali, somma zone, periodi/stagione, classe zona, completamento, settimane, movimenti e interpolazione degli schemi | ✓ |
-| UI | `commonTest` con `runAppTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) · staff modifica e ripristina i riferimenti, la mappa si ricolora · staff vede il quadro squadra e apre il diario di un giocatore · giocatore apre uno schema e va al passo successivo · gli schemi mostrano il loader finché non arrivano · nello schema e nell'editor la barra sparisce, "indietro" la riporta · staff crea una partita, registra un tiro segnato e la termina · la partita in corso sopravvive al riavvio · nel tabellino scorrono i numeri e i nomi restano fermi | iOS Simulator + Wasm (browser headless). Android in locale |
+| Unit | `commonTest` | ViewModel (con `TestDispatcherProvider` e repository finti) · `domain/`: percentuali, somma zone, periodi/stagione, classe zona, completamento, settimane, movimenti e interpolazione degli schemi, giornate, riposo, prossima gara e filtro Nostre del calendario | ✓ |
+| UI | `commonTest` con `runAppTest` + repository finti | 1 login OTP · 2 registra sessione (validazione segnati ≤ tentati) · 3 spunta esercizio · 4 staff aggiunge giocatore · 5 staff assegna esercizio dalla libreria · staff gestisce la libreria (aggiunge, modifica, riordina, elimina) · staff modifica e ripristina i riferimenti, la mappa si ricolora · staff vede il quadro squadra e apre il diario di un giocatore · giocatore apre uno schema e va al passo successivo · gli schemi mostrano il loader finché non arrivano · nello schema e nell'editor la barra sparisce, "indietro" la riporta · staff crea una partita, registra un tiro segnato e la termina · la partita in corso sopravvive al riavvio · nel tabellino scorrono i numeri e i nomi restano fermi · il giocatore vede le gare della sua squadra, poi tutto il girone · lo staff importa il PDF, segna la nostra squadra e conferma | iOS Simulator + Wasm (browser headless). Android in locale |
+| Edge Function | `supabase/functions/import-league/parse_test.ts` (Deno) | lettura del PDF d'esempio: 110 gare, 11 squadre, giornata, numero, data e ora, campo, gare spezzate dal cambio pagina | ✓ |
 | DB | `supabase/tests` (pgTAP) | RLS: giocatore non legge/scrive dati altrui, solo staff gestisce rosa/piani/riferimenti, solo giocatore spunta | ✓ (Supabase locale in CI) |
 
 Architettura: Konsist + `verify()` dei moduli Koin in `androidUnitTest`.

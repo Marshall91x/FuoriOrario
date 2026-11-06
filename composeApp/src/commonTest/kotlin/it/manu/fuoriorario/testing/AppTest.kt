@@ -28,6 +28,8 @@ import it.manu.fuoriorario.feature.auth.FakeAuthRepository
 import it.manu.fuoriorario.feature.auth.data.AuthRepository
 import it.manu.fuoriorario.feature.games.FakeGameRepository
 import it.manu.fuoriorario.feature.games.data.GameRepository
+import it.manu.fuoriorario.feature.league.FakeLeagueRepository
+import it.manu.fuoriorario.feature.league.data.LeagueRepository
 import it.manu.fuoriorario.feature.plan.FakePlanRepository
 import it.manu.fuoriorario.feature.plan.data.PlanRepository
 import it.manu.fuoriorario.feature.plays.FakePlayRepository
@@ -60,7 +62,8 @@ fun TestApp(
     plans: PlanRepository = FakePlanRepository(),
     plays: PlayRepository = FakePlayRepository(),
     back: DirectNavigationEventInput = DirectNavigationEventInput(),
-    games: GameRepository = FakeGameRepository()
+    games: GameRepository = FakeGameRepository(),
+    leagues: LeagueRepository = FakeLeagueRepository()
 ) {
     val koin = remember {
         koinApplication {
@@ -77,6 +80,7 @@ fun TestApp(
                     single { plans }
                     single { plays }
                     single { games }
+                    single { leagues }
                 }
             )
         }
