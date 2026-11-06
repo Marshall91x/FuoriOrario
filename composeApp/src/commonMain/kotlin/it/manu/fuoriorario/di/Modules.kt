@@ -22,6 +22,7 @@ import it.manu.fuoriorario.feature.games.data.GameRepository
 import it.manu.fuoriorario.feature.games.data.SupabaseGameRepository
 import it.manu.fuoriorario.feature.league.CalendarViewModel
 import it.manu.fuoriorario.feature.league.LeagueViewModel
+import it.manu.fuoriorario.feature.league.StandingsViewModel
 import it.manu.fuoriorario.feature.league.data.LeagueRepository
 import it.manu.fuoriorario.feature.league.data.SupabaseLeagueRepository
 import it.manu.fuoriorario.feature.plan.PlanViewModel
@@ -80,6 +81,7 @@ val appModule = module {
     viewModelOf(::LibraryViewModel)
     viewModelOf(::ZoneRefsViewModel)
     viewModelOf(::CalendarViewModel)
+    viewModelOf(::StandingsViewModel)
     viewModelOf(::LeagueViewModel)
 }
 

@@ -1,6 +1,7 @@
 package it.manu.fuoriorario.feature.league
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
@@ -30,7 +31,7 @@ import kotlinx.datetime.LocalDateTime
 
 private const val ACK = "2026-10-01T10:00:00Z"
 
-/** #100, #101: the league's fixtures for the whole team; staff import the FIP PDF and edit fixtures. */
+/** #100, #101, #102: the league's fixtures for the whole team; staff import the FIP PDF and edit fixtures. */
 @OptIn(ExperimentalTestApi::class)
 class CalendarTest {
     private val coach = Member("Coach", Role.STAFF, ACK, id = "coach")
@@ -117,6 +118,42 @@ class CalendarTest {
 
         awaitText("62–55")
         assertEquals(62, leagues.league?.fixtures?.single()?.homeScore)
+    }
+
+    @Test
+    fun afterTwoResultsTheStandingsShowTheExpectedOrder() = runAppTest {
+        val soon = Clock.System.now() + 1.days
+        val leagues = FakeLeagueRepository(
+            League(
+                "l",
+                "U19",
+                listOf(LeagueTeam("a", "Artemis", ours = true), LeagueTeam("b", "Vasto"), LeagueTeam("c", "Atessa")),
+                listOf(Fixture("1", 1, Leg.FIRST, soon, "a", "b"), Fixture("2", 1, Leg.FIRST, soon, "b", "c"))
+            )
+        )
+        setContent { TestApp(FakeAuthRepository(coach), FakeRosterRepository(coach, luca), leagues = leagues) }
+
+        awaitText("Partite")
+        onNodeWithText("Partite").performClick()
+        onNodeWithTag("calendar_all").performClick()
+        result("1", "62", "55")
+        result("2", "50", "70")
+
+        // Artemis and Atessa on 2 points, never met: Atessa's +20 beats Artemis' +7.
+        onNodeWithTag("games_standings").performClick()
+        awaitText("1  Atessa")
+        awaitText("2  Artemis")
+        awaitText("3  Vasto")
+    }
+
+    private suspend fun ComposeUiTest.result(number: String, home: String, away: String) {
+        onNodeWithTag("fixture_$number").performScrollTo().performClick()
+        awaitText("GARA $number")
+        onNodeWithTag("fixture_status_PLAYED").performClick()
+        onNodeWithTag("fixture_home_score").performTextReplacement(home)
+        onNodeWithTag("fixture_away_score").performTextReplacement(away)
+        onNodeWithTag("fixture_save").performScrollTo().performClick()
+        awaitText("$home–$away")
     }
 
     @Test

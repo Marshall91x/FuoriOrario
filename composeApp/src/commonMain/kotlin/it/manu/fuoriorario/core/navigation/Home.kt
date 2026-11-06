@@ -50,6 +50,7 @@ import androidx.navigation.compose.rememberNavController
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.games_calendar
 import fuoriorario.composeapp.generated.resources.games_recorded
+import fuoriorario.composeapp.generated.resources.games_standings
 import fuoriorario.composeapp.generated.resources.ic_tab_games
 import fuoriorario.composeapp.generated.resources.ic_tab_plan
 import fuoriorario.composeapp.generated.resources.ic_tab_plays
@@ -81,6 +82,7 @@ import it.manu.fuoriorario.domain.weekOf
 import it.manu.fuoriorario.feature.games.GamesScreen
 import it.manu.fuoriorario.feature.league.CalendarScreen
 import it.manu.fuoriorario.feature.league.LeagueScreen
+import it.manu.fuoriorario.feature.league.StandingsScreen
 import it.manu.fuoriorario.feature.plan.PlanScreen
 import it.manu.fuoriorario.feature.plays.PlaysScreen
 import it.manu.fuoriorario.feature.roster.RosterScreen
@@ -109,9 +111,10 @@ private enum class TeamSection(val label: StringResource, val tag: String) {
     SETTINGS(Res.string.team_settings, "team_settings")
 }
 
-/** What the Partite tab shows; Classifica comes with #102. [tag] is the test tag of its switch. */
+/** What the Partite tab shows; [tag] is the test tag of its switch. */
 private enum class GamesSection(val label: StringResource, val tag: String) {
     CALENDAR(Res.string.games_calendar, "games_calendar"),
+    STANDINGS(Res.string.games_standings, "games_standings"),
     RECORDED(Res.string.games_recorded, "games_recorded")
 }
 
@@ -209,6 +212,7 @@ fun Home(
                                         val staff = member.role == Role.STAFF
                                         when (gamesSection) {
                                             GamesSection.CALENDAR -> ScreenViewModels { CalendarScreen(staff) }
+                                            GamesSection.STANDINGS -> ScreenViewModels { StandingsScreen(staff) }
                                             GamesSection.RECORDED -> ScreenViewModels {
                                                 GamesScreen(staff, onSecondLevel = { secondLevel = it })
                                             }
