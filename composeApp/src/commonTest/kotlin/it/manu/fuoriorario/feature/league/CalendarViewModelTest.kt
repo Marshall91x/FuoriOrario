@@ -4,6 +4,7 @@ import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.fixture_deleted
 import fuoriorario.composeapp.generated.resources.fixture_saved
 import fuoriorario.composeapp.generated.resources.save_failed
+import it.manu.fuoriorario.core.ROME
 import it.manu.fuoriorario.core.error.AppErrorManager
 import it.manu.fuoriorario.core.error.FallbackHandler
 import it.manu.fuoriorario.core.error.NetworkErrorHandler
@@ -22,13 +23,14 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.getString
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -115,7 +117,9 @@ class CalendarViewModelTest {
     @Test
     fun edit_opensTheDraftInRomeTime() = runTest(dispatcher) {
         repository.league = league.copy(
-            fixtures = listOf(Fixture("1", 1, Leg.FIRST, Instant.parse("2026-11-09T17:30:00Z"), "a", "b", "Pala"))
+            fixtures = listOf(
+                Fixture("1", 1, Leg.FIRST, LocalDateTime(2026, 11, 9, 18, 30).toInstant(ROME), "a", "b", "Pala")
+            )
         )
         val vm = loaded()
         vm.onEdit(first)
@@ -185,7 +189,7 @@ class CalendarViewModelTest {
         vm.onSave()
         advanceUntilIdle()
 
-        assertEquals(Instant.parse("2026-12-10T19:15:00Z"), first.startsAt)
+        assertEquals(LocalDateTime(2026, 12, 10, 20, 15).toInstant(ROME), first.startsAt)
     }
 
     @Test
