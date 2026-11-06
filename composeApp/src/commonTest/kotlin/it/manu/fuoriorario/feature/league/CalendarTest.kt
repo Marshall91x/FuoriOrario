@@ -3,6 +3,8 @@ package it.manu.fuoriorario.feature.league
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -141,9 +143,9 @@ class CalendarTest {
 
         // Artemis and Atessa on 2 points, never met: Atessa's +20 beats Artemis' +7.
         onNodeWithTag("games_standings").performClick()
-        awaitText("1  Atessa")
-        awaitText("2  Artemis")
-        awaitText("3  Vasto")
+        awaitNode(hasTestTag("standing_c_position") and hasText("1"))
+        onNodeWithTag("standing_a_position").assertTextEquals("2")
+        onNodeWithTag("standing_b_position").assertTextEquals("3")
     }
 
     private suspend fun ComposeUiTest.result(number: String, home: String, away: String) {

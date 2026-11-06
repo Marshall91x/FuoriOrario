@@ -1,25 +1,7 @@
 package it.manu.fuoriorario.feature.league
 
-import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,6 +19,9 @@ import fuoriorario.composeapp.generated.resources.standings_team
 import fuoriorario.composeapp.generated.resources.standings_won
 import it.manu.fuoriorario.core.designsystem.Loader
 import it.manu.fuoriorario.core.designsystem.Panel
+import it.manu.fuoriorario.core.designsystem.Table
+import it.manu.fuoriorario.core.designsystem.TableColumn
+import it.manu.fuoriorario.core.designsystem.TableRow
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
 import it.manu.fuoriorario.core.viewmodel.UseCaseMutableState
 import it.manu.fuoriorario.domain.Fixture
@@ -65,9 +50,6 @@ fun StandingsStateContent(state: UseCaseMutableState<StandingsScreenState>?, sta
     }
 }
 
-private val NAME_WIDTH = 150.dp
-private val CELL_WIDTH = 44.dp
-
 /** Pos and Squadra stay still, the numbers scroll; our row is highlighted. Without a league, how to get one. */
 @Composable
 fun StandingsContent(state: StandingsScreenState, staff: Boolean) {
@@ -79,82 +61,35 @@ fun StandingsContent(state: StandingsScreenState, staff: Boolean) {
         }
         return
     }
-    val scroll = rememberScrollState()
-    val columns = listOf(
-        Res.string.standings_points,
-        Res.string.standings_played,
-        Res.string.standings_won,
-        Res.string.standings_lost,
-        Res.string.standings_scored,
-        Res.string.standings_conceded,
-        Res.string.standings_diff
-    ).map { stringResource(it) }
     Panel {
-        Column {
-            StandingRow(
-                "${stringResource(Res.string.standings_position)}  ${stringResource(Res.string.standings_team)}",
-                columns,
-                c.muted,
-                scroll
-            )
-            state.standings.forEachIndexed { i, s ->
-                HorizontalDivider(Modifier.width(NAME_WIDTH + CELL_WIDTH * columns.size), color = c.line)
-                StandingRow(
-                    "${i + 1}  ${s.team.name}",
-                    s.cells(),
-                    c.ink,
-                    scroll,
-                    Modifier.background(
-                        if (s.team.ours) c.surface2 else Color.Transparent,
-                        RoundedCornerShape(6.dp)
-                    ),
-                    tag = "standing_${i + 1}",
+        Table(
+            listOf(
+                TableColumn("position", stringResource(Res.string.standings_position), 36.dp),
+                TableColumn("team", stringResource(Res.string.standings_team), 150.dp)
+            ),
+            listOf(
+                TableColumn("points", stringResource(Res.string.standings_points)),
+                TableColumn("played", stringResource(Res.string.standings_played)),
+                TableColumn("won", stringResource(Res.string.standings_won)),
+                TableColumn("lost", stringResource(Res.string.standings_lost)),
+                TableColumn("scored", stringResource(Res.string.standings_scored)),
+                TableColumn("conceded", stringResource(Res.string.standings_conceded)),
+                TableColumn("diff", stringResource(Res.string.standings_diff))
+            ),
+            state.standings.mapIndexed { i, s ->
+                TableRow(
+                    "standing_${s.team.id}",
+                    listOf("${i + 1}", s.team.name) + s.cells(),
+                    highlighted = s.team.ours,
                     bold = s.team.ours
                 )
             }
-        }
+        )
     }
 }
 
 private fun Standing.cells() = listOf(points, played, won, lost, scored, conceded).map { it.toString() } +
     (if (diff > 0) "+$diff" else "$diff")
-
-@Composable
-private fun StandingRow(
-    name: String,
-    cells: List<String>,
-    color: Color,
-    scroll: ScrollState,
-    modifier: Modifier = Modifier,
-    tag: String? = null,
-    bold: Boolean = false
-) {
-    Row(
-        modifier.then(tag?.let { Modifier.testTag(it) } ?: Modifier).padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            name,
-            Modifier.width(NAME_WIDTH),
-            color = color,
-            fontWeight = if (bold) FontWeight.Bold else FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        // Every row shares [scroll], so the header and the rows stay aligned (as the box score).
-        Row(Modifier.horizontalScroll(scroll, overscrollEffect = null)) {
-            cells.forEach { cell ->
-                Text(
-                    cell,
-                    Modifier.width(CELL_WIDTH),
-                    color = color,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-    }
-}
 
 @Preview
 @Composable

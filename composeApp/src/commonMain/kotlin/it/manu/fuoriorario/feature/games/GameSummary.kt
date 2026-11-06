@@ -1,28 +1,13 @@
 package it.manu.fuoriorario.feature.games
 
-import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fuoriorario.composeapp.generated.resources.Res
@@ -47,6 +32,9 @@ import it.manu.fuoriorario.core.designsystem.GhostStyle
 import it.manu.fuoriorario.core.designsystem.Loader
 import it.manu.fuoriorario.core.designsystem.Panel
 import it.manu.fuoriorario.core.designsystem.SegmentedControl
+import it.manu.fuoriorario.core.designsystem.Table
+import it.manu.fuoriorario.core.designsystem.TableColumn
+import it.manu.fuoriorario.core.designsystem.TableRow
 import it.manu.fuoriorario.core.designsystem.short
 import it.manu.fuoriorario.core.theme.FuoriOrarioTheme
 import it.manu.fuoriorario.domain.BoxLine
@@ -75,9 +63,6 @@ private val boxColumns = mapOf(
     "steals" to Res.string.game_box_steals,
     "fouls" to Res.string.game_box_fouls
 )
-
-private val NAME_WIDTH = 110.dp
-private val CELL_WIDTH = 44.dp
 
 /**
  * Riepilogo (PRD F8): score, parziali, tabellino and shot map, filtered by quarter. Staff see every convocato and
@@ -136,34 +121,20 @@ internal fun Summary(summary: GameSummary, staff: Boolean, busy: Boolean, action
  */
 @Composable
 private fun BoxScore(lines: List<BoxLine>, selected: String?, onRow: (String) -> Unit) {
-    val c = FuoriOrarioTheme.colors
-    val scroll = rememberScrollState()
     Panel {
         Text(stringResource(Res.string.game_box).uppercase(), style = MaterialTheme.typography.titleMedium)
-        Column {
-            BoxRow(
-                stringResource(Res.string.game_box_player),
-                boxColumns.values.map { stringResource(it) },
-                c.muted,
-                scroll
-            )
-            lines.forEach { line ->
-                HorizontalDivider(Modifier.width(NAME_WIDTH + CELL_WIDTH * boxColumns.size), color = c.line)
-                BoxRow(
-                    line.callUp.label,
-                    line.cells(),
-                    c.ink,
-                    scroll,
-                    Modifier
-                        .background(
-                            if (line.callUp.id == selected) c.surface2 else Color.Transparent,
-                            RoundedCornerShape(6.dp)
-                        )
-                        .clickable { onRow(line.callUp.id) },
-                    tag = "box_${line.callUp.id}"
+        Table(
+            listOf(TableColumn("player", stringResource(Res.string.game_box_player), 110.dp)),
+            boxColumns.map { (key, label) -> TableColumn(key, stringResource(label)) },
+            lines.map { line ->
+                TableRow(
+                    "box_${line.callUp.id}",
+                    listOf(line.callUp.label) + line.cells(),
+                    highlighted = line.callUp.id == selected,
+                    onClick = { onRow(line.callUp.id) }
                 )
             }
-        }
+        )
     }
 }
 
@@ -172,43 +143,6 @@ private fun BoxLine.cells() = listOf(points.toString(), twos.ratio, threes.ratio
     listOf(rebounds, assists, turnovers, steals, fouls).map { it.toString() }
 
 private val Shots.ratio get() = "$made/$attempted"
-
-@Composable
-private fun BoxRow(
-    name: String,
-    cells: List<String>,
-    color: Color,
-    scroll: ScrollState,
-    modifier: Modifier = Modifier,
-    tag: String? = null
-) {
-    Row(
-        modifier.then(tag?.let { Modifier.testTag(it) } ?: Modifier).padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            name,
-            Modifier.width(NAME_WIDTH),
-            color = color,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        // Every row shares [scroll], so the header and the rows stay aligned; a per-row overscroll would stretch one alone.
-        Row(Modifier.horizontalScroll(scroll, overscrollEffect = null)) {
-            cells.zip(boxColumns.keys).forEach { (cell, key) ->
-                val cellTag = tag?.let { "${it}_$key" }
-                Text(
-                    cell,
-                    Modifier.width(CELL_WIDTH).then(cellTag?.let { Modifier.testTag(it) } ?: Modifier),
-                    color = color,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-    }
-}
 
 @Preview
 @Composable
