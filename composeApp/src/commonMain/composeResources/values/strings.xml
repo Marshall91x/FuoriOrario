@@ -265,6 +265,7 @@
     <string name="game_new">+ Nuova partita</string>
     <string name="game_new_title">Nuova partita</string>
     <string name="game_in_progress">Partita in corso</string>
+    <string name="game_other_in_progress">C\'è già una partita in corso: terminala o abbandonala prima di iniziarne un\'altra.</string>
     <string name="game_resume">Riprendi</string>
     <string name="game_abandon">Abbandona</string>
     <string name="game_abandon_confirm">Conferma abbandono</string>

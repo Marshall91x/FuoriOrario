@@ -1,7 +1,9 @@
 package it.manu.fuoriorario.feature.games
 
+import androidx.lifecycle.viewModelScope
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.game_deleted
+import fuoriorario.composeapp.generated.resources.game_other_in_progress
 import fuoriorario.composeapp.generated.resources.game_saved
 import it.manu.fuoriorario.core.error.ErrorManager
 import it.manu.fuoriorario.core.today
@@ -37,6 +39,7 @@ import kotlin.uuid.Uuid
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
 /** "Nuova partita" as typed; [callUps] are member ids. [fixtureId]: started from that calendar fixture. */
@@ -101,6 +104,17 @@ data class GamesScreenState(
     val secondLevel get() = form != null || live || summary != null
 }
 
+/**
+ * "Inizia live" from the calendar: the form filled in; with that fixture's game already in progress, Live again. Only
+ * one game at a time: with another in progress nothing opens (the ViewModel says why).
+ */
+private fun GamesScreenState.startingFrom(form: GameForm?) = when {
+    form == null -> this
+    draft == null -> copy(form = form)
+    form.fixtureId != null && draft.fixtureId == form.fixtureId -> copy(live = true)
+    else -> this
+}
+
 /** Partite (PRD F8): the team's games; staff create one, record it live and save it at the end (ADR 0010). */
 class GamesViewModel(
     private val staff: Boolean,
@@ -112,8 +126,7 @@ class GamesViewModel(
     private val dispatchers: DispatcherProvider,
     errorManager: ErrorManager
 ) : ScreenModel<GamesScreenState>(
-    // Only one game at a time: with a draft the fixture's form doesn't open, as "Nuova partita" doesn't.
-    GamesScreenState(draft = drafts.draft.value, form = start.form.takeIf { drafts.draft.value == null }),
+    GamesScreenState(draft = drafts.draft.value).startingFrom(start.form),
     dispatchers,
     errorManager,
     busy = { copy(busy = it) }
@@ -123,6 +136,9 @@ class GamesViewModel(
 
     init {
         load()
+        if (start.form != null && state.draft != null && !state.live) {
+            viewModelScope.launch { toast(Res.string.game_other_in_progress) }
+        }
     }
 
     /** "Riprova" under the list, when it failed with a game in progress on screen. */

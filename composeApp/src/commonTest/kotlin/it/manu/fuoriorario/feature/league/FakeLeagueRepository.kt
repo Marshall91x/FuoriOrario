@@ -94,14 +94,13 @@ class FakeLeagueRepository(var league: League? = null) : LeagueRepository {
         this.league = l.copy(fixtures = l.fixtures.filter { it.number != fixture.number })
     }
 
-    /** Like `save_game`: the fixture gets the link and, unless tied, [game]'s result as played. */
+    /** Like `save_game`: the fixture not linked yet gets the link and [game]'s result as played. */
     fun recorded(fixtureId: String, game: Game) {
         val l = league ?: return
         league = l.copy(
             fixtures = l.fixtures.map { f ->
                 when {
-                    f.id != fixtureId -> f
-                    game.ourScore == game.theirScore -> f.copy(gameId = game.id)
+                    f.id != fixtureId || f.gameId != null -> f
                     else -> {
                         val home = l.team(f.homeId).ours
                         f.copy(

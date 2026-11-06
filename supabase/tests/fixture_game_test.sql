@@ -1,5 +1,5 @@
 begin;
-select plan(10);
+select plan(9);
 
 insert into auth.users (id, email) values ('10000000-0000-0000-0000-000000000001', 'staff@example.com');
 
@@ -28,14 +28,6 @@ select lives_ok($$ select public.save_game(
 select results_eq($$ select status, home_score, away_score from public.fixtures where number = '2' $$,
   $$ values ('PLAYED', 55, 50) $$, 'ours home: our score is the home one');
 
--- Basketball has no draws: a tied live links the fixture but leaves its result to the staff.
-select public.save_game(
-  jsonb_build_object('id', '30000000-0000-0000-0000-000000000003', 'date', '2026-10-10', 'opponent', 'Vasto',
-    'home', false, 'our_score', 40, 'their_score', 40,
-    'fixture_id', (select id from public.fixtures where number = '3')), '{}', '[]');
-select results_eq($$ select status, home_score, game_id from public.fixtures where number = '3' $$,
-  $$ values ('SCHEDULED', null::int, '30000000-0000-0000-0000-000000000003'::uuid) $$, 'a tie only links');
-
 -- The result stays editable by hand: the referto counts. The game doesn't change.
 update public.fixtures set home_score = 62 where number = '1';
 select results_eq($$ select f.home_score, g.their_score from public.fixtures f join public.games g on g.id = f.game_id
@@ -59,7 +51,7 @@ delete from public.fixtures where number = '1';
 select results_eq('select count(*)::int from public.games where id = ''30000000-0000-0000-0000-000000000001''',
   $$ values (1) $$, 'deleting the fixture keeps the game');
 delete from public.leagues;
-select results_eq('select count(*)::int from public.games', $$ values (3) $$, 'deleting the league keeps the games');
+select results_eq('select count(*)::int from public.games', $$ values (2) $$, 'deleting the league keeps the games');
 
 select * from finish();
 rollback;

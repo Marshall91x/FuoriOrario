@@ -3,6 +3,7 @@ package it.manu.fuoriorario.feature.games
 import com.russhwolf.settings.MapSettings
 import fuoriorario.composeapp.generated.resources.Res
 import fuoriorario.composeapp.generated.resources.game_deleted
+import fuoriorario.composeapp.generated.resources.game_other_in_progress
 import fuoriorario.composeapp.generated.resources.game_saved
 import fuoriorario.composeapp.generated.resources.save_failed
 import it.manu.fuoriorario.core.error.AppErrorManager
@@ -84,11 +85,23 @@ class GamesViewModelTest {
     }
 
     @Test
-    fun aGameInProgressKeepsTheFixturesFormClosed() = runTest(dispatcher) {
+    fun anotherGameInProgressKeepsTheFixturesFormClosedAndSaysWhy() = runTest(dispatcher) {
         drafts.save(GameDraft("d", LocalDate(2026, 11, 1), "Vasto", home = true))
         val vm = vm(start = GamesStart(form = fromFixture))
         advanceUntilIdle()
         assertNull(vm.data.form)
+        assertFalse(vm.data.live)
+        assertEquals("d", vm.data.draft?.id)
+        assertEquals(getString(Res.string.game_other_in_progress), vm.toasts.first())
+    }
+
+    @Test
+    fun theFixturesOwnGameInProgressResumes() = runTest(dispatcher) {
+        drafts.save(GameDraft("d", LocalDate(2026, 11, 9), "Atessa", home = false, fixtureId = "f1"))
+        val vm = vm(start = GamesStart(form = fromFixture))
+        advanceUntilIdle()
+        assertNull(vm.data.form)
+        assertTrue(vm.data.live)
         assertEquals("d", vm.data.draft?.id)
     }
 
