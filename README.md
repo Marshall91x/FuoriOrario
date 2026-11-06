@@ -108,6 +108,7 @@ Per firmare in locale, le stesse chiavi (con `ANDROID_KEYSTORE_PATH` al posto di
    ```sh
    supabase link --project-ref bwrxcpyrxbimacbwjhhr
    supabase db push                       # solo migrazioni: seed.sql è per lo sviluppo
+   supabase functions deploy import-league   # import del calendario FIP (adr/0011)
    SMTP_PASSWORD=<password per le app> supabase config diff
    SMTP_PASSWORD=<password per le app> supabase config push
    ```

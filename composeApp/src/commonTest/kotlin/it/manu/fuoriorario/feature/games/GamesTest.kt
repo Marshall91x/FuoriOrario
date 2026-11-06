@@ -56,6 +56,7 @@ class GamesTest {
 
         awaitText("Partite")
         onNodeWithText("Partite").performClick()
+        onNodeWithTag("games_recorded").performClick()
         awaitText("Ancora nessuna partita.")
         onNodeWithTag("game_new").performClick()
 
@@ -87,6 +88,7 @@ class GamesTest {
 
         awaitText("Partite")
         onNodeWithText("Partite").performClick()
+        onNodeWithTag("games_recorded").performClick()
         onNodeWithTag("game_new").performClick()
         onNodeWithTag("game_opponent").performTextInput("Virtus")
         onNodeWithTag("call_up_luca").performClick()
@@ -114,6 +116,7 @@ class GamesTest {
 
         awaitText("Partite")
         onNodeWithText("Partite").performClick()
+        onNodeWithTag("games_recorded").performClick()
         onNodeWithTag("game_new").performClick()
         onNodeWithTag("game_opponent").performTextInput("Virtus")
         onNodeWithTag("game_start").performScrollTo().performClick()
@@ -123,6 +126,7 @@ class GamesTest {
         launch++
         awaitText("Partite")
         onNodeWithText("Partite").performClick()
+        onNodeWithTag("games_recorded").performClick()
         awaitText("PARTITA IN CORSO")
         onNodeWithTag("game_new").assertIsNotEnabled()
         onNodeWithTag("game_resume").performClick()
@@ -139,6 +143,7 @@ class GamesTest {
 
         awaitText("Partite")
         onNodeWithText("Partite").performClick()
+        onNodeWithTag("games_recorded").performClick()
         awaitText("Fortitudo")
         awaitText("61–58")
         awaitNode(hasText("+ Nuova partita"), count = 0)
@@ -161,6 +166,7 @@ class GamesTest {
 
         awaitText("Partite")
         onNodeWithText("Partite").performClick()
+        onNodeWithTag("games_recorded").performClick()
         awaitText("5 PT")
         onNodeWithText("Fortitudo").performClick()
 
@@ -182,6 +188,7 @@ class GamesTest {
 
         awaitText("Partite")
         onNodeWithText("Partite").performClick()
+        onNodeWithTag("games_recorded").performClick()
         onNodeWithText("Fortitudo").performClick()
         onNodeWithTag("box_anna").assertExists()
         onNodeWithTag("box_luca").assertExists()
@@ -205,6 +212,7 @@ class GamesTest {
 
         awaitText("Partite")
         onNodeWithText("Partite").performClick()
+        onNodeWithTag("games_recorded").performClick()
         onNodeWithText("Fortitudo").performClick()
         onNodeWithTag("box_luca_fouls", useUnmergedTree = true).performScrollTo().assertIsDisplayed()
         onNodeWithText("#7 Luca B.", useUnmergedTree = true).assertIsDisplayed()
