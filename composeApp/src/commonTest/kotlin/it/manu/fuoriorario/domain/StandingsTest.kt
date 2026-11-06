@@ -69,6 +69,40 @@ class StandingsTest {
     }
 
     @Test
+    fun threeTied_twoStillTiedInTheGroup_headToHeadBetweenThemAgain() {
+        // a, b, c on 6 points. In the group a and b have 6 points, b's diff is better (+51 against +11),
+        // but between a and b alone a is ahead (+9).
+        assertEquals(
+            listOf("a", "b", "c", "d"),
+            order(
+                played("a", "b", 60, 50),
+                played("b", "a", 55, 54),
+                played("a", "c", 51, 50),
+                played("c", "a", 50, 51),
+                played("b", "c", 80, 50),
+                played("c", "b", 50, 80),
+                played("c", "d", 60, 50),
+                played("d", "c", 50, 60),
+                played("c", "d", 60, 50)
+            )
+        )
+    }
+
+    @Test
+    fun headToHeadEven_totalDiffDecides() {
+        // a and b split their games by the same margin; a beat d by more than b did.
+        assertEquals(
+            listOf("a", "b", "c", "d"),
+            order(
+                played("a", "b", 60, 50),
+                played("b", "a", 60, 50),
+                played("a", "d", 80, 50),
+                played("b", "d", 60, 50)
+            )
+        )
+    }
+
+    @Test
     fun tiedWithoutHeadToHead_totalDiffThenScored() {
         // a, b, c on 2 points, never met: a +10, b +5 with 80 scored, c +5 with 60.
         assertEquals(
