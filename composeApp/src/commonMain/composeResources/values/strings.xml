@@ -353,6 +353,7 @@
     <string name="fixture_error_teams">Scegli due squadre diverse.</string>
     <string name="fixture_error_date">Data e ora non valide.</string>
     <string name="fixture_error_result">Inserisci il risultato.</string>
+    <string name="fixture_error_draw">Nel basket non si pareggia: controlla il risultato.</string>
     <string name="league_title">Campionato</string>
     <string name="league_none">Nessun campionato in questa stagione.</string>
     <string name="league_summary">%1$d gare · %2$d squadre</string>

@@ -45,6 +45,7 @@ import fuoriorario.composeapp.generated.resources.fixture_add
 import fuoriorario.composeapp.generated.resources.fixture_away
 import fuoriorario.composeapp.generated.resources.fixture_date
 import fuoriorario.composeapp.generated.resources.fixture_error_date
+import fuoriorario.composeapp.generated.resources.fixture_error_draw
 import fuoriorario.composeapp.generated.resources.fixture_error_result
 import fuoriorario.composeapp.generated.resources.fixture_error_teams
 import fuoriorario.composeapp.generated.resources.fixture_home
@@ -373,7 +374,8 @@ private fun FixtureSheet(league: League, draft: FixtureDraft, state: CalendarScr
 private val errorText = mapOf(
     FixtureError.TEAMS to Res.string.fixture_error_teams,
     FixtureError.DATE to Res.string.fixture_error_date,
-    FixtureError.RESULT to Res.string.fixture_error_result
+    FixtureError.RESULT to Res.string.fixture_error_result,
+    FixtureError.DRAW to Res.string.fixture_error_draw
 )
 
 @Preview

@@ -38,7 +38,10 @@ enum class FixtureError {
     DATE,
 
     /** Played without both scores. */
-    RESULT
+    RESULT,
+
+    /** Played with the same score: basketball has no draws, the standings couldn't count it. */
+    DRAW
 }
 
 /**
@@ -71,6 +74,7 @@ data class FixtureDraft(
         status != FixtureStatus.POSTPONED && startsAt == null -> FixtureError.DATE
         status == FixtureStatus.PLAYED && (homeScore.toIntOrNull() == null || awayScore.toIntOrNull() == null) ->
             FixtureError.RESULT
+        status == FixtureStatus.PLAYED && homeScore.toInt() == awayScore.toInt() -> FixtureError.DRAW
         else -> null
     }
 
