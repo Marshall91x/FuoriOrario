@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import it.manu.fuoriorario.domain.Fixture
 import it.manu.fuoriorario.domain.ImportFixture
 import it.manu.fuoriorario.domain.ImportPreview
@@ -29,7 +30,7 @@ import kotlinx.datetime.LocalDateTime
 
 private const val ACK = "2026-10-01T10:00:00Z"
 
-/** #100: the league's fixtures for the whole team; staff import the FIP PDF. */
+/** #100, #101: the league's fixtures for the whole team; staff import the FIP PDF and edit fixtures. */
 @OptIn(ExperimentalTestApi::class)
 class CalendarTest {
     private val coach = Member("Coach", Role.STAFF, ACK, id = "coach")
@@ -90,5 +91,50 @@ class CalendarTest {
 
         onNodeWithText("Partite").performClick()
         awaitText("Atessa")
+    }
+
+    private fun leagueWithOneFixture() = League(
+        "l",
+        "U19",
+        listOf(LeagueTeam("a", "Artemis", ours = true), LeagueTeam("b", "Vasto")),
+        listOf(Fixture("1", 1, Leg.FIRST, Clock.System.now() + 1.days, "a", "b"))
+    )
+
+    @Test
+    fun staffEnterAResultAndTheRowShowsIt() = runAppTest {
+        val leagues = FakeLeagueRepository(leagueWithOneFixture())
+        setContent { TestApp(FakeAuthRepository(coach), FakeRosterRepository(coach, luca), leagues = leagues) }
+
+        awaitText("Partite")
+        onNodeWithText("Partite").performClick()
+        awaitNode(hasText("+ Gara"))
+        onNodeWithTag("fixture_1").performClick()
+        awaitText("GARA 1")
+        onNodeWithTag("fixture_status_PLAYED").performClick()
+        onNodeWithTag("fixture_home_score").performTextReplacement("62")
+        onNodeWithTag("fixture_away_score").performTextReplacement("55")
+        onNodeWithTag("fixture_save").performScrollTo().performClick()
+
+        awaitText("62–55")
+        assertEquals(62, leagues.league?.fixtures?.single()?.homeScore)
+    }
+
+    @Test
+    fun playerHasNoActionsOnFixtures() = runAppTest {
+        setContent {
+            TestApp(
+                FakeAuthRepository(luca),
+                FakeRosterRepository(coach, luca),
+                leagues = FakeLeagueRepository(leagueWithOneFixture())
+            )
+        }
+
+        awaitText("Partite")
+        onNodeWithText("Partite").performClick()
+        awaitText("Vasto")
+        awaitNode(hasText("+ Gara"), count = 0)
+        onNodeWithTag("fixture_1").performClick()
+        waitForIdle()
+        awaitNode(hasText("GARA 1"), count = 0)
     }
 }

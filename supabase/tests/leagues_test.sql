@@ -1,5 +1,5 @@
 begin;
-select plan(17);
+select plan(24);
 
 insert into public.members (id, team_id, email, display_name, role) values
   ('20000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-000000000001', 'anna@example.com', 'Anna', 'player');
@@ -56,8 +56,23 @@ select throws_ok($$ select public.import_league('{"id":"40000000-0000-0000-0000-
   '23514', null, 'a team doesn''t play itself');
 select results_eq('select count(*)::int from public.leagues', $$ values (1) $$, 'a failed import leaves nothing behind');
 
+-- Staff edit, add and delete fixtures by hand (#101).
+select lives_ok($$ insert into public.fixtures (league_id, number, round, leg, starts_at, home_team_id, away_team_id)
+    select '40000000-0000-0000-0000-000000000001', 'M1', 4, 'FIRST', '2026-12-01 18:00+00', h.id, a.id
+    from public.league_teams h, public.league_teams a where h.name = 'Vasto' and a.name = 'Village' $$,
+  'staff add a fixture by hand');
+select results_eq($$ update public.fixtures set status = 'PLAYED', home_score = 20, away_score = 0
+    where number = 'M1' returning home_score $$, $$ values (20) $$, 'staff record a result');
+select results_eq($$ delete from public.fixtures where number = 'M1' returning number $$, $$ values ('M1') $$,
+  'staff delete a fixture');
+
 -- Player
 select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-00000000000a"}', true);
+select throws_ok($$ insert into public.fixtures (league_id, number, round, leg, home_team_id, away_team_id)
+    select '40000000-0000-0000-0000-000000000001', 'M2', 4, 'FIRST', h.id, a.id
+    from public.league_teams h, public.league_teams a where h.name = 'Vasto' and a.name = 'Village' $$,
+  '42501', null, 'players cannot add fixtures');
+select is_empty($$ delete from public.fixtures returning id $$, 'players cannot delete fixtures');
 select results_eq('select count(*)::int from public.fixtures', $$ values (4) $$, 'players read the fixtures');
 select throws_ok($$ select public.import_league('{"id":"40000000-0000-0000-0000-000000000003","name":"X"}', 'A',
     '[{"number":"1","round":1,"leg":"FIRST","startsAt":null,"home":"A","away":"B","venue":null}]') $$,
@@ -67,6 +82,8 @@ select is_empty($$ update public.fixtures set venue = 'x' returning id $$, 'play
 -- Another team's staff
 select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-00000000000f"}', true);
 select is_empty('select * from public.league_teams', 'another team reads nothing');
+select is_empty($$ update public.fixtures set venue = 'x' returning id $$, 'another team''s staff cannot change fixtures');
+select is_empty($$ delete from public.fixtures returning id $$, 'another team''s staff cannot delete fixtures');
 
 -- Staff delete the league: everything goes.
 select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-000000000001"}', true);

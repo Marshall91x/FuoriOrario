@@ -81,6 +81,23 @@ class SupabaseLeagueRepository : LeagueRepository {
             filter { eq("id", league.id) }
         }.requireRow()
     }
+
+    override suspend fun save(league: League, fixture: Fixture) = mapErrors {
+        supabase.from("fixtures").upsert(FixtureWrite(league.id, fixture)) {
+            onConflict = "league_id,number"
+            select()
+        }.requireRow()
+    }
+
+    override suspend fun delete(league: League, fixture: Fixture) = mapErrors {
+        supabase.from("fixtures").delete {
+            select()
+            filter {
+                eq("league_id", league.id)
+                eq("number", fixture.number)
+            }
+        }.requireRow()
+    }
 }
 
 @Serializable
@@ -104,5 +121,26 @@ private class FixtureRow(
 ) {
     val fixture get() = Fixture(
         number, round, leg, startsAt?.let(Instant::parse), homeId, awayId, venue, status, homeScore, awayScore
+    )
+}
+
+/** No defaults: every column is sent, so a cleared date or result is written as null. The team id is the DB's. */
+@Serializable
+private class FixtureWrite(
+    @SerialName("league_id") val leagueId: String,
+    val number: String,
+    val round: Int,
+    val leg: Leg,
+    @SerialName("starts_at") val startsAt: String?,
+    @SerialName("home_team_id") val homeId: String,
+    @SerialName("away_team_id") val awayId: String,
+    val venue: String?,
+    val status: FixtureStatus,
+    @SerialName("home_score") val homeScore: Int?,
+    @SerialName("away_score") val awayScore: Int?
+) {
+    constructor(leagueId: String, f: Fixture) : this(
+        leagueId, f.number, f.round, f.leg, f.startsAt?.toString(), f.homeId, f.awayId, f.venue, f.status, f.homeScore,
+        f.awayScore
     )
 }

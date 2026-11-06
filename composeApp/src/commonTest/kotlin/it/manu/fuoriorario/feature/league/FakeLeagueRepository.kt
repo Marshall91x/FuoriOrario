@@ -77,6 +77,18 @@ class FakeLeagueRepository(var league: League? = null) : LeagueRepository {
         this.league = null
     }
 
+    override suspend fun save(league: League, fixture: Fixture) {
+        failIfAsked()
+        val l = this.league!!
+        this.league = l.copy(fixtures = l.fixtures.filter { it.number != fixture.number } + fixture)
+    }
+
+    override suspend fun delete(league: League, fixture: Fixture) {
+        failIfAsked()
+        val l = this.league!!
+        this.league = l.copy(fixtures = l.fixtures.filter { it.number != fixture.number })
+    }
+
     private fun failIfAsked() {
         if (failNext) {
             failNext = false
