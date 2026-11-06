@@ -61,7 +61,7 @@ Linguaggio comune del progetto. UI e documentazione in italiano, codice in ingle
 | Gara | `Fixture` | Una gara ufficiale del campionato, anche tra altre squadre: giornata, numero gara FIP, data e ora, casa, ospite, campo, stato, risultato. Da non confondere con *Partita*, che è la nostra gara registrata col live. |
 | Stato (della gara) | `FixtureStatus` | `SCHEDULED` (programmata), `POSTPONED` (rinviata, senza data), `PLAYED` (giocata, con risultato). Il forfait è un risultato 20-0. |
 | Giornata | `round`, `leg` | Numero 1–N più andata/ritorno, come nel PDF FIP: si mostra "3ª andata". |
-| Numero gara | `number` | Codice FIP della gara (es. `000691`). Ritrova la gara a un nuovo import; si vede solo nel foglio Modifica. |
+| Numero gara | `number` | Codice FIP della gara (es. `000691`). Ritrova la gara a un nuovo import; si vede solo nel foglio Modifica. Una gara inserita a mano ha un codice `M…` che nessun import ritrova. |
 | Riposo | — | Con un numero dispari di squadre, in ogni giornata una non gioca. Si ricava, non si salva. |
 | Import del calendario | `importLeague` | Lo staff carica il PDF FIP, vede un'anteprima e la conferma. Un nuovo import aggiorna data, ora e campo delle gare ritrovate, mai i risultati; quelle non più nel PDF restano. |
 | Classifica | `Standings` | Calcolata dalle gare giocate del campionato: vittoria 2, sconfitta 0. Parità: scontri diretti (punti, differenza canestri) fra le squadre a pari punti, poi differenza canestri totale, poi punti segnati. Colonne Pos, Squadra, Pt, G, V, P, PF, PS, Diff. |
