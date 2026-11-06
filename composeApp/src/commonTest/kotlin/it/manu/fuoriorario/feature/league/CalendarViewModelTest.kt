@@ -145,6 +145,18 @@ class CalendarViewModelTest {
     }
 
     @Test
+    fun save_played_aDraw_saysSoAndWritesNothing() = runTest(dispatcher) {
+        val vm = loaded()
+        vm.onEdit(first)
+        vm.onDraftChanged(vm.data.editing!!.copy(status = FixtureStatus.PLAYED, homeScore = "60", awayScore = "60"))
+        vm.onSave()
+        advanceUntilIdle()
+
+        assertEquals(FixtureError.DRAW, vm.data.error)
+        assertEquals(FixtureStatus.SCHEDULED, first.status)
+    }
+
+    @Test
     fun save_played_writesTheResultAndShowsIt() = runTest(dispatcher) {
         val vm = loaded()
         vm.onEdit(first)

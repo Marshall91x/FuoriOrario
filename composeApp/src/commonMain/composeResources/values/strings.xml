@@ -314,6 +314,16 @@
     <string name="game_deleted">Partita eliminata</string>
     <string name="games_calendar">Calendario</string>
     <string name="games_recorded">Registrate</string>
+    <string name="games_standings">Classifica</string>
+    <string name="standings_position">Pos</string>
+    <string name="standings_team">Squadra</string>
+    <string name="standings_points">Pt</string>
+    <string name="standings_played">G</string>
+    <string name="standings_won">V</string>
+    <string name="standings_lost">P</string>
+    <string name="standings_scored">PF</string>
+    <string name="standings_conceded">PS</string>
+    <string name="standings_diff">Diff</string>
     <string name="calendar_ours">Nostre</string>
     <string name="calendar_all">Tutto il girone</string>
     <string name="calendar_empty">Ancora nessun calendario.</string>
@@ -343,6 +353,7 @@
     <string name="fixture_error_teams">Scegli due squadre diverse.</string>
     <string name="fixture_error_date">Data e ora non valide.</string>
     <string name="fixture_error_result">Inserisci il risultato.</string>
+    <string name="fixture_error_draw">Nel basket non si pareggia: controlla il risultato.</string>
     <string name="league_title">Campionato</string>
     <string name="league_none">Nessun campionato in questa stagione.</string>
     <string name="league_summary">%1$d gare · %2$d squadre</string>
