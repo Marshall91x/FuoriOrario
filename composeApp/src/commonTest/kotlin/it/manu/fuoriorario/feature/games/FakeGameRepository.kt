@@ -5,9 +5,11 @@ import it.manu.fuoriorario.domain.Game
 import it.manu.fuoriorario.domain.GameDraft
 import it.manu.fuoriorario.domain.GameEvent
 import it.manu.fuoriorario.feature.games.data.GameRepository
+import it.manu.fuoriorario.feature.league.FakeLeagueRepository
 import kotlinx.io.IOException
 
-class FakeGameRepository(vararg games: Game) : GameRepository {
+/** [leagues]: where a live started from a fixture puts its result, as the RPC does. */
+class FakeGameRepository(vararg games: Game, private val leagues: FakeLeagueRepository? = null) : GameRepository {
     val games = games.toMutableList()
 
     /** The drafts saved, in order. */
@@ -37,6 +39,7 @@ class FakeGameRepository(vararg games: Game) : GameRepository {
             throw IOException("offline")
         }
         saved += draft
+        draft.fixtureId?.let { leagues?.recorded(it, draft.toGame()) }
         callUps[draft.id] = draft.callUps
         events[draft.id] = draft.events
         return draft.toGame().also { games += it }

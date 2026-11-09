@@ -73,13 +73,15 @@ import org.koin.core.parameter.parametersOf
 
 /**
  * Partite: the team's games, newest first. Staff also start a new one and record it in Live, or resume the one in
- * progress. [onSecondLevel] tells whether the form or Live is open, a screen without the tab bar.
+ * progress. [onSecondLevel] tells whether the form or Live is open, a screen without the tab bar. [start]: opened
+ * from the calendar.
  */
 @Composable
 fun GamesScreen(
     staff: Boolean,
+    start: GamesStart = GamesStart(),
     onSecondLevel: (Boolean) -> Unit = {},
-    vm: GamesViewModel = koinViewModel { parametersOf(staff) }
+    vm: GamesViewModel = koinViewModel { parametersOf(staff, start) }
 ) {
     val uiState = vm.uiState.collectAsStateWithLifecycle()
     val toast = LocalToast.current
