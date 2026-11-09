@@ -3,6 +3,7 @@ package it.manu.fuoriorario.feature.league
 import it.manu.fuoriorario.core.ROME
 import it.manu.fuoriorario.domain.Fixture
 import it.manu.fuoriorario.domain.FixtureStatus
+import it.manu.fuoriorario.domain.Game
 import it.manu.fuoriorario.domain.ImportPreview
 import it.manu.fuoriorario.domain.League
 import it.manu.fuoriorario.domain.LeagueTeam
@@ -77,16 +78,41 @@ class FakeLeagueRepository(var league: League? = null) : LeagueRepository {
         this.league = null
     }
 
-    override suspend fun save(league: League, fixture: Fixture) {
+    /** Like the upsert: the id is the row's, the live game's link isn't written. */
+    override suspend fun save(league: League, fixture: Fixture): Fixture {
         failIfAsked()
         val l = this.league!!
-        this.league = l.copy(fixtures = l.fixtures.filter { it.number != fixture.number } + fixture)
+        val old = l.fixtures.firstOrNull { it.number == fixture.number }
+        val saved = fixture.copy(id = old?.id ?: fixture.number, gameId = old?.gameId)
+        this.league = l.copy(fixtures = l.fixtures.filter { it.number != fixture.number } + saved)
+        return saved
     }
 
     override suspend fun delete(league: League, fixture: Fixture) {
         failIfAsked()
         val l = this.league!!
         this.league = l.copy(fixtures = l.fixtures.filter { it.number != fixture.number })
+    }
+
+    /** Like `save_game`: the fixture not linked yet gets the link and [game]'s result as played. */
+    fun recorded(fixtureId: String, game: Game) {
+        val l = league ?: return
+        league = l.copy(
+            fixtures = l.fixtures.map { f ->
+                when {
+                    f.id != fixtureId || f.gameId != null -> f
+                    else -> {
+                        val home = l.team(f.homeId).ours
+                        f.copy(
+                            gameId = game.id,
+                            status = FixtureStatus.PLAYED,
+                            homeScore = if (home) game.ourScore else game.theirScore,
+                            awayScore = if (home) game.theirScore else game.ourScore
+                        )
+                    }
+                }
+            }
+        )
     }
 
     private fun failIfAsked() {

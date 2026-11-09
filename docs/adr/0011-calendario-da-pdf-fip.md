@@ -11,6 +11,7 @@ La squadra vuole vedere gare programmate, risultati e classifica del campionato.
 - Il **numero gara FIP** è la chiave: un nuovo import aggiorna data, ora e campo delle gare ritrovate, non tocca mai i risultati e non cancella niente (le gare sparite sono segnalate nell'anteprima).
 - **Campionato = una fase FIP**: una nuova fase è un nuovo import e un nuovo campionato. Si mostra l'ultimo della stagione corrente.
 - I risultati li inserisce lo staff a mano (o arrivano dal live per le nostre gare); la **classifica si calcola in `domain/`**, come le statistiche.
+- **Gara → Partita** (#103): il collegamento sta sulla gara (`fixtures.game_id`), non sulla partita, così una partita salvata non cambia ([ADR 0010](0010-partita-live-in-bozza-locale.md)). "Inizia live" porta l'id della gara nella bozza; `save_game` collega la gara e ci scrive il risultato come giocata. Il risultato resta modificabile a mano (vale il referto). Eliminare la partita scollega la gara, che tiene il risultato; eliminare gara o campionato non tocca la partita. Le partite salvate prima restano scollegate.
 
 ## Conseguenze
 - Se la FIP cambia l'impaginazione, l'import si rompe: l'anteprima lo rende visibile e le gare restano modificabili a mano. Il test della funzione gira sul PDF d'esempio.

@@ -15,7 +15,10 @@ enum class FixtureStatus { SCHEDULED, POSTPONED, PLAYED }
 /** Glossary *Squadra del girone*: the FIP name as it is; one is [ours]. */
 data class LeagueTeam(val id: String, val name: String, val ours: Boolean = false)
 
-/** Glossary *Gara*: [number] is the FIP one, [homeId] and [awayId] are [LeagueTeam] ids. */
+/**
+ * Glossary *Gara*: [number] is the FIP one, [homeId] and [awayId] are [LeagueTeam] ids. [id] is the row's, null until
+ * saved; [gameId] is the Partita recorded live for it.
+ */
 data class Fixture(
     val number: String,
     val round: Int,
@@ -26,7 +29,9 @@ data class Fixture(
     val venue: String? = null,
     val status: FixtureStatus = if (startsAt == null) FixtureStatus.POSTPONED else FixtureStatus.SCHEDULED,
     val homeScore: Int? = null,
-    val awayScore: Int? = null
+    val awayScore: Int? = null,
+    val id: String? = null,
+    val gameId: String? = null
 ) {
     fun plays(team: LeagueTeam) = homeId == team.id || awayId == team.id
 }

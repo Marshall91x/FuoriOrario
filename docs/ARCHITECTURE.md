@@ -75,7 +75,9 @@ Login (email → codice OTP) → Informativa (primo accesso) → Home
 Home = barra in basso:
   Diario di tiro  ─ foglio "Registra sessione"
   Piano           ─ fogli "Esercizio", "Nota"
-  Partite         ─ Calendario (Nostre / Tutto il girone; staff: tocco su una gara → Modifica, + Gara), Classifica, Registrate;
+  Partite         ─ Calendario (Nostre / Tutto il girone; staff: tocco su una gara → Modifica (Riepilogo se registrata col live), + Gara,
+                    Inizia live su una nostra gara da giocare dal giorno prima → Nuova partita compilata; giocatore: tocco su una gara
+                    registrata col live → Riepilogo), Classifica, Registrate;
                     Registrate: elenco; staff: Nuova partita → Live (bozza locale, Termina partita), Partita in corso – Riprendi/Abbandona
   Schemi          ─ elenco per categoria → schema passo per passo (◀ ▶ Riproduci); staff: Nuovo schema / Modifica → editor
   Squadra (staff) ─ Quadro (tocco → Diario del giocatore), Rosa, Impostazioni (Libreria, Riferimenti, Campionato: import PDF)
