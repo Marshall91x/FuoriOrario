@@ -3,7 +3,12 @@ package it.manu.fuoriorario.testing
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.LocalSaveableStateRegistry
+import androidx.compose.runtime.saveable.SaveableStateRegistry
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.backhandler.LocalCompatNavigationEventDispatcherOwner
 import androidx.compose.ui.test.ComposeUiTest
@@ -50,7 +55,8 @@ import org.koin.dsl.module
 /**
  * The real [App] with fakes in place of Supabase and of the device's storage ([prefs]). Leaving the composition
  * is quitting the app: ViewModels and Koin go with it, so a `key` around this is a restart. [back] sends the system
- * back, as the gesture or the Android key does: `runOnIdle { back.backCompleted() }`.
+ * back, as the gesture or the Android key does: `runOnIdle { back.backCompleted() }`. [recreation] rebuilds the UI
+ * as Android does on a configuration change.
  */
 @OptIn(InternalComposeUiApi::class)
 @Composable
@@ -63,7 +69,8 @@ fun TestApp(
     plays: PlayRepository = FakePlayRepository(),
     back: DirectNavigationEventInput = DirectNavigationEventInput(),
     games: GameRepository = FakeGameRepository(),
-    leagues: LeagueRepository = FakeLeagueRepository()
+    leagues: LeagueRepository = FakeLeagueRepository(),
+    recreation: Recreation? = null
 ) {
     val koin = remember {
         koinApplication {
@@ -101,7 +108,32 @@ fun TestApp(
             koin.close()
         }
     }
-    CompositionLocalProvider(LocalViewModelStoreOwner provides owner) { App(koin) }
+    CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
+        recreation?.Around { App(koin) } ?: App(koin)
+    }
+}
+
+/**
+ * What Android does to the activity on a configuration change, or behind a picker: `rememberSaveable` state is saved,
+ * the UI rebuilt from it, ViewModels kept. StateRestorationTester would, but its save isn't implemented off Android.
+ */
+class Recreation {
+    private var registry by mutableStateOf(SaveableStateRegistry(null) { true })
+    private var shown by mutableStateOf(true)
+
+    @Composable
+    internal fun Around(content: @Composable () -> Unit) =
+        CompositionLocalProvider(LocalSaveableStateRegistry provides registry) { if (shown) content() }
+
+    @OptIn(ExperimentalTestApi::class)
+    fun recreate(test: ComposeUiTest) {
+        val saved = test.runOnIdle { registry.performSave() }
+        test.runOnIdle { shown = false }
+        test.runOnIdle {
+            registry = SaveableStateRegistry(saved) { true }
+            shown = true
+        }
+    }
 }
 
 private object UnconfinedDispatcherProvider : DispatcherProvider {

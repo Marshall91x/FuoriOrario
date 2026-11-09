@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -140,8 +141,9 @@ fun Home(
     val toast = remember { SnackbarHostState() }
     var period by remember { mutableStateOf(Period.DAYS_30) }
     var week by remember { mutableStateOf(weekOf(today())) }
-    var section by remember { mutableStateOf(TeamSection.OVERVIEW) }
-    var gamesSection by remember { mutableStateOf(GamesSection.CALENDAR) }
+    // Saveable like the tab: Android recreates the activity behind its file picker, and the PDF goes to Campionato (#112).
+    var section by rememberSaveable { mutableStateOf(TeamSection.OVERVIEW) }
+    var gamesSection by rememberSaveable { mutableStateOf(GamesSection.CALENDAR) }
     // What the calendar asked Registrate to open: "Inizia live" or a Riepilogo. Only for that visit: GamesScreen's
     // ViewModel takes it when created, then it's cleared, so coming back to the tab doesn't open it again.
     var gamesStart by remember { mutableStateOf(GamesStart()) }
