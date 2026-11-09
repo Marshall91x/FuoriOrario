@@ -10,6 +10,10 @@
   - Web Wasm su GitHub Pages: usato da tutti, inclusi i tester iPhone.
   - APK Android firmato su GitHub Releases (installazione manuale).
   - iOS: solo sul dispositivo dello sviluppatore via Xcode; nessun account Apple Developer fino a M8.
+- **Backend al rilascio** (deciso il 2026-11-09, #112):
+  - Le Edge Function le pubblica `release.yml`, prima di web e APK, con il secret `SUPABASE_ACCESS_TOKEN`. Nella 0.3.0 `import-league` non era stata pubblicata e l'import del calendario falliva. Se il deploy fallisce, l'app non esce.
+  - Le migrazioni restano manuali (`supabase db push`), prima del tag. Una migrazione che cancella o riscrive dati va guardata mentre gira. Applicarla dalla CI richiederebbe anche la password del database tra i secret.
+  - La CI controlla che ogni funzione stia nel limite di 20 MB di Supabase: un bundle troppo grande (413) si vedeva solo al deploy.
 
 - **Repository pubblico** (deciso il 2026-10-05): con GitHub Free un repo privato non ha né GitHub Pages né protezione dei branch. Nel repo non ci sono segreti: l'URL e la chiave anon di Supabase sono pubblici per natura (i dati sono protetti dalle RLS, vedi 0002); chiave `service_role`, keystore e password restano nei secret della CI o in `local.properties`, mai nel repo.
 
@@ -22,3 +26,4 @@
 - `main` e `develop` protetti: PR obbligatoria, niente force-push né cancellazione; CI verde obbligatoria da M0.
 - Gli aggiornamenti Android vanno reinstallati a mano; Play Console (test interno) in M8.
 - La keystore di firma va conservata fuori dal repo (secret CI): perderla impedisce gli aggiornamenti.
+- Rilasciare richiede ancora un passo a mano: `supabase db push` prima del tag, se ci sono migrazioni nuove.

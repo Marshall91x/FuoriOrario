@@ -169,6 +169,20 @@ class LeagueViewModelTest {
     }
 
     @Test
+    fun import_functionFails_toastsAndShowsNoPreview() = runTest(dispatcher) {
+        repository.previewError = IllegalStateException("Requested function was not found")
+        val vm = vm()
+        advanceUntilIdle()
+        vm.onPdfPicked { byteArrayOf(1) }
+        advanceUntilIdle()
+
+        assertEquals(getString(Res.string.save_failed), vm.toasts.first())
+        assertNull(vm.data.preview)
+        assertFalse(vm.data.unreadable)
+        assertFalse(vm.data.busy)
+    }
+
+    @Test
     fun cancel_dropsThePreview() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()
