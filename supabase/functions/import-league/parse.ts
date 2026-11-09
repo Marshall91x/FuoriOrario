@@ -1,7 +1,11 @@
 // Reads a FIP calendar PDF (ADR 0011). The plain text glues the two team names together and puts dates in a block
 // apart, so the lines are rebuilt from the text coordinates and read in order: a line with home, away and date starts
 // a fixture; the FIP number (left, a bit lower) and the venue (the line below, maybe on the next page) follow it.
-import { getDocument } from "npm:pdfjs-dist@4.10.38/legacy/build/pdf.mjs";
+// From esm.sh, not npm: the npm package bundles to 29 MB (canvas binaries) and the deploy is refused with 413.
+import { getDocument } from "https://esm.sh/pdfjs-dist@4.10.38/legacy/build/pdf.mjs";
+// The worker imported here, not by pdfjs at runtime: a dynamic import may be missing from the deployed bundle.
+import * as pdfjsWorker from "https://esm.sh/pdfjs-dist@4.10.38/legacy/build/pdf.worker.mjs";
+(globalThis as { pdfjsWorker?: unknown }).pdfjsWorker = pdfjsWorker;
 
 export type Leg = "FIRST" | "SECOND";
 export interface PreviewFixture {

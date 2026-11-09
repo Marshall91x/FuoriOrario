@@ -266,7 +266,7 @@ Le RLS sono la vera barriera: la UI nasconde, il database impedisce. Coperte da 
 | Sviluppo | locale (`supabase start`, Docker) | build debug, URL locale |
 | Produzione | progetto cloud, regione UE (Francoforte) | build da tag su `main` |
 
-Le migrazioni si applicano in produzione con `supabase db push` dal job di rilascio (o a mano durante la prova).
+Le migrazioni si applicano in produzione a mano con `supabase db push`, prima del tag. Le Edge Function le pubblica il job di rilascio ([adr/0007](adr/0007-gitflow-e-distribuzione.md)).
 
 ## Test
 
@@ -284,5 +284,5 @@ I test UI partono con `runAppTest` (non `runComposeUiTest`): carica prima tutte 
 ## CI/CD (GitHub Actions)
 
 - **PR verso `develop` / `main`**: ktlint, build Android + iOS + Wasm, unit test, UI test (iOS sim + Wasm), test pgTAP.
-- **Tag `vX.Y.Z` su `main`**: deploy Wasm su GitHub Pages, APK firmato su GitHub Releases.
+- **Tag `vX.Y.Z` su `main`**: deploy delle Edge Function, poi Wasm su GitHub Pages e APK firmato su GitHub Releases.
 - Branching gitflow: vedi [adr/0007](adr/0007-gitflow-e-distribuzione.md).

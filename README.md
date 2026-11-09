@@ -108,13 +108,13 @@ Per firmare in locale, le stesse chiavi (con `ANDROID_KEYSTORE_PATH` al posto di
    ```sh
    supabase link --project-ref bwrxcpyrxbimacbwjhhr
    supabase db push                       # solo migrazioni: seed.sql è per lo sviluppo
-   supabase functions deploy import-league   # import del calendario FIP (adr/0011)
+   supabase functions deploy import-league   # import del calendario FIP (adr/0011); poi lo fa il rilascio
    SMTP_PASSWORD=<password per le app> supabase config diff
    SMTP_PASSWORD=<password per le app> supabase config push
    ```
 
 4. Copia `supabase/seed.production.example.sql` in `supabase/seed.production.sql` (non versionato), metti nome della squadra ed email dello staff, ed eseguilo una volta nel SQL Editor della dashboard. I giocatori li aggiunge lo staff da Rosa.
-5. In GitHub → Settings → Secrets and variables → Actions imposta `SUPABASE_URL` e `SUPABASE_ANON_KEY` del progetto cloud: le usa la build di rilascio.
+5. In GitHub → Settings → Secrets and variables → Actions imposta `SUPABASE_URL` e `SUPABASE_ANON_KEY` del progetto cloud: le usa la build di rilascio. Imposta anche `SUPABASE_ACCESS_TOKEN` (un [token personale](https://supabase.com/dashboard/account/tokens)): il rilascio lo usa per pubblicare le Edge Function.
 
 Prova: accedi con un'email dello staff e controlla che il codice arrivi da `fuoriorario.tech@gmail.com`; un'email fuori rosa deve essere rifiutata.
 

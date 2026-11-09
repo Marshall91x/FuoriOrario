@@ -71,3 +71,15 @@ jobs:
         with:
           deno-version: v2.1.4
       - run: deno test --allow-read --allow-env --allow-net supabase/functions/import-league/parse_test.ts
+      - name: Functions fit the deploy limit
+        # shortcut: measures the dependencies downloaded, not the bundle Supabase builds (npm pdfjs-dist, refused
+        # with 413, was 64 MB here; esm.sh 2 MB). Use the real bundler if a function lands near the limit.
+        run: |
+          export DENO_DIR="$RUNNER_TEMP/deno-size"
+          for f in supabase/functions/*/index.ts; do
+            rm -rf "$DENO_DIR"
+            deno cache --quiet "$f"
+            kb=$(du -sk "$DENO_DIR" | cut -f1)
+            echo "$f: $kb kB"
+            [ "$kb" -le 20480 ] || { echo "::error::$f pulls $kb kB, over Supabase's 20 MB per function"; exit 1; }
+          done
