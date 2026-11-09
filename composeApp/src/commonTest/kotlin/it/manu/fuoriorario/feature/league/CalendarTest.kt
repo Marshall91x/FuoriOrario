@@ -23,6 +23,7 @@ import it.manu.fuoriorario.domain.Role
 import it.manu.fuoriorario.feature.auth.FakeAuthRepository
 import it.manu.fuoriorario.feature.games.FakeGameRepository
 import it.manu.fuoriorario.feature.roster.FakeRosterRepository
+import it.manu.fuoriorario.testing.Recreation
 import it.manu.fuoriorario.testing.TestApp
 import it.manu.fuoriorario.testing.awaitNode
 import it.manu.fuoriorario.testing.awaitText
@@ -96,6 +97,22 @@ class CalendarTest {
 
         onNodeWithText("Partite").performClick()
         awaitText("Atessa")
+    }
+
+    /** #112: Android recreates the activity while its picker is open; the PDF must come back to Campionato. */
+    @Test
+    fun staffStayOnCampionatoWhenTheAppIsRecreated() = runAppTest {
+        val recreation = Recreation()
+        setContent {
+            TestApp(FakeAuthRepository(coach), FakeRosterRepository(coach, luca), recreation = recreation)
+        }
+
+        awaitText("Squadra")
+        onNodeWithText("Squadra").performClick()
+        onNodeWithTag("team_settings").performClick()
+        awaitNode(hasTestTag("league_import"))
+        recreation.recreate(this)
+        awaitNode(hasTestTag("league_import"))
     }
 
     private fun leagueWithOneFixture() = League(

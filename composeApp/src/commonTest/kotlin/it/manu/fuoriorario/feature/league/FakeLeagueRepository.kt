@@ -27,6 +27,9 @@ class FakeLeagueRepository(var league: League? = null) : LeagueRepository {
     /** Next write fails like a network error. */
     var failNext = false
 
+    /** What the Edge Function call throws besides a 422, as when it isn't deployed (404). */
+    var previewError: Exception? = null
+
     override suspend fun league(since: Instant): League? {
         if (failLoad) {
             failLoad = false
@@ -37,6 +40,7 @@ class FakeLeagueRepository(var league: League? = null) : LeagueRepository {
 
     override suspend fun preview(pdf: ByteArray): ImportPreview {
         failIfAsked()
+        previewError?.let { throw it }
         return preview ?: throw UnreadableCalendarException()
     }
 
