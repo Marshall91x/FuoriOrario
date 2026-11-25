@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -39,6 +40,8 @@ import fuoriorario.composeapp.generated.resources.game_box_rebounds
 import fuoriorario.composeapp.generated.resources.game_box_steals
 import fuoriorario.composeapp.generated.resources.game_box_turnovers
 import fuoriorario.composeapp.generated.resources.game_events
+import fuoriorario.composeapp.generated.resources.game_events_all
+import fuoriorario.composeapp.generated.resources.game_events_less
 import fuoriorario.composeapp.generated.resources.game_finish
 import fuoriorario.composeapp.generated.resources.game_fouled_out
 import fuoriorario.composeapp.generated.resources.game_free_throw
@@ -230,16 +233,21 @@ internal fun Scoreboard(score: Score, opponent: String, quarters: Map<Quarter, S
     }
 }
 
-/** Newest first, each with its ✕. */
+/** Events shown before "Mostra tutti". */
+private const val COMPACT_EVENT_COUNT = 5
+
+/** Newest first, each with its ✕: the last [COMPACT_EVENT_COUNT] until "Mostra tutti". */
 @Composable
 private fun Events(events: List<GameEvent>, callUps: List<CallUp>, onRemove: (Int) -> Unit) {
     val c = FuoriOrarioTheme.colors
     val remove = stringResource(Res.string.game_remove_event)
+    var expanded by rememberSaveable { mutableStateOf(false) }
     Panel {
         Text(stringResource(Res.string.game_events).uppercase(), style = MaterialTheme.typography.titleMedium)
         if (events.isEmpty()) Text(stringResource(Res.string.game_no_events), color = c.muted)
         Column {
-            events.withIndex().reversed().forEach { (i, e) ->
+            val newestFirst = events.withIndex().reversed()
+            (if (expanded) newestFirst else newestFirst.take(COMPACT_EVENT_COUNT)).forEach { (i, e) ->
                 HorizontalDivider(color = c.line)
                 Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     val who = callUps.find { it.id == e.memberId }?.label
@@ -264,6 +272,17 @@ private fun Events(events: List<GameEvent>, callUps: List<CallUp>, onRemove: (In
                     )
                 }
             }
+        }
+        if (events.size > COMPACT_EVENT_COUNT) {
+            GhostButton(
+                if (expanded) {
+                    stringResource(Res.string.game_events_less)
+                } else {
+                    stringResource(Res.string.game_events_all, events.size)
+                },
+                { expanded = !expanded },
+                Modifier.testTag("game_events_toggle")
+            )
         }
     }
 }
@@ -294,11 +313,12 @@ private fun GameLivePreview() = FuoriOrarioTheme {
         "Virtus",
         home = true,
         callUps = listOf(CallUp("luca", "Luca B.", "7"), CallUp("anna", "Anna", "4")),
-        events = listOf(
-            GameEvent(GameEventType.SHOT, Quarter.Q1, "luca", Zone.CEN, true),
-            GameEvent(GameEventType.OPPONENT, Quarter.Q1, value = 2),
-            GameEvent(GameEventType.REBOUND, Quarter.Q1, "anna")
-        ) + List(FOUL_LIMIT) { GameEvent(GameEventType.FOUL, Quarter.Q2, "anna") },
+        // The fouls first: newest first, the compact list still shows a shot, the opponent and a rebound.
+        events = List(FOUL_LIMIT) { GameEvent(GameEventType.FOUL, Quarter.Q1, "anna") } + listOf(
+            GameEvent(GameEventType.SHOT, Quarter.Q2, "luca", Zone.CEN, true),
+            GameEvent(GameEventType.OPPONENT, Quarter.Q2, value = 2),
+            GameEvent(GameEventType.REBOUND, Quarter.Q2, "anna")
+        ),
         selected = "luca"
     )
     Column { GameLive(draft, busy = false, GamesActions()) }

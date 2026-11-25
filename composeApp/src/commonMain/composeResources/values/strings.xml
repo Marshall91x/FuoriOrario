@@ -293,6 +293,8 @@
     <string name="game_events">Eventi</string>
     <string name="game_no_events">Ancora nessun evento.</string>
     <string name="game_remove_event">Elimina evento</string>
+    <string name="game_events_all">Mostra tutti (%1$d)</string>
+    <string name="game_events_less">Mostra meno</string>
     <string name="game_finish">Termina partita</string>
     <string name="game_fouled_out">%1$d falli</string>
     <string name="game_saved">Partita salvata</string>

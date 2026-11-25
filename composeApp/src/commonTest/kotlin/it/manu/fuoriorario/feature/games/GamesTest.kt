@@ -12,6 +12,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -131,6 +132,32 @@ class GamesTest {
         onNodeWithTag("game_new").assertIsNotEnabled()
         onNodeWithTag("game_resume").performClick()
         awaitText("NOI 0 – 2 VIRTUS")
+    }
+
+    @Test
+    fun theLiveEventsShowTheLastFiveUntilOpened() = runAppTest {
+        setContent { TestApp(FakeAuthRepository(coach), FakeRosterRepository(coach, luca)) }
+
+        awaitText("Partite")
+        onNodeWithText("Partite").performClick()
+        onNodeWithTag("games_recorded").performClick()
+        onNodeWithTag("game_new").performClick()
+        onNodeWithTag("game_opponent").performTextInput("Virtus")
+        onNodeWithTag("game_start").performScrollTo().performClick()
+
+        repeat(5) { onNodeWithTag("opponent_2").performScrollTo().performClick() }
+        awaitText("NOI 0 – 10 VIRTUS")
+        awaitNode(hasTestTag("game_events_toggle"), count = 0)
+        repeat(2) { onNodeWithTag("opponent_2").performScrollTo().performClick() }
+        awaitText("NOI 0 – 14 VIRTUS")
+        awaitNode(hasContentDescription("Elimina evento"), count = 5)
+
+        onNodeWithTag("game_events_toggle").performScrollTo().assertTextEquals("Mostra tutti (7)").performClick()
+        awaitNode(hasContentDescription("Elimina evento"), count = 7)
+        onNodeWithTag("game_events_toggle").assertTextEquals("Mostra meno")
+        // Opened stays opened as events come in.
+        onNodeWithTag("opponent_2").performScrollTo().performClick()
+        awaitNode(hasContentDescription("Elimina evento"), count = 8)
     }
 
     @Test
