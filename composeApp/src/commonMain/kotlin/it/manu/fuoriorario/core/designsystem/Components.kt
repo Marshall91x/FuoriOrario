@@ -125,7 +125,7 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
 
 /** Prototype button variants drawn by [GhostButton]. */
 enum class GhostStyle {
-    /** `.btn.ghost.small` */
+    /** `.btn.ghost.small`, but filled with `surface2` while enabled so the tap target shows in dark (#117). */
     PLAIN,
 
     /** `.role-toggle` */
@@ -147,13 +147,23 @@ fun GhostButton(
 ) {
     val c = FuoriOrarioTheme.colors
     val pill = style == GhostStyle.PILL
+    // Filled means tappable: on the dark surface a transparent button with a `line` border is invisible.
+    val filled = style == GhostStyle.PLAIN && enabled
     OutlinedButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
         shape = if (pill) RoundedCornerShape(50) else RoundedCornerShape(10.dp),
-        border = BorderStroke(1.dp, if (style == GhostStyle.DANGER) c.accent else c.line),
+        border = BorderStroke(
+            1.dp,
+            when {
+                style == GhostStyle.DANGER -> c.accent
+                filled -> c.muted.copy(alpha = 0.4f)
+                else -> c.line
+            }
+        ),
         colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = if (filled) c.surface2 else Color.Transparent,
             contentColor = when (style) {
                 GhostStyle.PLAIN -> c.ink
                 GhostStyle.PILL -> c.muted
